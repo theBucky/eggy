@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "singleQuote": true,
+  "semi": false,
+  "printWidth": 100,
+  "trailingComma": "none",
+  "sortPackageJson": false,
+  "svelte": true,
+  "ignorePatterns": [
+    "**/*.md",
+    "src/renderer/src/lib/components/ui/**",
+    "tools/oxlint/anti-slop/**"
+  ]
+}

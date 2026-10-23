@@ -1,0 +1,18 @@
+import { resolve } from 'node:path'
+import { defineConfig } from 'electron-vite'
+import { svelte } from '@sveltejs/vite-plugin-svelte'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  main: {},
+  preload: {},
+  renderer: {
+    resolve: {
+      alias: {
+        $lib: resolve(import.meta.dirname, 'src/renderer/src/lib')
+      }
+    },
+    plugins: [svelte(), tailwindcss()],
+    build: { minify: true }
+  }
+})
