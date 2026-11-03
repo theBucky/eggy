@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["electron.vite.config.ts", "src/main", "src/preload"],
+  "include": ["electron.vite.config.ts", "src/main", "src/preload", "src/shared"],
   "compilerOptions": {
     "lib": ["esnext"],
     "types": ["node", "electron-vite/node"]

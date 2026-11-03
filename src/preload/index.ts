@@ -1,8 +1,15 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
+import { homedir } from 'node:os'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { Api } from '../shared/api'
 
-// Custom APIs for renderer
-const api = {}
+const api: Api = {
+  home: homedir(),
+  chooseRoot: (current) => ipcRenderer.invoke('choose-root', current),
+  scan: (root) => ipcRenderer.invoke('scan', root),
+  fetch: (path) => ipcRenderer.invoke('fetch', path),
+  pull: (path) => ipcRenderer.invoke('pull', path)
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

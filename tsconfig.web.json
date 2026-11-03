@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/renderer/src", "src/preload/index.d.ts"],
+  "include": ["src/renderer/src", "src/preload/index.d.ts", "src/shared"],
   "exclude": ["src/renderer/src/lib/components/ui"],
   "compilerOptions": {
     "lib": ["esnext", "dom"],
