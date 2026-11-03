@@ -142,6 +142,15 @@
   scrollbar-width: none;
 }
 
+/* Sizes go on each edge because the shared --scroll-fade-size is inherited by the label fades
+   inside. The stock reveal grows each fade over 96px of scrolling, which leaves a list that
+   overflows by less hard-cut near either end. */
+@utility scroll-fade-y {
+  --scroll-fade-t-size: min(25%, calc(var(--spacing) * 24));
+  --scroll-fade-b-size: var(--scroll-fade-t-size);
+  --scroll-fade-reveal: calc(var(--spacing) * 6);
+}
+
 @utility truncate-fade {
   @apply overflow-hidden whitespace-nowrap scroll-fade-e;
   /* The text never scrolls, so the end fade applies in full as soon as it overflows. */
