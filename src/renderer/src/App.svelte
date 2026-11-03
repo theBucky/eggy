@@ -168,7 +168,7 @@
                               {:else}
                                 <IconFolder stroke={1.5} class="text-muted-foreground" />
                               {/if}
-                              <span class="truncate">
+                              <span class="flex-1 truncate-fade">
                                 {dir.startsWith(`${workspace.root}/`)
                                   ? dir.slice(workspace.root.length + 1)
                                   : tilde(dir)}
@@ -178,7 +178,7 @@
                                   (entry) => statusOf(entry) === 'outdated'
                                 ).length}
                                 {#if outdated > 0}
-                                  <span class="ml-auto text-xs text-brand">
+                                  <span class="text-xs text-brand">
                                     {outdated} outdated
                                   </span>
                                 {/if}
@@ -205,15 +205,17 @@
                                       <span class={['size-1.5 rounded-full', dots[status]]}></span>
                                     {/if}
                                   </span>
-                                  <span class="truncate">{nameOf(entry.repo.path)}</span>
+                                  <span class="flex-1 truncate-fade">
+                                    {nameOf(entry.repo.path)}
+                                  </span>
                                   {#if status === 'failed'}
-                                    <span class="ml-auto text-xs text-destructive">failed</span>
+                                    <span class="text-xs text-destructive">failed</span>
                                   {:else if status === 'outdated'}
-                                    <span class="ml-auto font-mono text-xs text-brand">
+                                    <span class="font-mono text-xs text-brand">
                                       ↓{entry.repo.sync?.behind}
                                     </span>
                                   {:else if entry.task?.status === 'updated'}
-                                    <span class="ml-auto font-mono text-xs text-success">
+                                    <span class="font-mono text-xs text-success">
                                       +{entry.task.commits.length}
                                     </span>
                                   {/if}
