@@ -1,7 +1,7 @@
 import { execFile, spawnSync } from 'node:child_process'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Commit, Failure, FetchOutcome, PullResult, Repo, Result, Sync } from '../shared/api'
+import type { Commit, Failure, FetchResult, PullResult, Repo, Sync } from '../shared/api'
 
 type GitResult = {
   ok: boolean
@@ -161,7 +161,7 @@ export async function scan(root: string): Promise<Repo[]> {
   return repos.filter((repo) => repo !== undefined)
 }
 
-export async function fetch(path: string): Promise<Result<FetchOutcome>> {
+export async function fetch(path: string): Promise<FetchResult> {
   const result = await git(path, ['fetch', '--tags', '--force'])
   const sync = await readSync(path)
 

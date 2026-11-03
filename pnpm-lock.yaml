@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@electron-toolkit/preload':
-        specifier: ^3.0.2
-        version: 3.0.2(electron@45.2.1(supports-color@7.2.0))
       '@electron-toolkit/utils':
         specifier: ^4.0.0
         version: 4.0.0(electron@45.2.1(supports-color@7.2.0))
@@ -164,11 +161,6 @@ packages:
   '@electron-internal/extract-zip@1.0.8':
     resolution: {integrity: sha512-8iajeLFbzNwM0m3AsQZSZgYREWglAImyGvvFSWU34FgMW8sHlzdwj9QKvv9dgN7jMP591EFUF/sLOC3Jl9YIjQ==}
     engines: {node: '>=22.12.0'}
-
-  '@electron-toolkit/preload@3.0.2':
-    resolution: {integrity: sha512-TWWPToXd8qPRfSXwzf5KVhpXMfONaUuRAZJHsKthKgZR/+LqX1dZVSSClQ8OTAEduvLGdecljCsoT2jSshfoUg==}
-    peerDependencies:
-      electron: '>=13.0.0'
 
   '@electron-toolkit/utils@4.0.0':
     resolution: {integrity: sha512-qXSntwEzluSzKl4z5yFNBknmPGjPa3zFhE4mp9+h0cgokY5ornAeP+CJQDBhKsL1S58aOQfcwkD3NwLZCl+64g==}
@@ -2297,10 +2289,6 @@ snapshots:
       '@babel/helper-validator-identifier': 7.29.7
 
   '@electron-internal/extract-zip@1.0.8': {}
-
-  '@electron-toolkit/preload@3.0.2(electron@45.2.1(supports-color@7.2.0))':
-    dependencies:
-      electron: 45.2.1(supports-color@7.2.0)
 
   '@electron-toolkit/utils@4.0.0(electron@45.2.1(supports-color@7.2.0))':
     dependencies:

@@ -1,29 +1,18 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { homedir } from 'node:os'
-import { electronAPI } from '@electron-toolkit/preload'
-import type { Api } from '../shared/api'
+import type { Api, Ipc } from '../shared/api'
+
+function invoke<Channel extends keyof Ipc>(channel: Channel) {
+  return (...args: Parameters<Ipc[Channel]>): Promise<Awaited<ReturnType<Ipc[Channel]>>> =>
+    ipcRenderer.invoke(channel, ...args)
+}
 
 const api: Api = {
   home: homedir(),
-  chooseRoot: (current) => ipcRenderer.invoke('choose-root', current),
-  scan: (root) => ipcRenderer.invoke('scan', root),
-  fetch: (path) => ipcRenderer.invoke('fetch', path),
-  pull: (path) => ipcRenderer.invoke('pull', path)
+  chooseRoot: invoke('chooseRoot'),
+  scan: invoke('scan'),
+  fetch: invoke('fetch'),
+  pull: invoke('pull')
 }
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
-if (process.contextIsolated) {
-  try {
-    contextBridge.exposeInMainWorld('electron', electronAPI)
-    contextBridge.exposeInMainWorld('api', api)
-  } catch (error) {
-    console.error(error)
-  }
-} else {
-  // @ts-ignore (define in dts)
-  window.electron = electronAPI
-  // @ts-ignore (define in dts)
-  window.api = api
-}
+contextBridge.exposeInMainWorld('api', api)

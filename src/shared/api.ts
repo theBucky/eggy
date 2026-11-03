@@ -34,17 +34,23 @@ export type FetchOutcome = { status: 'fetched' } | Failure
 
 export type PullOutcome = { status: 'current' } | { status: 'updated'; count: number } | Failure
 
-export type Result<Outcome> = {
+export type FetchResult = {
   sync: Sync | undefined
-  outcome: Outcome
+  outcome: FetchOutcome
 }
 
-export type PullResult = Result<PullOutcome> & { history: Commit[] }
+export type PullResult = {
+  sync: Sync | undefined
+  history: Commit[]
+  outcome: PullOutcome
+}
 
-export type Api = {
-  home: string
+// The renderer invokes each method over IPC on a channel named after it.
+export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scan: (root: string) => Promise<Repo[]>
-  fetch: (path: string) => Promise<Result<FetchOutcome>>
+  fetch: (path: string) => Promise<FetchResult>
   pull: (path: string) => Promise<PullResult>
 }
+
+export type Api = Ipc & { home: string }
