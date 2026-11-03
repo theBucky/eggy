@@ -1,5 +1,6 @@
 import type { Attachment } from 'svelte/attachments'
 import { on } from 'svelte/events'
+import './fluid-hover.css'
 
 type Point = { x: number; y: number }
 
