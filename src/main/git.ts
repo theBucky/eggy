@@ -162,7 +162,7 @@ export async function scan(root: string): Promise<Repo[]> {
 }
 
 export async function fetch(path: string): Promise<Result<FetchOutcome>> {
-  const result = await git(path, ['fetch'])
+  const result = await git(path, ['fetch', '--tags', '--force'])
   const sync = await readSync(path)
 
   if (!result.ok) return { sync, outcome: failure(result) }
