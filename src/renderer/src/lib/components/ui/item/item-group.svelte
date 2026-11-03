@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { fluidHover } from "$lib/fluid-hover.js";
 	import { cn, type WithElementRef } from "$lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
 
@@ -12,6 +13,7 @@
 
 <div
 	bind:this={ref}
+	{@attach fluidHover('[data-slot="item"]')}
 	role="list"
 	data-slot="item-group"
 	class={cn("gap-4 has-data-[size=sm]:gap-2.5 has-data-[size=xs]:gap-2 group/item-group flex w-full flex-col", className)}

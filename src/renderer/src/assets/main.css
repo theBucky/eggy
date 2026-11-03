@@ -171,7 +171,9 @@
 }
 
 @layer base {
-  * {
+  *,
+  ::before,
+  ::after {
     @apply border-border outline-ring/50;
     corner-shape: superellipse(1.25);
   }
@@ -194,4 +196,42 @@ body:has([data-slot='tooltip-content'][data-state='instant-open'])
 
 [data-bits-floating-content-wrapper]:has(> [data-slot='tooltip-content']) {
   z-index: 50 !important;
+}
+
+/* The `fluidHover` highlight, placed through `--hover-*`. It travels only on `move`; on `enter` it
+   fades in where it lands instead of sliding over from where it last went out. */
+@layer components {
+  [data-fluid-hover] {
+    position: relative;
+    isolation: isolate;
+
+    &::before {
+      @apply rounded-md bg-muted ease-out;
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: var(--hover-width);
+      height: var(--hover-height);
+      translate: var(--hover-x) var(--hover-y);
+      opacity: 0;
+      transition-property: opacity;
+      transition-duration: 60ms;
+    }
+  }
+
+  [data-fluid-hover='enter']::before,
+  [data-fluid-hover='move']::before {
+    opacity: 1;
+    transition-duration: 80ms;
+  }
+
+  [data-fluid-hover='move']::before {
+    transition-property: opacity, translate, width, height;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition-property: opacity;
+    }
+  }
 }
