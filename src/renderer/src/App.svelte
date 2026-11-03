@@ -28,7 +28,10 @@
 
   <Sidebar.Inset>
     {#if current}
-      <RepoDetail {workspace} entry={current} />
+      <!-- Keyed so switching repos starts each scroller at the top with unpushed commits folded. -->
+      {#key current.repo.path}
+        <RepoDetail {workspace} entry={current} />
+      {/key}
     {:else}
       <RepoOverview {workspace} />
     {/if}

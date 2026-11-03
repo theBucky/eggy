@@ -4,7 +4,12 @@ export type Commit = {
   author: string
   // Committer date in milliseconds since the epoch.
   date: number
-  unpushed: boolean
+}
+
+// Up to ten of each kind, newest first.
+export type History = {
+  unpushed: Commit[]
+  pushed: Commit[]
 }
 
 export type Sync = {
@@ -24,8 +29,8 @@ export type Repo = {
   commitUrl: string | undefined
   // Missing while the upstream ref is absent locally, such as before a first fetch or after a prune.
   sync: Sync | undefined
-  // The local branch's latest commits, newest first; empty once the repo can no longer be read.
-  history: Commit[]
+  // The local branch's latest commits; empty once the repo can no longer be read.
+  history: History
 }
 
 export type Failure = { status: 'failed'; message: string }
@@ -41,7 +46,7 @@ export type FetchResult = {
 
 export type PullResult = {
   sync: Sync | undefined
-  history: Commit[]
+  history: History
   outcome: PullOutcome
 }
 

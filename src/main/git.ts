@@ -1,7 +1,7 @@
 import { execFile, spawnSync } from 'node:child_process'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Commit, Failure, FetchResult, PullResult, Repo, Sync } from '../shared/api'
+import type { Commit, Failure, FetchResult, History, PullResult, Repo, Sync } from '../shared/api'
 
 type GitResult = {
   ok: boolean
@@ -63,25 +63,36 @@ async function readSync(path: string): Promise<Sync | undefined> {
   return { ahead, behind }
 }
 
-async function readHistory(path: string): Promise<Commit[]> {
-  // Both walks share an order, so the first ten unpushed commits cover any among the latest ten.
-  const [log, unpushed] = await Promise.all([
-    git(path, ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']),
-    git(path, ['rev-list', '--abbrev-commit', '--max-count=10', '@{upstream}..HEAD'])
-  ])
+const log = ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']
 
-  if (!log.ok) return []
+function parseLog({ ok, stdout }: GitResult): Commit[] {
+  if (!ok) return []
 
-  const local = new Set(unpushed.stdout.split('\n'))
-
-  return log.stdout
-    .trim()
+  return stdout
     .split('\n')
+    .filter(Boolean)
     .map((line) => {
       const [hash, subject, author, date] = line.split('\x1f')
 
-      return { hash, subject, author, date: Number(date) * 1000, unpushed: local.has(hash) }
+      return { hash, subject, author, date: Number(date) * 1000 }
     })
+}
+
+// The list folds unpushed commits away, so pushed ones get their own ten to keep the list full.
+async function readHistory(path: string): Promise<History> {
+  const [unpushed, bases] = await Promise.all([
+    git(path, [...log, '@{upstream}..HEAD']),
+    git(path, ['merge-base', '--all', 'HEAD', '@{upstream}'])
+  ])
+
+  // Commits reachable from any merge base are exactly those on both sides. Without a local
+  // upstream ref both commands fail and every commit reads as pushed.
+  const pushed = await git(path, [
+    ...log,
+    ...(unpushed.ok ? bases.stdout.trim().split('\n') : ['HEAD'])
+  ])
+
+  return { unpushed: parseLog(unpushed), pushed: parseLog(pushed) }
 }
 
 // Forges serve a repository's pages at its clone URL without `.git`, and SSH remotes, including
