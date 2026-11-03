@@ -25,8 +25,6 @@ pnpm dev
 | `pnpm format`       | oxfmt (write)                                 |
 | `pnpm format:check` | oxfmt (check only)                            |
 | `pnpm build:mac`    | Package with electron-builder (macOS)         |
-| `pnpm build:win`    | Package with electron-builder (Win)           |
-| `pnpm build:linux`  | Package with electron-builder (Linux)         |
 
 ## shadcn-svelte
 
