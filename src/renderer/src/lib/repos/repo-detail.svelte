@@ -31,7 +31,7 @@
       label: [ahead > 0 && `${ahead} ahead`, behind > 0 && `${behind} behind`]
         .filter(Boolean)
         .join(', '),
-      variant: behind > 0 ? 'brand' : 'secondary'
+      variant: behind > 0 ? 'info' : 'secondary'
     }
   })
 </script>

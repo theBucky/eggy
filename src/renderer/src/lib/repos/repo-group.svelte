@@ -35,7 +35,7 @@
   const dots = {
     unknown: 'bg-muted-foreground/30',
     failed: 'bg-destructive',
-    outdated: 'bg-brand',
+    outdated: 'bg-info',
     updated: 'bg-success',
     current: 'bg-success'
   } satisfies Record<Exclude<Status, 'running'>, string>
@@ -147,7 +147,7 @@
                             (entry) => statusOf(entry) === 'outdated'
                           ).length}
                           {#if outdated > 0}
-                            <span class="text-xs text-brand">{outdated} outdated</span>
+                            <span class="text-xs text-muted-foreground">{outdated} outdated</span>
                           {/if}
                         {/if}
                       </Sidebar.MenuButton>
@@ -176,7 +176,7 @@
                             {#if status === 'failed'}
                               <span class="text-xs text-destructive">failed</span>
                             {:else if status === 'outdated'}
-                              <span class="font-mono text-xs text-brand">
+                              <span class="font-mono text-xs text-info">
                                 ↓{entry.repo.sync?.behind}
                               </span>
                             {:else if entry.task?.status === 'updated'}

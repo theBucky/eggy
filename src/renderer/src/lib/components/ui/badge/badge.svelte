@@ -9,7 +9,7 @@
 				secondary: "bg-secondary text-secondary-foreground/74 [a]:hover:bg-secondary/80",
 				destructive: "bg-destructive/16 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20",
 				success: "bg-success/16 text-success",
-				brand: "bg-brand/16 text-brand",
+				info: "bg-info/16 text-info",
 				outline: "border border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground bg-input/20 dark:bg-input/30",
 				ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
 				link: "text-primary underline-offset-4 hover:underline",
