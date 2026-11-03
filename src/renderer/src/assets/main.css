@@ -136,19 +136,32 @@
   --radius-2xl: 16px;
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* Fits the macOS overlay scrollbar, whose track widens to 16px under the pointer. */
+  --spacing-scrollbar: 16px;
 }
 
 @utility no-scrollbar {
   scrollbar-width: none;
+  --scroll-fade-scrollbar: 0px;
 }
 
 /* Sizes go on each edge because the shared --scroll-fade-size is inherited by the label fades
    inside. The stock reveal grows each fade over 96px of scrolling, which leaves a list that
-   overflows by less hard-cut near either end. */
+   overflows by less hard-cut near either end. The mask also covers the scroller's own scrollbar,
+   so a second layer keeps the strip under it opaque. */
 @utility scroll-fade-y {
   --scroll-fade-t-size: min(25%, calc(var(--spacing) * 24));
   --scroll-fade-b-size: var(--scroll-fade-t-size);
   --scroll-fade-reveal: calc(var(--spacing) * 6);
+  mask-image: var(--scroll-fade-block), linear-gradient(#000 0 0);
+  mask-size:
+    100% 100%,
+    var(--scroll-fade-scrollbar, var(--spacing-scrollbar)) 100%;
+  mask-position:
+    0 0,
+    100% 0;
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
 }
 
 @utility truncate-fade {
