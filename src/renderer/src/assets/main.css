@@ -154,3 +154,16 @@
     @apply font-sans;
   }
 }
+
+/* Within the skip window the next tooltip opens as instant-open and replaces the current one in a
+   single frame. The replaced tooltip skips its fade-out, and the wrapper's z-index is pinned here
+   because bits-ui copies it from the content a frame after mount, which leaves the new tooltip
+   below the sidebar for that frame. */
+body:has([data-slot='tooltip-content'][data-state='instant-open'])
+  [data-slot='tooltip-content'][data-state='closed'] {
+  display: none;
+}
+
+[data-bits-floating-content-wrapper]:has(> [data-slot='tooltip-content']) {
+  z-index: 50 !important;
+}
