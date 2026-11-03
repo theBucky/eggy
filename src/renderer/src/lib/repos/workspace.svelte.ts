@@ -1,4 +1,4 @@
-import type { FetchOutcome, PullOutcome, Repo } from '../../../shared/api'
+import type { FetchOutcome, PullOutcome, Repo } from '../../../../shared/api'
 
 export type Task =
   | { command: 'fetch' | 'pull'; status: 'running' }
