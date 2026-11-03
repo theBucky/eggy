@@ -19,7 +19,9 @@ function distance(point: Point, box: DOMRect): number {
 /**
  * Draws one hover highlight in the container and places it on the item matching `selector`
  * nearest the pointer, so the highlight glides from item to item. A click in the gap around the
- * lit item reaches it, since what is lit is what a click hits.
+ * lit item reaches it, since what is lit is what a click hits. The highlight is painted beneath the
+ * items, so an item with its own fill, such as a selected row, needs an opaque color to hide the
+ * highlight.
  */
 export function fluidHover(selector: string): Attachment<HTMLElement> {
   return (container) => {
