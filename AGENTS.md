@@ -2,7 +2,7 @@
 
 - `pnpm dev`: run Electron with HMR.
 - `pnpm build`: typecheck (`svelte-check`) then build main/preload/renderer; `pnpm typecheck` runs checks alone.
-- `pnpm dlx shadcn-svelte@latest add <component>`: vendor shadcn-svelte components into `src/renderer/src/lib/components/ui` (directory is excluded from lint, format, and typecheck).
+- `pnpm dlx shadcn-svelte@latest add <component>`: vendor shadcn-svelte components into `src/renderer/src/lib/components/ui` (directory is excluded from lint and format).
 
 ## boundaries
 
