@@ -43,7 +43,6 @@ function createWindow(): void {
     }
   })
 
-  // F12 toggles DevTools in development; packaged builds block the reload and DevTools keys.
   optimizer.watchWindowShortcuts(mainWindow)
 
   mainWindow.once('ready-to-show', () => mainWindow.show())

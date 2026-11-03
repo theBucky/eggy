@@ -1,7 +1,5 @@
 @reference '../assets/main.css';
 
-/* The `fluidHover` highlight, placed through `--hover-*`. It travels only on `move`; on `enter` it
-   fades in where it lands instead of sliding over from where it last went out. */
 @layer components {
   [data-fluid-hover] {
     position: relative;

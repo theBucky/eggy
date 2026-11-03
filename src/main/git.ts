@@ -32,7 +32,6 @@ function failure({ stdout, stderr }: GitResult): Failure {
 }
 
 // A repo owns its subtree, so clones kept inside a project (such as `refs/`) stay out.
-// Dot directories and node_modules only hold caches and dependency checkouts.
 async function findRepos(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
 

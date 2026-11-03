@@ -45,7 +45,6 @@ export type PullResult = {
   outcome: PullOutcome
 }
 
-// The renderer invokes each method over IPC on a channel named after it.
 export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scan: (root: string) => Promise<Repo[]>

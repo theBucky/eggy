@@ -2,7 +2,6 @@
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
 
-/* Latin subset only; other scripts fall back to the system font. */
 @font-face {
   font-family: 'Geist Variable';
   font-style: normal;
@@ -16,7 +15,6 @@
    appearance. */
 @custom-variant dark (&:is(.dark *));
 
-/* Colors, type, and radii follow the Paper "Cursor Light" design system. */
 :root {
   --background: #ffffff;
   --foreground: #1c1c1c;
