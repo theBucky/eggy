@@ -86,9 +86,10 @@ export class Workspace {
   async pull(entry: Entry): Promise<void> {
     entry.task = { command: 'pull', status: 'running' }
 
-    const { sync, outcome } = await window.api.pull(entry.repo.path)
+    const { sync, history, outcome } = await window.api.pull(entry.repo.path)
 
     entry.repo.sync = sync
+    entry.repo.history = history
     entry.task = { command: 'pull', ...outcome }
   }
 

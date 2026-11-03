@@ -7,6 +7,7 @@
   import * as Item from '$lib/components/ui/item'
   import { Spinner } from '$lib/components/ui/spinner'
   import { nameOf, tilde } from '$lib/paths'
+  import { ago } from '$lib/time'
   import type { Entry } from '$lib/workspace.svelte'
 
   type SyncBadge = { label: string; variant: BadgeVariant }
@@ -67,40 +68,7 @@
       <dd class="truncate font-mono text-xs/[18px]">{repo.remote}</dd>
     </dl>
 
-    {#if task?.status === 'updated'}
-      <section class="mt-8 flex min-h-0 flex-col gap-2">
-        <h2 class="text-muted-foreground">New commits</h2>
-        <div class="flex min-h-0 flex-col rounded-xl border">
-          <div class="scroll-fade-y my-2 min-h-0 overflow-y-auto px-1">
-            <Item.Group>
-              {#each task.commits as commit (commit.hash)}
-                <Item.Root size="xs" role="listitem">
-                  <Item.Media>
-                    <Avatar.Root>
-                      <Avatar.Fallback>{commit.author.charAt(0).toUpperCase()}</Avatar.Fallback>
-                    </Avatar.Root>
-                  </Item.Media>
-                  <!-- The title's own clamp loses to its flex display and the description allows two
-                       lines, so each line clamps itself. Wrapping anywhere keeps a long word from
-                       widening the row past the card. -->
-                  <Item.Content>
-                    <Item.Title>
-                      <span class="line-clamp-1 wrap-anywhere">{commit.subject}</span>
-                    </Item.Title>
-                    <Item.Description>
-                      <span class="line-clamp-1 wrap-anywhere">
-                        {commit.author} · {commit.date} ·
-                        <span class="font-mono">{commit.hash}</span>
-                      </span>
-                    </Item.Description>
-                  </Item.Content>
-                </Item.Root>
-              {/each}
-            </Item.Group>
-          </div>
-        </div>
-      </section>
-    {:else if task?.status === 'failed'}
+    {#if task?.status === 'failed'}
       <div class="mt-8">
         <Alert.Root variant="destructive">
           <IconAlertCircle />
@@ -110,6 +78,52 @@
           </Alert.Description>
         </Alert.Root>
       </div>
+    {/if}
+
+    {#if repo.history.length > 0}
+      <section class="mt-8 flex min-h-0 flex-col">
+        <h2 class="text-muted-foreground">Recent commits</h2>
+        <!-- Bleeds into the page padding so the scrollbar and focus rings stay off the rows. -->
+        <div class="scroll-fade-y -mx-scrollbar my-2 min-h-0 overflow-y-auto px-scrollbar py-1">
+          <Item.Group>
+            {#each repo.history as commit (commit.hash)}
+              {@const link =
+                repo.commitUrl && !commit.unpushed
+                  ? { href: repo.commitUrl + commit.hash, target: '_blank' }
+                  : undefined}
+              <div role="listitem" class={{ 'opacity-50': commit.unpushed }}>
+                <Item.Root size="xs">
+                  {#snippet child({ props })}
+                    <svelte:element this={link ? 'a' : 'div'} {...props} {...link}>
+                      <Item.Media>
+                        <Avatar.Root>
+                          <Avatar.Fallback>
+                            {commit.author.charAt(0).toUpperCase()}
+                          </Avatar.Fallback>
+                        </Avatar.Root>
+                      </Item.Media>
+                      <!-- The title's own clamp loses to its flex display and the description
+                           allows two lines, so each line clamps itself. Wrapping anywhere keeps a
+                           long word from widening the row past the panel. -->
+                      <Item.Content>
+                        <Item.Title>
+                          <span class="line-clamp-1 wrap-anywhere">{commit.subject}</span>
+                        </Item.Title>
+                        <Item.Description>
+                          <span class="line-clamp-1 wrap-anywhere">
+                            <span class="font-mono">{commit.hash}</span>: {commit.author},
+                            {ago(commit.date)}
+                          </span>
+                        </Item.Description>
+                      </Item.Content>
+                    </svelte:element>
+                  {/snippet}
+                </Item.Root>
+              </div>
+            {/each}
+          </Item.Group>
+        </div>
+      </section>
     {/if}
   </div>
 </div>

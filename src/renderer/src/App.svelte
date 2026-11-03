@@ -216,7 +216,7 @@
                                     </span>
                                   {:else if entry.task?.status === 'updated'}
                                     <span class="font-mono text-xs text-success">
-                                      +{entry.task.commits.length}
+                                      +{entry.task.count}
                                     </span>
                                   {/if}
                                 </Sidebar.MenuButton>

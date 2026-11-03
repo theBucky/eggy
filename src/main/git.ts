@@ -1,7 +1,7 @@
 import { execFile, spawnSync } from 'node:child_process'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Failure, FetchOutcome, PullOutcome, Repo, Result, Sync } from '../shared/api'
+import type { Commit, Failure, FetchOutcome, PullResult, Repo, Result, Sync } from '../shared/api'
 
 type GitResult = {
   ok: boolean
@@ -64,6 +64,55 @@ async function readSync(path: string): Promise<Sync | undefined> {
   return { ahead, behind }
 }
 
+async function readHistory(path: string): Promise<Commit[]> {
+  // Both walks share an order, so the first ten unpushed commits cover any among the latest ten.
+  const [log, unpushed] = await Promise.all([
+    git(path, ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']),
+    git(path, ['rev-list', '--abbrev-commit', '--max-count=10', '@{upstream}..HEAD'])
+  ])
+
+  if (!log.ok) return []
+
+  const local = new Set(unpushed.stdout.split('\n'))
+
+  return log.stdout
+    .trim()
+    .split('\n')
+    .map((line) => {
+      const [hash, subject, author, date] = line.split('\x1f')
+
+      return { hash, subject, author, date: Number(date) * 1000, unpushed: local.has(hash) }
+    })
+}
+
+// Forges serve a repository's pages at its clone URL without `.git`, and SSH remotes, including
+// git's `user@host:path` shorthand, map to the same host over HTTPS.
+function commitUrlOf(remote: string): string | undefined {
+  const scp = /^(?:[^@/]+@)?([^/:]+):(?!\/\/)(.+)$/.exec(remote)
+  const url = URL.parse(scp ? `ssh://${scp[1]}/${scp[2]}` : remote)
+
+  if (url === null) return undefined
+
+  const repo = url.pathname.replace(/(\.git)?\/?$/, '')
+
+  const route =
+    url.hostname === 'bitbucket.org'
+      ? 'commits'
+      : url.hostname.endsWith('.googlesource.com')
+        ? '+'
+        : 'commit'
+
+  if (url.protocol === 'https:' || url.protocol === 'http:') {
+    return `${url.origin}${repo}/${route}/`
+  }
+
+  if (url.protocol === 'ssh:' || url.protocol === 'git:') {
+    return `https://${url.hostname}${repo}/${route}/`
+  }
+
+  return undefined
+}
+
 async function readRepo(path: string): Promise<Repo | undefined> {
   const refs = await git(path, [
     'rev-parse',
@@ -89,9 +138,15 @@ async function readRepo(path: string): Promise<Repo | undefined> {
 
   if (upstream === '') return undefined
 
-  const [remote, sync] = await Promise.all([git(path, ['ls-remote', '--get-url']), readSync(path)])
+  const [{ stdout }, sync, history] = await Promise.all([
+    git(path, ['ls-remote', '--get-url']),
+    readSync(path),
+    readHistory(path)
+  ])
 
-  return { path, gitDir, branch, upstream, remote: remote.stdout.trim(), sync }
+  const remote = stdout.trim()
+
+  return { path, gitDir, branch, upstream, remote, commitUrl: commitUrlOf(remote), sync, history }
 }
 
 async function head(path: string): Promise<string> {
@@ -119,31 +174,17 @@ export async function fetch(path: string): Promise<Result<FetchOutcome>> {
   return { sync, outcome: { status: 'fetched' } }
 }
 
-export async function pull(path: string): Promise<Result<PullOutcome>> {
+export async function pull(path: string): Promise<PullResult> {
   const before = await head(path)
   const result = await git(path, ['pull', '--ff-only'])
   const after = await head(path)
-  const sync = await readSync(path)
+  const [sync, history] = await Promise.all([readSync(path), readHistory(path)])
 
-  if (!result.ok) return { sync, outcome: failure(result) }
+  if (!result.ok) return { sync, history, outcome: failure(result) }
 
-  if (before === after) return { sync, outcome: { status: 'current' } }
+  if (before === after) return { sync, history, outcome: { status: 'current' } }
 
-  const log = await git(path, [
-    'log',
-    '--no-show-signature',
-    '--format=%h%x1f%s%x1f%an%x1f%cr',
-    `${before}..${after}`
-  ])
+  const count = await git(path, ['rev-list', '--count', `${before}..${after}`])
 
-  const commits = log.stdout
-    .trim()
-    .split('\n')
-    .map((line) => {
-      const [hash, subject, author, date] = line.split('\x1f')
-
-      return { hash, subject, author, date }
-    })
-
-  return { sync, outcome: { status: 'updated', commits } }
+  return { sync, history, outcome: { status: 'updated', count: Number(count.stdout) } }
 }
