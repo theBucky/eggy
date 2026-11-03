@@ -2,29 +2,38 @@
   import IconAlertCircle from '@tabler/icons-svelte/icons/alert-circle'
   import * as Alert from '$lib/components/ui/alert'
   import * as Avatar from '$lib/components/ui/avatar'
+  import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
   import { Spinner } from '$lib/components/ui/spinner'
   import { nameOf, tilde } from '$lib/paths'
   import type { Entry } from '$lib/workspace.svelte'
 
+  type SyncBadge = { label: string; variant: BadgeVariant }
+
   let { entry, disabled, onpull }: { entry: Entry; disabled: boolean; onpull: () => void } =
     $props()
 
   const { repo, task } = $derived(entry)
 
-  const sync = $derived(
-    task?.command === 'fetch' && task.status === 'running'
-      ? 'checking'
-      : repo.sync === undefined
-        ? 'gone'
-        : [
-            repo.sync.ahead > 0 && `${repo.sync.ahead} ahead`,
-            repo.sync.behind > 0 && `${repo.sync.behind} behind`
-          ]
-            .filter(Boolean)
-            .join(', ') || 'up to date'
-  )
+  const badge = $derived.by((): SyncBadge => {
+    if (task?.command === 'fetch' && task.status === 'running') {
+      return { label: 'Checking', variant: 'secondary' }
+    }
+
+    if (repo.sync === undefined) return { label: 'Gone', variant: 'destructive' }
+
+    const { ahead, behind } = repo.sync
+
+    if (ahead === 0 && behind === 0) return { label: 'Up to date', variant: 'success' }
+
+    return {
+      label: [ahead > 0 && `${ahead} ahead`, behind > 0 && `${behind} behind`]
+        .filter(Boolean)
+        .join(', '),
+      variant: behind > 0 ? 'brand' : 'secondary'
+    }
+  })
 </script>
 
 <div class="absolute inset-0 flex flex-col">
@@ -46,13 +55,13 @@
       </div>
     </div>
 
-    <dl class="mt-6 grid grid-cols-[96px_1fr] gap-x-4 gap-y-2">
+    <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Branch</dt>
       <dd class="truncate font-mono text-xs/[18px]">{repo.branch}</dd>
       <dt class="text-muted-foreground">Upstream</dt>
-      <dd class="truncate font-mono text-xs/[18px]">
-        {repo.upstream}
-        <span class="text-muted-foreground">· {sync}</span>
+      <dd class="flex min-w-0 items-center gap-2">
+        <span class="truncate font-mono text-xs/[18px]">{repo.upstream}</span>
+        <Badge variant={badge.variant}>{badge.label}</Badge>
       </dd>
       <dt class="text-muted-foreground">Remote</dt>
       <dd class="truncate font-mono text-xs/[18px]">{repo.remote}</dd>
