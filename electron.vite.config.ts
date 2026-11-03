@@ -13,6 +13,11 @@ export default defineConfig({
       }
     },
     plugins: [svelte(), tailwindcss()],
-    build: { minify: true }
+    build: {
+      minify: true,
+      // Lightning CSS folds `animation-timeline` into the `animation` shorthand, which Chromium
+      // rejects, silently dropping every scroll-driven fade.
+      cssMinify: false
+    }
   }
 })

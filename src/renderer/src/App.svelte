@@ -76,7 +76,7 @@
     <!-- Keeps the sidebar content clear of the traffic lights. -->
     <div class="h-8 shrink-0"></div>
 
-    <Sidebar.Content>
+    <Sidebar.Content class="scroll-fade-y">
       <Collapsible.Root bind:open={repositoriesOpen}>
         {#snippet child({ props })}
           <Sidebar.Group {...props}>

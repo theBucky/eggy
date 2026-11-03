@@ -22,7 +22,7 @@
 </script>
 
 <div class="absolute inset-0 flex flex-col">
-  <div class="my-2 min-h-0 flex-1 overflow-y-auto px-8 py-6">
+  <div class="scroll-fade-y my-2 min-h-0 flex-1 overflow-y-auto px-8 py-6">
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
