@@ -94,6 +94,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
   /* Fits the macOS overlay scrollbar, whose track widens to 16px under the pointer. */
   --spacing-scrollbar: 16px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @utility no-scrollbar {
@@ -152,4 +153,36 @@ body:has([data-slot='tooltip-content'][data-state='instant-open'])
 
 [data-bits-floating-content-wrapper]:has(> [data-slot='tooltip-content']) {
   z-index: 50 !important;
+}
+
+/* Easing to and from `auto` keeps open content sized by its rows, where bits-ui's measured height
+   goes stale once a nested folder opens. Padding here would hold collapsed content open, so the
+   rows inside carry it. */
+[data-slot='collapsible-content'] {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  /* Fits the focus rings of rows at the edges. */
+  overflow-clip-margin: 2px;
+  /* A clipped flex item otherwise keeps its content height as its minimum. */
+  min-height: 0;
+  transition-property: height, opacity;
+  transition-duration: 260ms;
+  transition-timing-function: var(--ease-out-expo);
+
+  &[data-starting-style],
+  &[data-ending-style] {
+    height: 0;
+    opacity: 0;
+  }
+
+  /* bits-ui zeroes the duration inline while it measures closing content, which would snap the
+     content shut. */
+  &[data-ending-style] {
+    transition-duration: 260ms, 100ms !important;
+    transition-timing-function: var(--ease-out-expo), ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition-property: opacity;
+  }
 }

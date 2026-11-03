@@ -1,5 +1,4 @@
 <script lang="ts">
-  import IconChevronDown from '@tabler/icons-svelte/icons/chevron-down'
   import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
   import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
   import IconFolder from '@tabler/icons-svelte/icons/folder'
@@ -14,6 +13,7 @@
   import * as Tooltip from '$lib/components/ui/tooltip'
   import { nameOf, tilde } from '$lib/paths'
   import { statusOf, type Status, type Workspace } from '$lib/repos/workspace.svelte'
+  import { cn } from '$lib/utils'
 
   let {
     workspace,
@@ -54,11 +54,12 @@
           {#snippet child({ props })}
             <Collapsible.Trigger {...props}>
               Repositories
-              {#if groupOpen}
-                <IconChevronDown />
-              {:else}
-                <IconChevronRight />
-              {/if}
+              <IconChevronRight
+                class={cn(
+                  'transition-transform duration-260 ease-out-expo',
+                  groupOpen && 'rotate-90'
+                )}
+              />
             </Collapsible.Trigger>
           {/snippet}
         </Sidebar.GroupLabel>
@@ -122,8 +123,8 @@
           <Tooltip.Content>Pull {workspace.outdated.length} outdated</Tooltip.Content>
         </Tooltip.Root>
       </div>
-      <Collapsible.Content class="pt-1">
-        <Sidebar.Menu>
+      <Collapsible.Content>
+        <Sidebar.Menu class="pt-1">
           {#each folders as [dir, entries] (dir)}
             {@const open = expanded.has(dir)}
             <Collapsible.Root bind:open={() => open, (value) => setExpanded(dir, value)}>
@@ -153,8 +154,8 @@
                       </Sidebar.MenuButton>
                     {/snippet}
                   </Collapsible.Trigger>
-                  <Collapsible.Content class="pt-1 pb-3">
-                    <Sidebar.Menu>
+                  <Collapsible.Content>
+                    <Sidebar.Menu class="pt-1 pb-3">
                       {#each entries as entry (entry.repo.path)}
                         {@const status = statusOf(entry)}
                         <Sidebar.MenuItem>
