@@ -238,11 +238,14 @@
 
   <Sidebar.Inset>
     {#if current}
-      <RepoDetail
-        entry={current}
-        disabled={workspace.busy}
-        onpull={() => workspace.pull(current)}
-      />
+      <!-- Keyed so switching repos starts the detail scrolled to the top. -->
+      {#key current.repo.path}
+        <RepoDetail
+          entry={current}
+          disabled={workspace.busy}
+          onpull={() => workspace.pull(current)}
+        />
+      {/key}
     {:else}
       <Empty.Root>
         <Empty.Header>
