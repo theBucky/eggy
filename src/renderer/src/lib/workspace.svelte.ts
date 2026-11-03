@@ -7,18 +7,18 @@ export type Task =
 
 export type Entry = {
   repo: Repo
-  // Unset while the repo waits for its first fetch.
   task?: Task
 }
 
 export type Status = 'unknown' | 'running' | 'failed' | 'outdated' | 'updated' | 'current'
 
 export function statusOf({ repo, task }: Entry): Status {
-  if (task === undefined) return 'unknown'
+  if (task?.status === 'running' || task?.status === 'failed') return task.status
 
-  if (task.status === 'running' || task.status === 'failed') return task.status
-
+  // Local upstream refs already show how far behind the last fetch left the branch.
   if ((repo.sync?.behind ?? 0) > 0) return 'outdated'
+
+  if (task === undefined) return 'unknown'
 
   return task.status === 'updated' ? 'updated' : 'current'
 }
@@ -60,8 +60,18 @@ export class Workspace {
 
     this.entries = repos.map((repo) => ({ repo }))
     this.scanning = false
+  }
 
-    await each(this.entries, (entry) => this.#fetch(entry))
+  async refresh(): Promise<void> {
+    await this.scan()
+    await each(this.entries, async (entry) => {
+      entry.task = { command: 'fetch', status: 'running' }
+
+      const { sync, outcome } = await window.api.fetch(entry.repo.path)
+
+      entry.repo.sync = sync
+      entry.task = { command: 'fetch', ...outcome }
+    })
   }
 
   async chooseRoot(): Promise<void> {
@@ -72,15 +82,6 @@ export class Workspace {
     this.root = root
     localStorage.setItem('root', root)
     await this.scan()
-  }
-
-  async #fetch(entry: Entry): Promise<void> {
-    entry.task = { command: 'fetch', status: 'running' }
-
-    const { sync, outcome } = await window.api.fetch(entry.repo.path)
-
-    entry.repo.sync = sync
-    entry.task = { command: 'fetch', ...outcome }
   }
 
   async pull(entry: Entry): Promise<void> {

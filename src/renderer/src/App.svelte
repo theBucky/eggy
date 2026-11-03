@@ -119,7 +119,7 @@
                       size="icon"
                       aria-label="Refresh"
                       disabled={workspace.busy}
-                      onclick={() => workspace.scan()}
+                      onclick={() => workspace.refresh()}
                     >
                       {#if workspace.activity === 'scan' || workspace.activity === 'fetch'}
                         <Spinner />
