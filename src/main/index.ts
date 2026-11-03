@@ -6,10 +6,10 @@ import { fetch, pull, scan } from './git'
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1120,
+    width: 1150,
     height: 760,
-    minWidth: 800,
-    minHeight: 480,
+    minWidth: 1150,
+    minHeight: 760,
     show: false,
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
