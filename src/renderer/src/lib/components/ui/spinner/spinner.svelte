@@ -1,19 +1,12 @@
 <script lang="ts">
 	import IconLoader from '@tabler/icons-svelte/icons/loader';
 	import { cn } from "$lib/utils.js";
-	import type { SVGAttributes } from "svelte/elements";
+	import type { ComponentProps } from "svelte";
 
-	let {
-		class: className,
-		role = "status",
-		// only forward them when set, otherwise `stroke: undefined` overrides the icon's `currentColor`
-		name,
-		color,
-		stroke,
-		className: legacyClassName,
-		"aria-label": ariaLabel = "Loading",
-		...restProps
-	}: SVGAttributes<SVGSVGElement> = $props();
+	let { class: className, ...restProps }: ComponentProps<IconLoader> = $props();
 </script>
 
-<IconLoader {role} {...name != null ? { name } : {}} {...color != null ? { color } : {}} {...stroke != null ? { stroke } : {}} {...legacyClassName != null ? { className: legacyClassName } : {}} aria-label={ariaLabel} class={cn("size-4 animate-spin", className)} {...restProps} />
+<!-- Chromium can't composite an animation on an <svg>, so the wrapper spins instead. -->
+<span class={cn("inline-flex size-4 shrink-0 animate-spin", className)}>
+	<IconLoader role="status" aria-label="Loading" class="size-full" {...restProps} />
+</span>
