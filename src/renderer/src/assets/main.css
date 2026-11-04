@@ -116,7 +116,7 @@
    overflows by less hard-cut near either end. The mask also covers the scroller's own scrollbar,
    so a second layer keeps the strip under it opaque. */
 @utility scroll-fade-y {
-  --scroll-fade-t-size: min(25%, calc(var(--spacing) * 24));
+  --scroll-fade-t-size: min(25%, calc(var(--spacing) * 12));
   --scroll-fade-b-size: var(--scroll-fade-t-size);
   --scroll-fade-reveal: calc(var(--spacing) * 6);
   mask-image: var(--scroll-fade-block), linear-gradient(#000 0 0);
