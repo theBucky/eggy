@@ -31,23 +31,6 @@ function failure({ stdout, stderr }: GitResult): Failure {
   return { status: 'failed', message: (stdout + stderr).trim() }
 }
 
-// A repo owns its subtree, so clones kept inside a project (such as `refs/`) stay out.
-async function findRepos(dir: string): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
-
-  if (entries.some((entry) => entry.name === '.git')) return [dir]
-
-  const nested = await Promise.all(
-    entries.flatMap((entry) =>
-      entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules'
-        ? [findRepos(join(dir, entry.name))]
-        : []
-    )
-  )
-
-  return nested.flat()
-}
-
 async function readSync(path: string): Promise<Sync | undefined> {
   const { ok, stdout } = await git(path, [
     'rev-list',
@@ -124,29 +107,24 @@ function commitUrlOf(remote: string): string | undefined {
 }
 
 async function readRepo(path: string): Promise<Repo | undefined> {
-  const refs = await git(path, [
-    'rev-parse',
-    '--path-format=absolute',
-    '--git-common-dir',
-    '--abbrev-ref',
-    'HEAD'
-  ])
-
-  if (!refs.ok) return undefined
-
-  const [gitDir, branch] = refs.stdout.split('\n')
-
   // Config names the upstream even while its ref is missing locally, where `@{upstream}` fails; the
-  // fetch then restores the ref or reports it gone. A detached HEAD reads as the branch "HEAD".
-  const tracking = await git(path, [
-    'for-each-ref',
-    '--format=%(upstream:short)',
-    `refs/heads/${branch}`
+  // fetch then restores the ref or reports it gone. Listing every branch finds the checked-out one
+  // by its star without first asking for its name, and a detached HEAD stars none.
+  const [commonDir, heads] = await Promise.all([
+    git(path, ['rev-parse', '--path-format=absolute', '--git-common-dir']),
+    git(path, [
+      'for-each-ref',
+      '--format=%(HEAD)%(refname:lstrip=2) %(upstream:short)',
+      'refs/heads'
+    ])
   ])
 
-  const upstream = tracking.stdout.trim()
+  const current = /^\*(\S+) (\S+)$/m.exec(heads.stdout)
 
-  if (upstream === '') return undefined
+  if (current === null) return undefined
+
+  const [, branch, upstream] = current
+  const gitDir = commonDir.stdout.trim()
 
   const [{ stdout }, sync, history] = await Promise.all([
     git(path, ['ls-remote', '--get-url']),
@@ -159,16 +137,25 @@ async function readRepo(path: string): Promise<Repo | undefined> {
   return { path, gitDir, branch, upstream, remote, commitUrl: commitUrlOf(remote), sync, history }
 }
 
-async function head(path: string): Promise<string> {
-  const { stdout } = await git(path, ['rev-parse', 'HEAD'])
+// A repo owns its subtree, so clones kept inside a project (such as `refs/`) stay out.
+export async function scan(dir: string): Promise<Repo[]> {
+  const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
 
-  return stdout.trim()
-}
+  if (entries.some((entry) => entry.name === '.git')) {
+    const repo = await readRepo(dir)
 
-export async function scan(root: string): Promise<Repo[]> {
-  const repos = await Promise.all((await findRepos(root)).map(readRepo))
+    return repo === undefined ? [] : [repo]
+  }
 
-  return repos.filter((repo) => repo !== undefined)
+  const nested = await Promise.all(
+    entries.flatMap((entry) =>
+      entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules'
+        ? [scan(join(dir, entry.name))]
+        : []
+    )
+  )
+
+  return nested.flat()
 }
 
 export async function fetch(path: string): Promise<FetchResult> {
@@ -185,16 +172,21 @@ export async function fetch(path: string): Promise<FetchResult> {
 }
 
 export async function pull(path: string): Promise<PullResult> {
-  const before = await head(path)
+  const before = (await git(path, ['rev-parse', 'HEAD'])).stdout.trim()
   const result = await git(path, ['pull', '--ff-only'])
-  const after = await head(path)
-  const [sync, history] = await Promise.all([readSync(path), readHistory(path)])
+
+  const [sync, history, added] = await Promise.all([
+    readSync(path),
+    readHistory(path),
+    git(path, ['rev-list', '--count', `${before}..HEAD`])
+  ])
 
   if (!result.ok) return { sync, history, outcome: failure(result) }
 
-  if (before === after) return { sync, history, outcome: { status: 'current' } }
+  // A fast-forward only adds commits, so none added means HEAD never moved.
+  const count = Number(added.stdout)
 
-  const count = await git(path, ['rev-list', '--count', `${before}..${after}`])
+  if (count === 0) return { sync, history, outcome: { status: 'current' } }
 
-  return { sync, history, outcome: { status: 'updated', count: Number(count.stdout) } }
+  return { sync, history, outcome: { status: 'updated', count } }
 }
