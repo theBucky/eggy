@@ -5,6 +5,7 @@
   import IconFolderCog from '@tabler/icons-svelte/icons/folder-cog'
   import IconFolderOpen from '@tabler/icons-svelte/icons/folder-open'
   import IconRefresh from '@tabler/icons-svelte/icons/refresh'
+  import { Tooltip as TooltipPrimitive } from 'bits-ui'
   import { SvelteSet } from 'svelte/reactivity'
   import { Button } from '$lib/components/ui/button'
   import * as Collapsible from '$lib/components/ui/collapsible'
@@ -19,6 +20,9 @@
     workspace,
     selected = $bindable()
   }: { workspace: Workspace; selected: string | undefined } = $props()
+
+  // One tooltip moves between the toolbar buttons instead of each mounting its own.
+  const toolbarTip = TooltipPrimitive.createTether<string>()
 
   let groupOpen = $state(true)
   const expanded = new SvelteSet<string>()
@@ -63,64 +67,60 @@
             </Collapsible.Trigger>
           {/snippet}
         </Sidebar.GroupLabel>
-        <Tooltip.Root>
-          <Tooltip.Trigger>
-            {#snippet child({ props })}
-              <Button
-                {...props}
-                variant="ghost"
-                size="icon"
-                aria-label="Change folder"
-                disabled={workspace.busy}
-                onclick={() => workspace.chooseRoot()}
-              >
-                <IconFolderCog stroke={1.5} />
-              </Button>
-            {/snippet}
-          </Tooltip.Trigger>
-          <Tooltip.Content>Change folder ({tilde(workspace.root)})</Tooltip.Content>
-        </Tooltip.Root>
-        <Tooltip.Root>
-          <Tooltip.Trigger>
-            {#snippet child({ props })}
-              <Button
-                {...props}
-                variant="ghost"
-                size="icon"
-                aria-label="Refresh"
-                disabled={workspace.busy}
-                onclick={() => workspace.refresh()}
-              >
-                {#if workspace.activity === 'scan' || workspace.activity === 'fetch'}
-                  <Spinner />
-                {:else}
-                  <IconRefresh stroke={1.5} />
-                {/if}
-              </Button>
-            {/snippet}
-          </Tooltip.Trigger>
-          <Tooltip.Content>Refresh</Tooltip.Content>
-        </Tooltip.Root>
-        <Tooltip.Root>
-          <Tooltip.Trigger>
-            {#snippet child({ props })}
-              <Button
-                {...props}
-                variant="ghost"
-                size="icon"
-                aria-label="Pull outdated"
-                disabled={workspace.busy || workspace.outdated.length === 0}
-                onclick={() => workspace.pullAll()}
-              >
-                {#if workspace.activity === 'pull'}
-                  <Spinner />
-                {:else}
-                  <IconCloudDownload stroke={1.5} />
-                {/if}
-              </Button>
-            {/snippet}
-          </Tooltip.Trigger>
-          <Tooltip.Content>Pull {workspace.outdated.length} outdated</Tooltip.Content>
+        <Tooltip.Trigger tether={toolbarTip} payload="Change folder">
+          {#snippet child({ props })}
+            <Button
+              {...props}
+              variant="ghost"
+              size="icon"
+              aria-label="Change folder"
+              disabled={workspace.busy}
+              onclick={() => workspace.chooseRoot()}
+            >
+              <IconFolderCog stroke={1.5} />
+            </Button>
+          {/snippet}
+        </Tooltip.Trigger>
+        <Tooltip.Trigger tether={toolbarTip} payload="Refresh">
+          {#snippet child({ props })}
+            <Button
+              {...props}
+              variant="ghost"
+              size="icon"
+              aria-label="Refresh"
+              disabled={workspace.busy}
+              onclick={() => workspace.refresh()}
+            >
+              {#if workspace.activity === 'scan' || workspace.activity === 'fetch'}
+                <Spinner />
+              {:else}
+                <IconRefresh stroke={1.5} />
+              {/if}
+            </Button>
+          {/snippet}
+        </Tooltip.Trigger>
+        <Tooltip.Trigger tether={toolbarTip} payload={`Pull ${workspace.outdated.length} outdated`}>
+          {#snippet child({ props })}
+            <Button
+              {...props}
+              variant="ghost"
+              size="icon"
+              aria-label="Pull outdated"
+              disabled={workspace.busy || workspace.outdated.length === 0}
+              onclick={() => workspace.pullAll()}
+            >
+              {#if workspace.activity === 'pull'}
+                <Spinner />
+              {:else}
+                <IconCloudDownload stroke={1.5} />
+              {/if}
+            </Button>
+          {/snippet}
+        </Tooltip.Trigger>
+        <Tooltip.Root tether={toolbarTip}>
+          {#snippet children({ payload })}
+            <Tooltip.Content>{payload}</Tooltip.Content>
+          {/snippet}
         </Tooltip.Root>
       </div>
       <Collapsible.Content>
