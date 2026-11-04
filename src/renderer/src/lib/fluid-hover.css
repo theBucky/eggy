@@ -1,5 +1,27 @@
 @reference '../assets/main.css';
 
+/* The container sets these inline on every pointer move. Inherited, they would restyle every row
+   inside it each time; only the highlight reads them. */
+@property --hover-x {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --hover-y {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --hover-width {
+  syntax: '*';
+  inherits: false;
+}
+
+@property --hover-height {
+  syntax: '*';
+  inherits: false;
+}
+
 @layer components {
   [data-fluid-hover] {
     position: relative;
@@ -7,6 +29,10 @@
 
     &::before {
       @apply rounded-md bg-muted ease-out;
+      --hover-x: inherit;
+      --hover-y: inherit;
+      --hover-width: inherit;
+      --hover-height: inherit;
       content: '';
       position: absolute;
       top: 0;

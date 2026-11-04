@@ -104,6 +104,13 @@
   --scroll-fade-scrollbar: 0px;
 }
 
+/* Stock leaves this gradient inheritable, so each frame of the scroll reveal would restyle everything
+   in the scroller. */
+@property --scroll-fade-block {
+  syntax: '*';
+  inherits: false;
+}
+
 /* Sizes go on each edge because the shared --scroll-fade-size is inherited by the label fades
    inside. The stock reveal grows each fade over 96px of scrolling, which leaves a list that
    overflows by less hard-cut near either end. The mask also covers the scroller's own scrollbar,
