@@ -22,7 +22,7 @@ const handlers: Handlers = {
   },
   scan: (_, root) => git.scan(root),
   fetch: (_, path) => git.fetch(path),
-  pull: (_, path) => git.pull(path)
+  pull: (_, path, command) => git.pull(path, command)
 }
 
 function createWindow(): void {

@@ -1,9 +1,9 @@
-import type { FetchOutcome, PullOutcome, Repo } from '../../../../shared/api'
+import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '../../../../shared/api'
 
 export type Task =
-  | { command: 'fetch' | 'pull'; status: 'running' }
+  | { command: 'fetch' | PullCommand; status: 'running' }
   | ({ command: 'fetch' } & FetchOutcome)
-  | ({ command: 'pull' } & PullOutcome)
+  | ({ command: PullCommand } & PullOutcome)
 
 export type Entry = {
   repo: Repo
@@ -84,17 +84,17 @@ export class Workspace {
     await this.scan()
   }
 
-  async pull(entry: Entry): Promise<void> {
-    entry.task = { command: 'pull', status: 'running' }
+  async pull(entry: Entry, command: PullCommand): Promise<void> {
+    entry.task = { command, status: 'running' }
 
-    const { sync, history, outcome } = await window.api.pull(entry.repo.path)
+    const { sync, history, outcome } = await window.api.pull(entry.repo.path, command)
 
     entry.repo.sync = sync
     entry.repo.history = history
-    entry.task = { command: 'pull', ...outcome }
+    entry.task = { command, ...outcome }
   }
 
   async pullAll(): Promise<void> {
-    await each(this.outdated, (entry) => this.pull(entry))
+    await each(this.outdated, (entry) => this.pull(entry, 'pull'))
   }
 }

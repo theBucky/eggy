@@ -37,6 +37,8 @@ export type Failure = { status: 'failed'; message: string }
 
 export type FetchOutcome = { status: 'fetched' } | Failure
 
+export type PullCommand = 'pull' | 'rebase'
+
 export type PullOutcome = { status: 'current' } | { status: 'updated'; count: number } | Failure
 
 export type FetchResult = {
@@ -54,7 +56,7 @@ export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scan: (root: string) => Promise<Repo[]>
   fetch: (path: string) => Promise<FetchResult>
-  pull: (path: string) => Promise<PullResult>
+  pull: (path: string, command: PullCommand) => Promise<PullResult>
 }
 
 export type Api = Ipc & { home: string }

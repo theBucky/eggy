@@ -1,7 +1,17 @@
 import { execFile, spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-import type { Commit, Failure, FetchResult, History, PullResult, Repo, Sync } from '../shared/api'
+import type {
+  Commit,
+  Failure,
+  FetchResult,
+  History,
+  PullCommand,
+  PullResult,
+  Repo,
+  Sync
+} from '../shared/api'
 
 type GitResult = {
   ok: boolean
@@ -171,19 +181,52 @@ export async function fetch(path: string): Promise<FetchResult> {
   return { sync, outcome: { status: 'fetched' } }
 }
 
-export async function pull(path: string): Promise<PullResult> {
-  const before = (await git(path, ['rev-parse', 'HEAD'])).stdout.trim()
-  const result = await git(path, ['pull', '--ff-only'])
-
-  const [sync, history, added] = await Promise.all([
-    readSync(path),
-    readHistory(path),
-    git(path, ['rev-list', '--count', `${before}..HEAD`])
+export async function pull(path: string, command: PullCommand): Promise<PullResult> {
+  // Git keeps a paused rebase's state in one of these directories, even after switching branches.
+  const { stdout } = await git(path, [
+    'rev-parse',
+    '--path-format=absolute',
+    'HEAD',
+    '--git-path',
+    'rebase-merge',
+    '--git-path',
+    'rebase-apply'
   ])
 
-  if (!result.ok) return { sync, history, outcome: failure(result) }
+  const [before, ...states] = stdout.trim().split('\n')
+  const rebasing = states.some((state) => existsSync(state))
 
-  // A fast-forward only adds commits, so none added means HEAD never moved.
+  // Git's conflict hints explain how to continue a rebase that the abort below undoes.
+  const result = await git(
+    path,
+    command === 'rebase'
+      ? ['-c', 'advice.mergeConflict=false', 'pull', '--rebase', '--autostash']
+      : ['pull', '--ff-only']
+  )
+
+  // A rebase stopped on a conflict detaches HEAD, which hides the repo from scans, so the branch
+  // and any stashed changes go back to how they were. A rebase already underway, such as one paused
+  // in a terminal, isn't this pull's to abort.
+  const aborted =
+    command === 'rebase' && !rebasing && !result.ok && (await git(path, ['rebase', '--abort'])).ok
+
+  const [sync, history, added, unmerged] = await Promise.all([
+    readSync(path),
+    readHistory(path),
+    git(path, ['rev-list', '--count', `${before}..@{upstream}`]),
+    // Git still exits cleanly when the stashed changes conflict on top of the rebased branch.
+    git(path, ['diff', '--name-only', '--diff-filter=U'])
+  ])
+
+  if (!result.ok || unmerged.stdout !== '') {
+    const outcome = failure(result)
+
+    if (aborted) outcome.message += '\n\nRebase aborted, so the branch is unchanged.'
+
+    return { sync, history, outcome }
+  }
+
+  // Counting from the upstream leaves out local commits that a rebase replays under new hashes.
   const count = Number(added.stdout)
 
   if (count === 0) return { sync, history, outcome: { status: 'current' } }

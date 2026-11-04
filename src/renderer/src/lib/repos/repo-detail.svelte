@@ -21,6 +21,8 @@
 
   let showUnpushed = $state(false)
 
+  const diverged = $derived(repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0)
+
   const aheadLabel = $derived(
     `${unpushed.length}${(repo.sync?.ahead ?? 0) > unpushed.length ? '+' : ''} ahead`
   )
@@ -52,8 +54,23 @@
         <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
         <p class="truncate font-mono text-xs text-muted-foreground">{tilde(repo.path)}</p>
       </div>
-      <div class="[-webkit-app-region:no-drag]">
-        <Button size="lg" disabled={workspace.busy} onclick={() => workspace.pull(entry)}>
+      <div class="flex gap-2 [-webkit-app-region:no-drag]">
+        {#if diverged}
+          <Button
+            size="lg"
+            variant="destructive"
+            disabled={workspace.busy}
+            onclick={() => workspace.pull(entry, 'rebase')}
+          >
+            {#if task?.command === 'rebase' && task.status === 'running'}
+              <Spinner data-icon="inline-start" />
+              Rebasing
+            {:else}
+              Rebase and pull
+            {/if}
+          </Button>
+        {/if}
+        <Button size="lg" disabled={workspace.busy} onclick={() => workspace.pull(entry, 'pull')}>
           {#if task?.command === 'pull' && task.status === 'running'}
             <Spinner data-icon="inline-start" />
             Pulling
