@@ -56,7 +56,7 @@
               Repositories
               <IconChevronRight
                 class={cn(
-                  'transition-transform duration-260 ease-out-expo',
+                  'transition-transform duration-collapsible ease-out-expo',
                   groupOpen && 'rotate-90'
                 )}
               />
