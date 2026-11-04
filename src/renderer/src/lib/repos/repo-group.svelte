@@ -123,7 +123,7 @@
           {/snippet}
         </Tooltip.Root>
       </div>
-      <Collapsible.Content>
+      <Collapsible.Content hiddenUntilFound>
         <Sidebar.Menu class="pt-1">
           {#each folders as [dir, entries] (dir)}
             {@const open = expanded.has(dir)}
@@ -154,7 +154,7 @@
                       </Sidebar.MenuButton>
                     {/snippet}
                   </Collapsible.Trigger>
-                  <Collapsible.Content>
+                  <Collapsible.Content hiddenUntilFound>
                     <Sidebar.Menu class="pt-1 pb-3">
                       {#each entries as entry (entry.repo.path)}
                         {@const status = statusOf(entry)}
