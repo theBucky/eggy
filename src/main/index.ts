@@ -32,7 +32,10 @@ const handlers: Handlers = {
   discardUpdate: (_, path) => sparkle.discardUpdate(path)
 }
 
-function createWindow(): void {
+// Set once the app quits, after which its window really closes.
+let quitting = false
+
+function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1150,
     height: 760,
@@ -54,6 +57,15 @@ function createWindow(): void {
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
 
+  // Hiding keeps the renderer, so an update underway still reports its progress and asks before it
+  // force quits.
+  mainWindow.on('close', (event) => {
+    if (quitting) return
+
+    event.preventDefault()
+    mainWindow.hide()
+  })
+
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     shell.openExternal(url)
 
@@ -65,18 +77,18 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(import.meta.dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 app.whenReady().then(() => {
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)
 
-  createWindow()
+  const window = createWindow()
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  app.on('activate', () => window.show())
 })
 
-// macOS apps stay active in the dock after their last window closes;
-// registering a no-op listener stops Electron's default quit.
-app.on('window-all-closed', () => {})
+app.on('before-quit', () => {
+  quitting = true
+})
