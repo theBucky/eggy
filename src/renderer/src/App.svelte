@@ -32,8 +32,8 @@
     <div class="h-8 shrink-0"></div>
 
     <Sidebar.Content class="scroll-fade-y">
-      <RepoGroup {workspace} bind:selected />
       <AppGroup {apps} bind:selected />
+      <RepoGroup {workspace} bind:selected />
     </Sidebar.Content>
   </Sidebar.Root>
 
