@@ -1,4 +1,8 @@
 <script lang="ts">
+  import AppDetail from '$lib/apps/app-detail.svelte'
+  import AppGroup from '$lib/apps/app-group.svelte'
+  import { Apps } from '$lib/apps/apps.svelte'
+  import QuitDialog from '$lib/apps/quit-dialog.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import RepoDetail from '$lib/repos/repo-detail.svelte'
   import RepoGroup from '$lib/repos/repo-group.svelte'
@@ -6,11 +10,17 @@
   import { Workspace } from '$lib/repos/workspace.svelte'
 
   const workspace = new Workspace()
+  const apps = new Apps()
+
+  // Repos and apps never share a path.
   let selected = $state<string>()
 
-  const current = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
+  const repo = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
+  const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
 
   workspace.scan()
+
+  apps.refresh()
 </script>
 
 <!-- Listed first so the no-drag controls below carve themselves out of it. -->
@@ -23,17 +33,24 @@
 
     <Sidebar.Content class="scroll-fade-y">
       <RepoGroup {workspace} bind:selected />
+      <AppGroup {apps} bind:selected />
     </Sidebar.Content>
   </Sidebar.Root>
 
   <Sidebar.Inset>
-    {#if current}
+    {#if repo}
       <!-- Keyed so switching repos starts each scroller at the top with unpushed commits folded. -->
-      {#key current.repo.path}
-        <RepoDetail {workspace} entry={current} />
+      {#key repo.repo.path}
+        <RepoDetail {workspace} entry={repo} />
+      {/key}
+    {:else if app}
+      {#key app.app.path}
+        <AppDetail {apps} entry={app} />
       {/key}
     {:else}
       <RepoOverview {workspace} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>
+
+<QuitDialog {apps} />

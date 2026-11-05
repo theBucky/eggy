@@ -1,0 +1,200 @@
+import { DOMParser, onErrorStopParsing, type Element, type NodeList } from '@xmldom/xmldom'
+import type { Notes, Release } from '../shared/api'
+
+// Where an app looks for updates, and the channels it opts into at runtime.
+export type Feed = {
+  url: string
+  channels: string[]
+}
+
+export type Update = {
+  release: Release
+  // The archive's EdDSA signature, which apps that publish a public key require.
+  signature: string | undefined
+}
+
+const formats = ['html', 'markdown', 'plain-text'] as const
+
+type Kind = 'number' | 'string' | 'period' | 'separator' | 'dash'
+
+function kindOf(part: string): Kind {
+  if (part === '.') return 'period'
+
+  if (part === '-') return 'dash'
+
+  if (/^\p{Nd}/u.test(part)) return 'number'
+
+  if (/^[\s\p{P}]/u.test(part)) return 'separator'
+
+  return 'string'
+}
+
+function separates(kind: Kind): boolean {
+  return kind === 'period' || kind === 'separator'
+}
+
+// Runs of digits or letters form one part and every separator its own. A dash ends the version, so
+// a trailing commit hash never counts.
+function split(version: string): string[] {
+  const parts: string[] = []
+
+  for (const char of version) {
+    const kind = kindOf(char)
+    const last = parts.at(-1)
+
+    if (last !== undefined && kind === 'dash') break
+
+    if (last === undefined || kind !== kindOf(last) || separates(kindOf(last))) parts.push(char)
+    else parts[parts.length - 1] = last + char
+  }
+
+  return parts
+}
+
+function leadingNumbers(parts: string[]): number {
+  const end = parts.findIndex((part) => kindOf(part) !== 'number' && kindOf(part) !== 'period')
+
+  return end === -1 ? parts.length : end
+}
+
+// Zeros fill out the shorter numeric prefix, so 1.0 matches 1.0.0 and 1.0pre1 matches 1.0.0pre1.
+function pad(shorter: string[], longer: string[]): void {
+  for (let index = leadingNumbers(shorter); index < leadingNumbers(longer); index++) {
+    shorter.splice(index, 0, kindOf(longer[index]) === 'period' ? '.' : '0')
+  }
+}
+
+// Ports Sparkle's SUStandardVersionComparator, which decides what counts as newer: a positive result
+// means `a` is newer than `b`.
+export function compare(a: string, b: string): number {
+  const partsA = split(a)
+  const partsB = split(b)
+
+  pad(partsA, partsB)
+  pad(partsB, partsA)
+
+  const shared = Math.min(partsA.length, partsB.length)
+
+  for (let index = 0; index < shared; index++) {
+    const partA = partsA[index]
+    const partB = partsB[index]
+    const kindA = kindOf(partA)
+    const kindB = kindOf(partB)
+
+    if (kindA === kindB || (separates(kindA) && separates(kindB))) {
+      if (kindA === 'number' && Number(partA) !== Number(partB)) {
+        return Number(partA) > Number(partB) ? 1 : -1
+      }
+
+      if (kindA === 'string' && partA !== partB) return partA > partB ? 1 : -1
+    } else if (kindB === 'string') {
+      return 1
+    } else {
+      return kindA === 'number' ? 1 : -1
+    }
+  }
+
+  if (partsA.length === partsB.length) return 0
+
+  // An extra number counts as a newer release, while extra letters mark a prerelease of the shorter.
+  const longer = partsA.length > partsB.length ? partsA : partsB
+  const newerIsLonger = kindOf(longer[shared]) !== 'string'
+
+  return partsA.length > partsB.length === newerIsLonger ? 1 : -1
+}
+
+// Like Sparkle, this matches the `sparkle:` prefix by name, since some feeds bind it to the wrong
+// namespace.
+function sparkleText(item: Element, name: string): string | undefined {
+  return item.getElementsByTagName(`sparkle:${name}`).item(0)?.textContent?.trim() || undefined
+}
+
+function localized(elements: NodeList<Element>): Element | undefined {
+  const translations = [...elements]
+
+  return (
+    translations.find((element) => !element.getAttribute('xml:lang')) ??
+    translations.find((element) => element.getAttribute('xml:lang')?.startsWith('en')) ??
+    translations.at(0)
+  )
+}
+
+function notesOf(item: Element, base: string): Notes | undefined {
+  const description = localized(item.getElementsByTagName('description'))
+  const text = description?.textContent?.trim()
+
+  if (description !== undefined && text) {
+    const format = description.getAttribute('sparkle:format')
+
+    return { format: formats.find((known) => known === format) ?? 'html', text }
+  }
+
+  const url = (
+    localized(item.getElementsByTagName('sparkle:releaseNotesLink')) ??
+    localized(item.getElementsByTagName('sparkle:fullReleaseNotesLink'))
+  )?.textContent?.trim()
+
+  return url ? { format: 'link', url: new URL(url, base).href } : undefined
+}
+
+// Items on a channel only reach apps that opt into it.
+function runsHere(item: Element, { channels }: Feed, system: string): boolean {
+  const channel = sparkleText(item, 'channel')
+  const minimum = sparkleText(item, 'minimumSystemVersion')
+  const maximum = sparkleText(item, 'maximumSystemVersion')
+
+  return (
+    (channel === undefined || channels.includes(channel)) &&
+    (process.arch === 'arm64' || !sparkleText(item, 'hardwareRequirements')?.includes('arm64')) &&
+    (minimum === undefined || compare(minimum, system) <= 0) &&
+    (maximum === undefined || compare(maximum, system) >= 0)
+  )
+}
+
+function parseItem(item: Element, feed: Feed, system: string): Update | undefined {
+  // Delta updates nest their own enclosures one level deeper.
+  const enclosure = [...item.children].find((element) => element.tagName === 'enclosure')
+  const url = enclosure?.getAttribute('url')
+
+  if (!enclosure || !url || !runsHere(item, feed, system)) return undefined
+
+  // Sparkle 2 moved these from the enclosure's attributes to elements of the item.
+  const field = (name: string): string | undefined =>
+    enclosure.getAttribute(`sparkle:${name}`) || sparkleText(item, name)
+
+  const build = field('version')
+
+  if (build === undefined) return undefined
+
+  const date = Date.parse(item.getElementsByTagName('pubDate').item(0)?.textContent ?? '')
+  const size = Number(enclosure.getAttribute('length'))
+
+  return {
+    release: {
+      version: field('shortVersionString') ?? build,
+      build,
+      date: Number.isNaN(date) ? undefined : date,
+      url: new URL(url, feed.url).href,
+      size: size > 0 ? size : undefined,
+      notes: notesOf(item, feed.url)
+    },
+    signature: enclosure.getAttribute('sparkle:edSignature') || undefined
+  }
+}
+
+// Finds the feed's newest release that runs on this Mac, if its build is newer than the installed one.
+export function findUpdate(xml: string, feed: Feed, installed: string): Update | undefined {
+  const document = new DOMParser({ onError: onErrorStopParsing }).parseFromString(xml, 'text/xml')
+  const system = process.getSystemVersion()
+  let newest: Update | undefined
+
+  for (const item of document.getElementsByTagName('item')) {
+    const update = parseItem(item, feed, system)
+
+    if (update && (!newest || compare(update.release.build, newest.release.build) > 0)) {
+      newest = update
+    }
+  }
+
+  return newest && compare(newest.release.build, installed) > 0 ? newest : undefined
+}

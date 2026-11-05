@@ -12,7 +12,15 @@ const api: Api = {
   chooseRoot: invoke('chooseRoot'),
   scan: invoke('scan'),
   fetch: invoke('fetch'),
-  pull: invoke('pull')
+  pull: invoke('pull'),
+  listApps: invoke('listApps'),
+  check: invoke('check'),
+  update: invoke('update'),
+  forceUpdate: invoke('forceUpdate'),
+  discardUpdate: invoke('discardUpdate'),
+  onProgress: (listener) => {
+    ipcRenderer.on('progress', (_, path, progress) => listener(path, progress))
+  }
 }
 
 contextBridge.exposeInMainWorld('api', api)
