@@ -50,11 +50,14 @@ export class Apps {
     })
   }
 
-  async refresh(): Promise<void> {
+  async scan(): Promise<void> {
     this.scanning = true
     this.entries = (await window.api.listApps()).map((app) => ({ app, update: undefined }))
     this.scanning = false
+  }
 
+  async refresh(): Promise<void> {
+    await this.scan()
     await Promise.all(
       this.entries.map(async (entry) => {
         entry.task = { command: 'check', status: 'running' }

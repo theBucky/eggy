@@ -20,7 +20,7 @@
 
   workspace.scan()
 
-  apps.refresh()
+  apps.scan()
 </script>
 
 <!-- Listed first so the no-drag controls below carve themselves out of it. -->
