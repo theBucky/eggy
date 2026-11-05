@@ -1,11 +1,8 @@
-import { execFile } from 'node:child_process'
-import { createPublicKey, verify } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { mkdtemp, open, readdir, readFile, rename, rm, stat } from 'node:fs/promises'
+import { mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
-import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
 import { nativeImage, net, shell } from 'electron'
 import type {
   App,
@@ -15,23 +12,13 @@ import type {
   Progress,
   Release,
   UpdateOutcome
-} from '../shared/api'
-import { findUpdate, type Feed, type Update } from './appcast'
-
-type Source = Feed & {
-  preferences?: Record<string, string>
-}
-
-type Bundle = {
-  path: string
-  id: string
-  name: string
-  version: string
-  build: string
-  executable: string
-  feed: string | undefined
-  key: string | undefined
-}
+} from '../../shared/api'
+import { readBundle, type Bundle } from './bundle'
+import { electronUpdater } from './electron-updater'
+import type { Framework, Update } from './framework'
+import { run } from './run'
+import { sparkle } from './sparkle'
+import { squirrel } from './squirrel'
 
 type Staged = {
   work: string
@@ -39,131 +26,34 @@ type Staged = {
   bundle: Bundle
 }
 
+// electron-updater installs through Squirrel, so its marker is the more specific one.
+const frameworks: Framework[] = [sparkle, electronUpdater, squirrel]
+
 const folders = ['/Applications', join(homedir(), 'Applications')]
 
 const waiting = new Map<string, Staged>()
 
-// Apps that set their feed in code at launch leave it out of Info.plist or name an outdated one there,
-// so these pick it the way the app does.
-const knownFeeds = new Map<string, (bundle: Bundle) => Promise<Source>>([
-  [
-    'com.openai.codex',
-    async () => ({
-      url: 'https://persistent.oaistatic.com/codex-app-prod/appcast.xml',
-      channels: []
-    })
-  ],
-  // OrbStack, whose feed lags a release behind without a rollout bucket.
-  [
-    'dev.kdrag0n.MacVirt',
-    async () => ({
-      url: `https://api-updates.orbstack.dev/${process.arch === 'arm64' ? 'arm64' : 'amd64'}/appcast.xml?bucket=0`,
-      channels: ['stable']
-    })
-  ],
-  // CleanShot X, whose Info.plist feed ends at version 3 since later releases go to licensed copies.
-  [
-    'pl.maketheweb.cleanshotx',
-    async () => ({
-      url: 'https://legit.maketheweb.io/api/v1/appcast',
-      channels: [],
-      preferences: { key: 'activationKey' }
-    })
-  ],
-  // Ghostty, which picks a feed by the update channel its config resolves to. Ghostty's own loader
-  // finds the config files and falls back to the channel of the installed build.
-  [
-    'com.mitchellh.ghostty',
-    async ({ executable }) => {
-      const config = await run(executable, ['+show-config'])
-      const channel = /^auto-update-channel = tip$/m.test(config) ? 'tip' : 'release'
-
-      return { url: `https://${channel}.files.ghostty.org/appcast.xml`, channels: [] }
-    }
-  ]
-])
-
 const iconSize = { width: 96, height: 96 }
-
-function run(file: string, args: string[], input = ''): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const child = execFile(file, args, { maxBuffer: Infinity }, (error, stdout, stderr) => {
-      if (error) reject(new Error(stderr.trim() || error.message))
-      else resolve(stdout)
-    })
-
-    child.stdin?.end(input)
-  })
-}
 
 function failure(cause: unknown): Failure {
   return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
 }
 
-// xml preserves property list dates and data that json cannot represent.
-async function readInfo(path: string): Promise<Map<string, string>> {
-  const xml = await run('plutil', [
-    '-convert',
-    'xml1',
-    '-o',
-    '-',
-    '--',
-    join(path, 'Contents/Info.plist')
-  ])
-
-  const dict = new DOMParser({ onError: onErrorStopParsing })
-    .parseFromString(xml, 'text/xml')
-    .getElementsByTagName('dict')
-    .item(0)
-
-  // Each key element comes right before the element that holds its value.
-  const fields = [...(dict?.children ?? [])]
-  const strings = new Map<string, string>()
-
-  for (let index = 0; index + 1 < fields.length; index += 2) {
-    const value = fields[index + 1]
-
-    if (value.tagName === 'string') {
-      strings.set(fields[index].textContent ?? '', value.textContent ?? '')
-    }
-  }
-
-  return strings
+function frameworkOf(path: string): Framework | undefined {
+  return frameworks.find(({ marker }) => existsSync(join(path, 'Contents', marker)))
 }
 
-async function readBundle(path: string): Promise<Bundle> {
-  const info = await readInfo(path)
-  const id = info.get('CFBundleIdentifier')
-  const build = info.get('CFBundleVersion')
-  const executable = info.get('CFBundleExecutable')
+async function fetchUpdate(bundle: Bundle): Promise<Update | undefined> {
+  const feed = await frameworkOf(bundle.path)?.locate(bundle)
 
-  if (id === undefined || build === undefined || executable === undefined) {
-    throw new Error(`${basename(path)} names no identifier, version, or executable.`)
-  }
+  if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
 
-  return {
-    path,
-    id,
-    name: info.get('CFBundleDisplayName') ?? info.get('CFBundleName') ?? basename(path, '.app'),
-    version: info.get('CFBundleShortVersionString') ?? build,
-    build,
-    executable: join(path, 'Contents/MacOS', executable),
-    feed: info.get('SUFeedURL'),
-    key: info.get('SUPublicEDKey')
-  }
-}
-
-async function locateFeed(bundle: Bundle): Promise<Source | undefined> {
-  const locate = knownFeeds.get(bundle.id)
-
-  if (locate !== undefined) return locate(bundle)
-
-  return bundle.feed === undefined ? undefined : { url: bundle.feed, channels: [] }
+  return feed.check()
 }
 
 async function readApp(path: string): Promise<App | undefined> {
   const bundle = await readBundle(path)
-  const feed = await locateFeed(bundle)
+  const feed = await frameworkOf(bundle.path)?.locate(bundle)
 
   if (feed === undefined) return undefined
 
@@ -182,32 +72,11 @@ export async function listApps(): Promise<App[]> {
 
   const paths = listed
     .flat()
-    .filter(
-      (path) =>
-        path.endsWith('.app') && existsSync(join(path, 'Contents/Frameworks/Sparkle.framework'))
-    )
+    .filter((path) => path.endsWith('.app') && frameworkOf(path) !== undefined)
 
   const apps = await Promise.all(paths.map((path) => readApp(path).catch(() => undefined)))
 
   return apps.filter((app) => app !== undefined).toSorted((a, b) => a.name.localeCompare(b.name))
-}
-
-async function fetchUpdate(bundle: Bundle): Promise<Update | undefined> {
-  const feed = await locateFeed(bundle)
-
-  if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
-
-  const url = new URL(feed.url)
-
-  for (const [parameter, key] of Object.entries(feed.preferences ?? {})) {
-    url.searchParams.set(parameter, (await run('defaults', ['read', bundle.id, key])).trim())
-  }
-
-  const response = await net.fetch(url.href)
-
-  if (!response.ok) throw new Error(`The update feed answered with HTTP ${response.status}.`)
-
-  return findUpdate(await response.text(), feed, bundle.build)
 }
 
 export async function check(path: string): Promise<CheckOutcome> {
@@ -254,21 +123,6 @@ async function download(
     }
   } finally {
     await handle.close()
-  }
-}
-
-function verifySignature(archive: Buffer, signature: string | undefined, key: string): void {
-  if (signature === undefined) {
-    throw new Error('The update is unsigned, but the app expects a signature.')
-  }
-
-  const publicKey = createPublicKey({
-    key: { kty: 'OKP', crv: 'Ed25519', x: Buffer.from(key, 'base64').toString('base64url') },
-    format: 'jwk'
-  })
-
-  if (!verify(null, archive, publicKey, Buffer.from(signature, 'base64'))) {
-    throw new Error("The update's signature doesn't match the app's key.")
   }
 }
 
@@ -384,11 +238,11 @@ async function stage(path: string, report: (progress: Progress) => void): Promis
     await download(update.release, archive, report)
     report({ stage: 'install' })
 
-    if (bundle.key !== undefined) {
-      verifySignature(await readFile(archive), update.signature, bundle.key)
-    }
+    const replacement = await unpack(archive, work, bundle.id)
 
-    return { work, replacement: await unpack(archive, work, bundle.id), bundle }
+    await update.verify(archive, replacement)
+
+    return { work, replacement, bundle }
   } catch (cause) {
     await rm(work, { recursive: true, force: true })
     throw cause

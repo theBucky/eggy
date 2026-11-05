@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
 import type { Ipc } from '../shared/api'
 import * as git from './git'
-import * as sparkle from './sparkle'
+import * as apps from './apps/updater'
 
 type Handlers = {
   [Channel in keyof Ipc]: (
@@ -24,12 +24,12 @@ const handlers: Handlers = {
   scan: (_, root) => git.scan(root),
   fetch: (_, path) => git.fetch(path),
   pull: (_, path, command) => git.pull(path, command),
-  listApps: () => sparkle.listApps(),
-  check: (_, path) => sparkle.check(path),
+  listApps: () => apps.listApps(),
+  check: (_, path) => apps.check(path),
   update: (event, path) =>
-    sparkle.update(path, (progress) => event.sender.send('progress', path, progress)),
-  forceUpdate: (_, path) => sparkle.forceUpdate(path),
-  discardUpdate: (_, path) => sparkle.discardUpdate(path)
+    apps.update(path, (progress) => event.sender.send('progress', path, progress)),
+  forceUpdate: (_, path) => apps.forceUpdate(path),
+  discardUpdate: (_, path) => apps.discardUpdate(path)
 }
 
 let quitting = false

@@ -1,12 +1,12 @@
 import { DOMParser, onErrorStopParsing, type Element, type NodeList } from '@xmldom/xmldom'
-import type { Notes, Release } from '../shared/api'
+import type { Notes, Release } from '../../shared/api'
 
-export type Feed = {
+export type Appcast = {
   url: string
   channels: string[]
 }
 
-export type Update = {
+export type Item = {
   release: Release
   signature: string | undefined
 }
@@ -131,7 +131,7 @@ function notesOf(item: Element, base: string): Notes | undefined {
   return url ? { format: 'link', url: new URL(url, base).href } : undefined
 }
 
-function runsHere(item: Element, { channels }: Feed, system: string): boolean {
+function runsHere(item: Element, { channels }: Appcast, system: string): boolean {
   const channel = sparkleText(item, 'channel')
   const minimum = sparkleText(item, 'minimumSystemVersion')
   const maximum = sparkleText(item, 'maximumSystemVersion')
@@ -144,12 +144,12 @@ function runsHere(item: Element, { channels }: Feed, system: string): boolean {
   )
 }
 
-function parseItem(item: Element, feed: Feed, system: string): Update | undefined {
+function parseItem(item: Element, appcast: Appcast, system: string): Item | undefined {
   // Delta updates nest their own enclosures one level deeper.
   const enclosure = [...item.children].find((element) => element.tagName === 'enclosure')
   const url = enclosure?.getAttribute('url')
 
-  if (!enclosure || !url || !runsHere(item, feed, system)) return undefined
+  if (!enclosure || !url || !runsHere(item, appcast, system)) return undefined
 
   // Sparkle 2 moved these from the enclosure's attributes to elements of the item.
   const field = (name: string): string | undefined =>
@@ -167,24 +167,24 @@ function parseItem(item: Element, feed: Feed, system: string): Update | undefine
       version: field('shortVersionString') ?? build,
       build,
       date: Number.isNaN(date) ? undefined : date,
-      url: new URL(url, feed.url).href,
+      url: new URL(url, appcast.url).href,
       size: size > 0 ? size : undefined,
-      notes: notesOf(item, feed.url)
+      notes: notesOf(item, appcast.url)
     },
     signature: enclosure.getAttribute('sparkle:edSignature') || undefined
   }
 }
 
-export function findUpdate(xml: string, feed: Feed, installed: string): Update | undefined {
+export function findItem(xml: string, appcast: Appcast, installed: string): Item | undefined {
   const document = new DOMParser({ onError: onErrorStopParsing }).parseFromString(xml, 'text/xml')
   const system = process.getSystemVersion()
-  let newest: Update | undefined
+  let newest: Item | undefined
 
   for (const item of document.getElementsByTagName('item')) {
-    const update = parseItem(item, feed, system)
+    const parsed = parseItem(item, appcast, system)
 
-    if (update && (!newest || compare(update.release.build, newest.release.build) > 0)) {
-      newest = update
+    if (parsed && (!newest || compare(parsed.release.build, newest.release.build) > 0)) {
+      newest = parsed
     }
   }
 
