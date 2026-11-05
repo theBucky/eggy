@@ -20,7 +20,7 @@
   // One tooltip moves between the toolbar buttons instead of each mounting its own.
   const tether = TooltipPrimitive.createTether<string>()
 
-  let open = $state(true)
+  let open = $state(false)
 </script>
 
 <Collapsible.Root bind:open>
