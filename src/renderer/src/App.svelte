@@ -12,7 +12,6 @@
   const workspace = new Workspace()
   const apps = new Apps()
 
-  // Repos and apps never share a path.
   let selected = $state<string>()
 
   const repo = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
@@ -28,7 +27,6 @@
 
 <Sidebar.Provider style="--sidebar-width: 18rem">
   <Sidebar.Root variant="inset">
-    <!-- Keeps the sidebar content clear of the traffic lights. -->
     <div class="h-8 shrink-0"></div>
 
     <Sidebar.Content class="scroll-fade-y">
@@ -39,7 +37,6 @@
 
   <Sidebar.Inset>
     {#if repo}
-      <!-- Keyed so switching repos starts each scroller at the top with unpushed commits folded. -->
       {#key repo.repo.path}
         <RepoDetail {workspace} entry={repo} />
       {/key}

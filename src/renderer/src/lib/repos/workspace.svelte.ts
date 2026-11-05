@@ -14,7 +14,6 @@ export type Entry = {
 export function statusOf({ repo, task }: Entry): Status {
   if (task?.status === 'running' || task?.status === 'failed') return task.status
 
-  // Local upstream refs already show how far behind the last fetch left the branch.
   if ((repo.sync?.behind ?? 0) > 0) return 'outdated'
 
   if (task === undefined) return 'unknown'
@@ -22,7 +21,6 @@ export function statusOf({ repo, task }: Entry): Status {
   return task.status === 'updated' ? 'updated' : 'current'
 }
 
-// Bounded so fetching or pulling everything doesn't open dozens of connections to the same host at once.
 const CONCURRENCY = 8
 
 // Linked worktrees share refs, so their git commands run one after another to avoid lock errors.
@@ -42,8 +40,6 @@ export class Workspace {
   root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
   entries = $state<Entry[]>([])
   scanning = $state(false)
-  // Callers start git work only while idle, so two commands never race on one repo's locks and
-  // any running task tells which batch is underway.
   activity = $derived(
     this.scanning
       ? 'scan'

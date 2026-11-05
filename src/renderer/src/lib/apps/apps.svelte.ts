@@ -33,7 +33,6 @@ export class Apps {
   entries = $state<Entry[]>([])
   scanning = $state(false)
   prompt = $state<Prompt>({ open: false, quitting: [] })
-  // Callers start work only while idle, so any running task tells which batch is underway.
   activity = $derived(
     this.scanning
       ? 'scan'
@@ -74,7 +73,6 @@ export class Apps {
     )
   }
 
-  // Apps that turn out to be running wait on one prompt once every download in the batch is done.
   async update(entries: Entry[]): Promise<void> {
     const quitting: Entry[] = []
 

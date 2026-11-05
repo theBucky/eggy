@@ -1,7 +1,6 @@
 import { DOMParser, onErrorStopParsing, type Element, type NodeList } from '@xmldom/xmldom'
 import type { Notes, Release } from '../shared/api'
 
-// Where an app looks for updates, and the channels it opts into at runtime.
 export type Feed = {
   url: string
   channels: string[]
@@ -9,7 +8,6 @@ export type Feed = {
 
 export type Update = {
   release: Release
-  // The archive's EdDSA signature, which apps that publish a public key require.
   signature: string | undefined
 }
 
@@ -33,8 +31,7 @@ function separates(kind: Kind): boolean {
   return kind === 'period' || kind === 'separator'
 }
 
-// Runs of digits or letters form one part and every separator its own. A dash ends the version, so
-// a trailing commit hash never counts.
+// a dash ends the version so a trailing commit hash never counts.
 function split(version: string): string[] {
   const parts: string[] = []
 
@@ -57,15 +54,13 @@ function leadingNumbers(parts: string[]): number {
   return end === -1 ? parts.length : end
 }
 
-// Zeros fill out the shorter numeric prefix, so 1.0 matches 1.0.0 and 1.0pre1 matches 1.0.0pre1.
 function pad(shorter: string[], longer: string[]): void {
   for (let index = leadingNumbers(shorter); index < leadingNumbers(longer); index++) {
     shorter.splice(index, 0, kindOf(longer[index]) === 'period' ? '.' : '0')
   }
 }
 
-// Ports Sparkle's SUStandardVersionComparator, which decides what counts as newer: a positive result
-// means `a` is newer than `b`.
+// follows sparkle's SUStandardVersionComparator rather than semver.
 export function compare(a: string, b: string): number {
   const partsA = split(a)
   const partsB = split(b)
@@ -96,7 +91,6 @@ export function compare(a: string, b: string): number {
 
   if (partsA.length === partsB.length) return 0
 
-  // An extra number counts as a newer release, while extra letters mark a prerelease of the shorter.
   const longer = partsA.length > partsB.length ? partsA : partsB
   const newerIsLonger = kindOf(longer[shared]) !== 'string'
 
@@ -137,7 +131,6 @@ function notesOf(item: Element, base: string): Notes | undefined {
   return url ? { format: 'link', url: new URL(url, base).href } : undefined
 }
 
-// Items on a channel only reach apps that opt into it.
 function runsHere(item: Element, { channels }: Feed, system: string): boolean {
   const channel = sparkleText(item, 'channel')
   const minimum = sparkleText(item, 'minimumSystemVersion')
@@ -182,7 +175,6 @@ function parseItem(item: Element, feed: Feed, system: string): Update | undefine
   }
 }
 
-// Finds the feed's newest release that runs on this Mac, if its build is newer than the installed one.
 export function findUpdate(xml: string, feed: Feed, installed: string): Update | undefined {
   const document = new DOMParser({ onError: onErrorStopParsing }).parseFromString(xml, 'text/xml')
   const system = process.getSystemVersion()

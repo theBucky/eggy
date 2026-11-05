@@ -32,7 +32,6 @@ const handlers: Handlers = {
   discardUpdate: (_, path) => sparkle.discardUpdate(path)
 }
 
-// Set once the app quits, after which its window really closes.
 let quitting = false
 
 function createWindow(): BrowserWindow {
@@ -66,7 +65,6 @@ function createWindow(): BrowserWindow {
     mainWindow.hide()
   })
 
-  // Release notes come from third-party feeds, so only web links leave the app.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (['http:', 'https:'].includes(new URL(url).protocol)) shell.openExternal(url)
 

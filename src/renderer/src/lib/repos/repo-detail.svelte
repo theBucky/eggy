@@ -121,7 +121,6 @@
             </Button>
           {/if}
         </div>
-        <!-- Bleeds into the page padding so the scrollbar and focus rings stay off the rows. -->
         <div class="scroll-fade-y -mx-scrollbar my-2 min-h-0 overflow-y-auto px-scrollbar py-1">
           <Item.Group>
             {#if showUnpushed}
@@ -148,9 +147,7 @@
     <Item.Root size="xs">
       {#snippet child({ props })}
         <svelte:element this={link ? 'a' : 'div'} {...props} {...link}>
-          <!-- The title's own clamp loses to its flex display and the description allows two
-               lines, so each line clamps itself. Wrapping anywhere keeps a long word from
-               widening the row past the panel. -->
+          <!-- the title's flex display defeats clamping, so the inner spans clamp instead. -->
           <Item.Content>
             <Item.Title>
               <Badge variant="secondary">

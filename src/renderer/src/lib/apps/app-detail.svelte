@@ -115,7 +115,6 @@
     {#if update?.notes}
       <section class="mt-8 flex min-h-0 max-w-160 flex-col">
         <h2 class="text-muted-foreground">Release notes</h2>
-        <!-- Bleeds into the page padding so the scrollbar and focus rings stay off the notes. -->
         <div class="scroll-fade-y -mx-scrollbar my-2 min-h-0 overflow-y-auto px-scrollbar py-1">
           <ReleaseNotes notes={update.notes} />
         </div>

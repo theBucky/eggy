@@ -71,7 +71,6 @@ function parseLog({ ok, stdout }: GitResult): Commit[] {
     })
 }
 
-// The list folds unpushed commits away, so pushed ones get their own ten to keep the list full.
 async function readHistory(path: string): Promise<History> {
   const [unpushed, bases] = await Promise.all([
     git(path, [...log, '@{upstream}..HEAD']),
@@ -88,8 +87,6 @@ async function readHistory(path: string): Promise<History> {
   return { unpushed: parseLog(unpushed), pushed: parseLog(pushed) }
 }
 
-// Forges serve a repository's pages at its clone URL without `.git`, and SSH remotes, including
-// git's `user@host:path` shorthand, map to the same host over HTTPS.
 function commitUrlOf(remote: string): string | undefined {
   const scp = /^(?:[^@/]+@)?([^/:]+):(?!\/\/)(.+)$/.exec(remote)
   const url = URL.parse(scp ? `ssh://${scp[1]}/${scp[2]}` : remote)
@@ -117,9 +114,7 @@ function commitUrlOf(remote: string): string | undefined {
 }
 
 async function readRepo(path: string): Promise<Repo | undefined> {
-  // Config names the upstream even while its ref is missing locally, where `@{upstream}` fails; the
-  // fetch then restores the ref or reports it gone. Listing every branch finds the checked-out one
-  // by its star without first asking for its name, and a detached HEAD stars none.
+  // upstream config survives a missing local ref, where `@{upstream}` fails.
   const [commonDir, heads] = await Promise.all([
     git(path, ['rev-parse', '--path-format=absolute', '--git-common-dir']),
     git(path, [
@@ -147,7 +142,6 @@ async function readRepo(path: string): Promise<Repo | undefined> {
   return { path, gitDir, branch, upstream, remote, commitUrl: commitUrlOf(remote), sync, history }
 }
 
-// A repo owns its subtree, so clones kept inside a project (such as `refs/`) stay out.
 export async function scan(dir: string): Promise<Repo[]> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
 

@@ -4,9 +4,7 @@ import './fluid-hover.css'
 
 type Point = { x: number; y: number }
 
-// How far past its edge an item still claims the pointer. Wider than half of any gap between
-// items (16px between a folder's last repo and the next folder), so crossing one hands the
-// highlight over instead of putting it out.
+// reach must exceed half the gap between rows to keep the highlight on while crossing.
 const REACH = 12
 
 function distance(point: Point, box: DOMRect): number {
@@ -16,13 +14,6 @@ function distance(point: Point, box: DOMRect): number {
   return Math.hypot(dx, dy)
 }
 
-/**
- * Draws one hover highlight in the container and places it on the item matching `selector`
- * nearest the pointer, so the highlight glides from item to item. A click in the gap around the
- * lit item reaches it, since what is lit is what a click hits. The highlight is painted beneath the
- * items, so an item with its own fill, such as a selected row, needs an opaque color to hide the
- * highlight.
- */
 export function fluidHover(selector: string): Attachment<HTMLElement> {
   return (container) => {
     let pointer: Point | undefined
@@ -49,8 +40,6 @@ export function fluidHover(selector: string): Attachment<HTMLElement> {
         }
       }
 
-      // An item that takes no click, such as an unpushed commit, lights nothing rather than its
-      // neighbor.
       return nearest?.matches('a[href], button:enabled') ? nearest : undefined
     }
 

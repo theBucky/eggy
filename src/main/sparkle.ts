@@ -19,8 +19,6 @@ import type {
 import { findUpdate, type Feed, type Update } from './appcast'
 
 type Source = Feed & {
-  // Query parameters filled from the app's own preferences per request, which keeps secrets such as a
-  // license key out of the renderer.
   preferences?: Record<string, string>
 }
 
@@ -31,15 +29,11 @@ type Bundle = {
   version: string
   build: string
   executable: string
-  // The feed that Info.plist names.
   feed: string | undefined
-  // The base64 Ed25519 key that signs the app's updates.
   key: string | undefined
 }
 
-// A downloaded update, unpacked and ready to replace its app.
 type Staged = {
-  // The temporary directory that holds the download and the replacement.
   work: string
   replacement: string
   bundle: Bundle
@@ -47,13 +41,11 @@ type Staged = {
 
 const folders = ['/Applications', join(homedir(), 'Applications')]
 
-// Updates of running apps, by app path, until the user allows the force quit or drops them.
 const waiting = new Map<string, Staged>()
 
 // Apps that set their feed in code at launch leave it out of Info.plist or name an outdated one there,
 // so these pick it the way the app does.
 const knownFeeds = new Map<string, (bundle: Bundle) => Promise<Source>>([
-  // ChatGPT
   [
     'com.openai.codex',
     async () => ({
@@ -91,7 +83,6 @@ const knownFeeds = new Map<string, (bundle: Bundle) => Promise<Source>>([
   ]
 ])
 
-// Twice the header's 48px, for Retina displays.
 const iconSize = { width: 96, height: 96 }
 
 function run(file: string, args: string[], input = ''): Promise<string> {
@@ -109,8 +100,7 @@ function failure(cause: unknown): Failure {
   return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
 }
 
-// XML, unlike JSON, also holds the dates and data that some property lists carry. Only the top-level
-// strings matter here.
+// xml preserves property list dates and data that json cannot represent.
 async function readInfo(path: string): Promise<Map<string, string>> {
   const xml = await run('plutil', [
     '-convert',
@@ -197,7 +187,6 @@ export async function listApps(): Promise<App[]> {
         path.endsWith('.app') && existsSync(join(path, 'Contents/Frameworks/Sparkle.framework'))
     )
 
-  // An app that can't be read can't be updated either, so it stays off the list.
   const apps = await Promise.all(paths.map((path) => readApp(path).catch(() => undefined)))
 
   return apps.filter((app) => app !== undefined).toSorted((a, b) => a.name.localeCompare(b.name))
@@ -256,7 +245,6 @@ async function download(
 
       if (total === undefined) continue
 
-      // Reporting whole percents keeps a fast download from flooding the renderer.
       const percent = Math.min(Math.floor((received / total) * 100), 100)
 
       if (percent > reported) {
@@ -284,7 +272,6 @@ function verifySignature(archive: Buffer, signature: string | undefined, key: st
   }
 }
 
-// Matching the bundle identifier keeps a stray app in the archive from replacing this one.
 async function findBundle(dir: string, id: string): Promise<string> {
   for (const name of await readdir(dir)) {
     const path = join(dir, name)
@@ -340,8 +327,7 @@ async function unpack(archive: string, work: string, id: string): Promise<string
   throw new Error(`Updates packaged as ${type || 'files without an extension'} aren't supported.`)
 }
 
-// Counting only the main executable leaves alone the other programs that run a tool shipped inside
-// the bundle, as the Codex CLI does with ChatGPT's.
+// bundles can also ship cli tools whose processes must stay running.
 async function pidsOf({ executable }: Bundle): Promise<number[]> {
   const lines = (await run('ps', ['-axo', 'pid=,comm='])).split('\n')
 
@@ -415,8 +401,7 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   try {
     await forceQuit(bundle)
 
-    // Trashing keeps the old version recoverable, and moving a bundle whole needs no App
-    // Management access, unlike deleting the files inside it.
+    // moving a whole bundle avoids the app management access needed to delete files inside.
     await shell.trashItem(path)
     await rename(replacement, path)
 
@@ -430,8 +415,6 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   }
 }
 
-// Checking for the app's processes only once the replacement is ready leaves no time for the app
-// to start between the check and the force quit.
 export async function update(
   path: string,
   report: (progress: Progress) => void

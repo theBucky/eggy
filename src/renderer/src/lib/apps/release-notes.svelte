@@ -2,12 +2,10 @@
   import DOMPurify from 'dompurify'
   import { marked } from 'marked'
 
-  // Notes link out of the app instead of navigating its window away.
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'A') node.setAttribute('target', '_blank')
   })
 
-  // Feeds write their notes for a web view, so styles, scripts, and media all stay out of the app.
   function render(format: 'html' | 'markdown', text: string): string {
     return DOMPurify.sanitize(format === 'markdown' ? marked.parse(text, { async: false }) : text, {
       ALLOWED_TAGS: [
