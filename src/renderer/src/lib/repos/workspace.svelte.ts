@@ -1,3 +1,4 @@
+import type { Status } from '$lib/components/status-dot.svelte'
 import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '../../../../shared/api'
 
 export type Task =
@@ -9,8 +10,6 @@ export type Entry = {
   repo: Repo
   task?: Task
 }
-
-export type Status = 'unknown' | 'running' | 'failed' | 'outdated' | 'updated' | 'current'
 
 export function statusOf({ repo, task }: Entry): Status {
   if (task?.status === 'running' || task?.status === 'failed') return task.status

@@ -1,8 +1,7 @@
 <script lang="ts">
-  import IconAlertCircle from '@tabler/icons-svelte/icons/alert-circle'
   import IconChevronDown from '@tabler/icons-svelte/icons/chevron-down'
   import IconChevronUp from '@tabler/icons-svelte/icons/chevron-up'
-  import * as Alert from '$lib/components/ui/alert'
+  import FailureAlert from '$lib/components/failure-alert.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
@@ -95,13 +94,10 @@
 
     {#if task?.status === 'failed'}
       <div class="mt-8">
-        <Alert.Root variant="destructive">
-          <IconAlertCircle />
-          <Alert.Title>{task.command === 'fetch' ? 'Fetch failed' : 'Pull failed'}</Alert.Title>
-          <Alert.Description>
-            <pre class="font-mono wrap-anywhere whitespace-pre-wrap">{task.message}</pre>
-          </Alert.Description>
-        </Alert.Root>
+        <FailureAlert
+          title={task.command === 'fetch' ? 'Fetch failed' : 'Pull failed'}
+          message={task.message}
+        />
       </div>
     {/if}
 
