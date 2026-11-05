@@ -1,15 +1,22 @@
 import type { Status } from '$lib/components/status-dot.svelte'
-import type { App, Failure, InstallOutcome, Progress, Release } from '../../../../shared/api'
+import type {
+  App,
+  CheckOutcome,
+  Failure,
+  InstallOutcome,
+  Progress,
+  Release
+} from '../../../../shared/api'
 
 export type Task =
-  | { command: 'check'; status: 'running' | 'checked' }
-  | { command: 'update'; status: 'running'; progress: Progress }
+  | { command: 'check'; status: 'running' }
+  | ({ command: 'check' } & CheckOutcome)
+  | { command: 'update'; status: 'running'; update: Release; progress: Progress }
+  | ({ command: 'update'; update: Release } & Failure)
   | { command: 'update'; status: 'updated' }
-  | ({ command: 'check' | 'update' } & Failure)
 
 export type Entry = {
   app: App
-  update: Release | undefined
   task?: Task
 }
 
@@ -19,14 +26,16 @@ type Prompt = {
   quitting: Entry[]
 }
 
-export function statusOf({ update, task }: Entry): Status {
-  if (task?.status === 'running' || task?.status === 'failed') return task.status
+export function releaseOf({ task }: Entry): Release | undefined {
+  return task !== undefined && 'update' in task ? task.update : undefined
+}
 
-  if (update !== undefined) return 'outdated'
-
+export function statusOf({ task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
-  return task.status === 'updated' ? 'updated' : 'current'
+  if (task.status === 'checked') return task.update === undefined ? 'current' : 'outdated'
+
+  return task.status
 }
 
 export class Apps {
@@ -51,7 +60,7 @@ export class Apps {
 
   async scan(): Promise<void> {
     this.scanning = true
-    this.entries = (await window.api.listApps()).map((app) => ({ app, update: undefined }))
+    this.entries = (await window.api.listApps()).map((app) => ({ app }))
     this.scanning = false
   }
 
@@ -61,14 +70,7 @@ export class Apps {
       this.entries.map(async (entry) => {
         entry.task = { command: 'check', status: 'running' }
 
-        const outcome = await window.api.check(entry.app.path)
-
-        if (outcome.status === 'checked') {
-          entry.update = outcome.update
-          entry.task = { command: 'check', status: 'checked' }
-        } else {
-          entry.task = { command: 'check', ...outcome }
-        }
+        entry.task = { command: 'check', ...(await window.api.check(entry.app.path)) }
       })
     )
   }
@@ -81,6 +83,7 @@ export class Apps {
         entry.task = {
           command: 'update',
           status: 'running',
+          update: releaseOf(entry)!,
           progress: { stage: 'download', percent: 0 }
         }
 
@@ -110,7 +113,7 @@ export class Apps {
     await Promise.all(
       this.prompt.quitting.map(async (entry) => {
         await window.api.discardUpdate(entry.app.path)
-        entry.task = undefined
+        entry.task = { command: 'check', status: 'checked', update: releaseOf(entry) }
       })
     )
   }
@@ -119,10 +122,9 @@ export class Apps {
     if (outcome.status === 'updated') {
       entry.app.version = outcome.version
       entry.app.build = outcome.build
-      entry.update = undefined
       entry.task = { command: 'update', status: 'updated' }
     } else {
-      entry.task = { command: 'update', ...outcome }
+      entry.task = { command: 'update', update: releaseOf(entry)!, ...outcome }
     }
   }
 }

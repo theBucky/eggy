@@ -3,7 +3,7 @@
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import { Spinner } from '$lib/components/ui/spinner'
-  import type { Apps, Entry } from '$lib/apps/apps.svelte'
+  import { releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
   import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/time'
@@ -12,7 +12,8 @@
 
   let { apps, entry }: { apps: Apps; entry: Entry } = $props()
 
-  const { app, update, task } = $derived(entry)
+  const { app, task } = $derived(entry)
+  const update = $derived(releaseOf(entry))
 
   const progress = $derived(
     task?.command === 'update' && task.status === 'running' ? task.progress : undefined
