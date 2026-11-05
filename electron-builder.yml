@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.revolt.apptodate
 productName: app
 directories:
   buildResources: build
@@ -6,9 +6,11 @@ files:
   - out/**
 mac:
   # self-signed local identity for personal use; no team id, so hardened runtime
-  # library validation would reject the electron framework
+  # library validation would reject the electron framework, and apple's timestamp
+  # server adds a network round trip that only matters for distribution
   identity: Local Development Code Signing
   hardenedRuntime: false
+  timestamp: none
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
