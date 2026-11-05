@@ -66,8 +66,9 @@ function createWindow(): BrowserWindow {
     mainWindow.hide()
   })
 
+  // Release notes come from third-party feeds, so only web links leave the app.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url)
+    if (['http:', 'https:'].includes(new URL(url).protocol)) shell.openExternal(url)
 
     return { action: 'deny' }
   })
