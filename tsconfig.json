@@ -13,7 +13,8 @@
     "noUnusedParameters": true,
     "paths": {
       "$lib": ["./src/renderer/src/lib"],
-      "$lib/*": ["./src/renderer/src/lib/*"]
+      "$lib/*": ["./src/renderer/src/lib/*"],
+      "$shared/*": ["./src/shared/*"]
     }
   }
 }

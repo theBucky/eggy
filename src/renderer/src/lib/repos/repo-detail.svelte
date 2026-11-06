@@ -10,7 +10,7 @@
   import { ago } from '$lib/time'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
   import type { Entry, Workspace } from '$lib/repos/workspace.svelte'
-  import type { Commit } from '../../../../shared/api'
+  import type { Commit } from '$shared/api'
 
   type SyncBadge = { label: string; variant: BadgeVariant }
 

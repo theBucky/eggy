@@ -9,7 +9,8 @@ export default defineConfig({
   renderer: {
     resolve: {
       alias: {
-        $lib: resolve(import.meta.dirname, 'src/renderer/src/lib')
+        $lib: resolve(import.meta.dirname, 'src/renderer/src/lib'),
+        $shared: resolve(import.meta.dirname, 'src/shared')
       }
     },
     plugins: [svelte(), tailwindcss()],

@@ -12,7 +12,7 @@
   import { DIFF_THEME, highlighter } from '$lib/repos/highlighter'
   import FileHeader from '$lib/repos/file-header.svelte'
   import { ago } from '$lib/time'
-  import type { Commit } from '../../../../shared/api'
+  import type { Commit } from '$shared/api'
 
   type Detail = { commit: Commit; url: string | undefined; body: string; items: CodeViewDiffItem[] }
 
