@@ -7,3 +7,7 @@ export function tilde(path: string): string {
 export function nameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1)
 }
+
+export function dirOf(path: string): string {
+  return path.slice(0, path.lastIndexOf('/'))
+}

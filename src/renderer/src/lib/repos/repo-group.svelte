@@ -10,7 +10,7 @@
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
-  import { nameOf, tilde } from '$lib/paths'
+  import { dirOf, nameOf } from '$lib/paths'
   import { statusOf, type Workspace } from '$lib/repos/workspace.svelte'
 
   let {
@@ -24,7 +24,7 @@
     [
       ...Map.groupBy(
         workspace.entries.toSorted((a, b) => a.repo.path.localeCompare(b.repo.path)),
-        (entry) => entry.repo.path.slice(0, entry.repo.path.lastIndexOf('/'))
+        (entry) => dirOf(entry.repo.path)
       )
     ].toSorted(([a], [b]) => a.localeCompare(b))
   )
@@ -72,14 +72,10 @@
                   {:else}
                     <IconFolder stroke={1.5} class="text-muted-foreground" />
                   {/if}
-                  <span class="flex-1 truncate-fade">
-                    {dir.startsWith(`${workspace.root}/`)
-                      ? dir.slice(workspace.root.length + 1)
-                      : tilde(dir)}
-                  </span>
+                  <span class="flex-1 truncate-fade">{workspace.relative(dir)}</span>
                   {#if !open}
-                    {@const outdated = entries.filter(
-                      (entry) => statusOf(entry) === 'outdated'
+                    {@const outdated = entries.filter((entry) =>
+                      workspace.outdated.includes(entry)
                     ).length}
                     {#if outdated > 0}
                       <span class="text-xs text-muted-foreground">{outdated} outdated</span>

@@ -1,4 +1,5 @@
 import type { Status } from '$lib/components/status-dot.svelte'
+import { tilde } from '$lib/paths'
 import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '$shared/api'
 
 type Task =
@@ -19,6 +20,10 @@ export function statusOf({ repo, task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
   return task.status === 'updated' ? 'updated' : 'current'
+}
+
+export function diverged({ repo }: Entry): boolean {
+  return repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0
 }
 
 const CONCURRENCY = 8
@@ -46,7 +51,12 @@ export class Workspace {
       : this.entries.find(({ task }) => task?.status === 'running')?.task?.command
   )
   busy = $derived(this.activity !== undefined)
-  outdated = $derived(this.entries.filter((entry) => statusOf(entry) === 'outdated'))
+  // Counts a repo through its pull and after a failed one, so the tally holds steady.
+  outdated = $derived(this.entries.filter(({ repo }) => (repo.sync?.behind ?? 0) > 0))
+
+  relative(dir: string): string {
+    return dir.startsWith(`${this.root}/`) ? dir.slice(this.root.length + 1) : tilde(dir)
+  }
 
   async scan(): Promise<void> {
     this.scanning = true

@@ -10,7 +10,7 @@
   import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/time'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
-  import type { Entry, Workspace } from '$lib/repos/workspace.svelte'
+  import { diverged, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
   import type { Commit } from '$shared/api'
 
   type SyncBadge = { label: string; variant: BadgeVariant }
@@ -22,8 +22,6 @@
 
   let showUnpushed = $state(false)
   let selected = $state<Commit>()
-
-  const diverged = $derived(repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0)
 
   const aheadLabel = $derived(
     `${unpushed.length}${(repo.sync?.ahead ?? 0) > unpushed.length ? '+' : ''} ahead`
@@ -57,7 +55,7 @@
         <p class="truncate font-mono text-xs text-muted-foreground">{tilde(repo.path)}</p>
       </div>
       <div class="flex gap-2 [-webkit-app-region:no-drag]">
-        {#if diverged}
+        {#if diverged(entry)}
           <Button
             size="lg"
             variant="destructive"
