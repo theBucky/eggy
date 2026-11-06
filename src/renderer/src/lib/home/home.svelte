@@ -291,7 +291,7 @@
       </div>
     </Table.Cell>
     <Table.Cell>
-      {#if behind(entry)}
+      {#if behind(entry) || runningPull(entry)}
         <div class="text-right">
           <PullButton
             {workspace}
