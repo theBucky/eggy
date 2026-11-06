@@ -6,7 +6,7 @@ export type Appcast = {
   channels: string[]
 }
 
-export type Item = {
+type Item = {
   release: Release
   signature: string | undefined
 }
@@ -61,7 +61,7 @@ function pad(shorter: string[], longer: string[]): void {
 }
 
 // follows sparkle's SUStandardVersionComparator rather than semver.
-export function compare(a: string, b: string): number {
+function compare(a: string, b: string): number {
   const partsA = split(a)
   const partsB = split(b)
 

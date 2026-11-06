@@ -1,7 +1,7 @@
 import type { Status } from '$lib/components/status-dot.svelte'
 import type { App, CheckOutcome, Failure, InstallOutcome, Progress, Release } from '$shared/api'
 
-export type Task =
+type Task =
   | { command: 'check'; status: 'running' }
   | ({ command: 'check' } & CheckOutcome)
   | { command: 'update'; status: 'running'; update: Release; progress: Progress }
