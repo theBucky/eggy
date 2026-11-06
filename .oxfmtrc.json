@@ -8,6 +8,7 @@
   "svelte": true,
   "ignorePatterns": [
     "**/*.md",
+    "build/icon.icon/**",
     "src/renderer/src/lib/components/ui/**",
     "tools/oxlint/anti-slop/**"
   ]
