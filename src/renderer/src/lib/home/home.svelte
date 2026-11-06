@@ -48,13 +48,6 @@
     )
   )
 
-  const failed = $derived(
-    [...apps.entries, ...workspace.entries].some(
-      ({ task }) =>
-        task?.status === 'failed' && (task.command === 'check' || task.command === 'fetch')
-    )
-  )
-
   const headline = $derived.by(() => {
     if (scanning) return 'Scanning'
 
@@ -62,7 +55,7 @@
 
     if (pending > 0) return `${plural(pending, 'update', 'updates')} waiting`
 
-    if (failed) return 'Some checks failed'
+    if (apps.checkFailed || workspace.checkFailed) return 'Some checks failed'
 
     return checked ? 'Everything is up to date' : 'Nothing checked yet'
   })

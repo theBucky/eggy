@@ -61,6 +61,9 @@ export class Workspace {
   )
   updating = $derived(this.entries.some(pulling))
   busy = $derived(this.checking || this.updating)
+  checkFailed = $derived(
+    this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
+  )
   // Counts a repo through its pull and after a failed one, so the tally holds steady.
   outdated = $derived(this.entries.filter(behind))
 
