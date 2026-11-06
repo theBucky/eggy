@@ -49,12 +49,14 @@ export class Apps {
   entries = $state<Entry[]>([])
   scanning = $state(false)
   prompt = $state<Prompt>({ open: false, quitting: [] })
-  activity = $derived(
-    this.scanning
-      ? 'scan'
-      : this.entries.find(({ task }) => task?.status === 'running')?.task?.command
+  checking = $derived(
+    this.scanning ||
+      this.entries.some(({ task }) => task?.status === 'running' && task.command === 'check')
   )
-  busy = $derived(this.activity !== undefined)
+  updating = $derived(
+    this.entries.some(({ task }) => task?.status === 'running' && task.command === 'update')
+  )
+  busy = $derived(this.checking || this.updating)
   // Counts an app through its download and after a failed install, so the tally holds steady.
   outdated = $derived(this.entries.filter((entry) => releaseOf(entry) !== undefined))
 

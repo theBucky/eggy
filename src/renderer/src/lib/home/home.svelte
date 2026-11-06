@@ -15,6 +15,7 @@
   import { dirOf, nameOf, tilde } from '$lib/paths'
   import {
     diverged,
+    pulling,
     statusOf,
     type Entry as RepoEntry,
     type Workspace
@@ -29,11 +30,8 @@
   const busy = $derived(apps.busy || workspace.busy)
   const scanning = $derived(apps.scanning || workspace.scanning)
 
-  const checking = $derived(apps.activity === 'check' || workspace.activity === 'fetch' || scanning)
-
-  const updating = $derived(
-    apps.activity === 'update' || workspace.activity === 'pull' || workspace.activity === 'rebase'
-  )
+  const checking = $derived(apps.checking || workspace.checking)
+  const updating = $derived(apps.updating || workspace.updating)
 
   const appRows = $derived(
     apps.entries.filter((entry) => apps.outdated.includes(entry) || entry.task?.status === 'failed')
@@ -43,9 +41,7 @@
   const repoRows = $derived(
     workspace.entries.filter(
       (entry) =>
-        workspace.outdated.includes(entry) ||
-        entry.task?.status === 'failed' ||
-        (entry.task?.status === 'running' && entry.task.command !== 'fetch')
+        workspace.outdated.includes(entry) || entry.task?.status === 'failed' || pulling(entry)
     )
   )
 
@@ -308,9 +304,9 @@
             disabled={workspace.busy}
             onclick={() => workspace.pull(entry, command)}
           >
-            {#if task?.status === 'running' && task.command !== 'fetch'}
+            {#if pulling(entry)}
               <Spinner data-icon="inline-start" />
-              {task.command === 'rebase' ? 'Rebasing' : 'Pulling'}
+              {task?.command === 'rebase' ? 'Rebasing' : 'Pulling'}
             {:else}
               {command === 'rebase' ? 'Rebase and pull' : 'Pull'}
             {/if}

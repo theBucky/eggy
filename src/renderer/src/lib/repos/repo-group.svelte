@@ -46,14 +46,14 @@
     <ToolbarButton
       label="Refresh"
       icon={IconRefresh}
-      busy={workspace.activity === 'scan' || workspace.activity === 'fetch'}
+      busy={workspace.checking}
       disabled={workspace.busy}
       onclick={() => workspace.refresh()}
     />
     <ToolbarButton
       label="Pull {workspace.outdated.length} outdated"
       icon={IconCloudDownload}
-      busy={workspace.activity === 'pull'}
+      busy={workspace.updating}
       disabled={workspace.busy || workspace.outdated.length === 0}
       onclick={() => workspace.pullAll()}
     />

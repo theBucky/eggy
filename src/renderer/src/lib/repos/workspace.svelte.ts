@@ -26,6 +26,10 @@ export function diverged({ repo }: Entry): boolean {
   return repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0
 }
 
+export function pulling({ task }: Entry): boolean {
+  return task?.status === 'running' && task.command !== 'fetch'
+}
+
 const CONCURRENCY = 8
 
 // Linked worktrees share refs, so their git commands run one after another to avoid lock errors.
@@ -45,12 +49,12 @@ export class Workspace {
   root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
   entries = $state<Entry[]>([])
   scanning = $state(false)
-  activity = $derived(
-    this.scanning
-      ? 'scan'
-      : this.entries.find(({ task }) => task?.status === 'running')?.task?.command
+  checking = $derived(
+    this.scanning ||
+      this.entries.some(({ task }) => task?.status === 'running' && task.command === 'fetch')
   )
-  busy = $derived(this.activity !== undefined)
+  updating = $derived(this.entries.some(pulling))
+  busy = $derived(this.checking || this.updating)
   // Counts a repo through its pull and after a failed one, so the tally holds steady.
   outdated = $derived(this.entries.filter(({ repo }) => (repo.sync?.behind ?? 0) > 0))
 

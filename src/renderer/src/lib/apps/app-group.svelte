@@ -15,14 +15,14 @@
     <ToolbarButton
       label="Check for updates"
       icon={IconRefresh}
-      busy={apps.activity === 'scan' || apps.activity === 'check'}
+      busy={apps.checking}
       disabled={apps.busy}
       onclick={() => apps.refresh()}
     />
     <ToolbarButton
       label="Update {apps.outdated.length} outdated"
       icon={IconCloudDownload}
-      busy={apps.activity === 'update'}
+      busy={apps.updating}
       disabled={apps.busy || apps.outdated.length === 0}
       onclick={() => apps.update(apps.outdated)}
     />
