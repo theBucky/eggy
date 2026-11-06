@@ -2,6 +2,7 @@
   import IconChevronDown from '@tabler/icons-svelte/icons/chevron-down'
   import IconChevronUp from '@tabler/icons-svelte/icons/chevron-up'
   import FailureAlert from '$lib/components/failure-alert.svelte'
+  import SidePane from '$lib/components/side-pane.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
@@ -14,40 +15,13 @@
 
   type SyncBadge = { label: string; variant: BadgeVariant }
 
-  // The pane shows `commit` and points open or shut. While it slides,
-  // it's `slide.width` wide and its content holds `slide.content` pixels, which keeps the content
-  // still against the moving edges.
-  type Pane = {
-    commit: Commit
-    open: boolean
-    slide: { width: string; content: number } | undefined
-  }
-
-  // The pane's width, of which the column gives up `COLUMN_SHARE` and the window grows by the rest,
-  // so the app stays narrow enough to sit on most screens.
-  const PANE_WIDTH = 640
-  const COLUMN_SHARE = 160
-  const COLUMN_MIN_WIDTH = 384
-
   let { workspace, entry }: { workspace: Workspace; entry: Entry } = $props()
 
   const { repo, task } = $derived(entry)
   const { unpushed, pushed } = $derived(repo.history)
 
-  let layout: HTMLElement
-  let wrapper = $state<HTMLElement>()
   let showUnpushed = $state(false)
-  let pane = $state.raw<Pane>()
-
-  let destroyed = false
-
-  const selected = $derived(pane?.open ? pane.commit : undefined)
-  const sliding = $derived(pane?.slide)
-
-  // The pane reads these rather than `pane`, so its effects skip the steps of a slide. Content
-  // shows once the pane has come to rest open, never half in view.
-  const shown = $derived(pane?.commit)
-  const revealed = $derived(pane?.open === true && pane.slide === undefined)
+  let selected = $state<Commit>()
 
   const diverged = $derived(repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0)
 
@@ -73,83 +47,10 @@
       variant: behind > 0 ? 'info' : 'secondary'
     }
   })
-
-  $effect(() => () => {
-    destroyed = true
-    window.api.collapseWindow().then(() => window.api.moveWindow())
-  })
-
-  function select(commit: Commit): void {
-    if (pane?.open && pane.commit.hash === commit.hash) return dismiss()
-
-    steer({ commit, open: true })
-  }
-
-  function dismiss(): void {
-    if (pane?.open) steer({ ...pane, open: false })
-  }
-
-  // Points the pane open or shut. A slide under way runs to its end before turning, since the
-  // window's move can't turn midway.
-  function steer(next: Omit<Pane, 'slide'>): void {
-    const resting = pane?.slide === undefined
-    const opened = pane !== undefined
-
-    pane = { ...next, slide: pane?.slide }
-
-    if (resting && next.open !== opened) slide(next.open)
-  }
-
-  // Slides the pane open from shut or shut from open, then on to wherever it points by then. The
-  // window grows while the column gives up its share, and whatever growth the screen can't fit
-  // comes out of the column too.
-  async function slide(open: boolean): Promise<void> {
-    const from = open ? 0 : wrapper!.getBoundingClientRect().width
-
-    // The pane holds still until the window replies.
-    pane = { ...pane!, slide: { width: `${from}px`, content: open ? PANE_WIDTH : from } }
-
-    const grown = open
-      ? await window.api.expandWindow(PANE_WIDTH - COLUMN_SHARE)
-      : await window.api.collapseWindow()
-
-    if (destroyed) return
-
-    // The layout takes all the window's growth, since the sidebar keeps its width.
-    const to = open ? Math.min(PANE_WIDTH, layout.clientWidth + grown - COLUMN_MIN_WIDTH) : 0
-    const content = Math.max(from, to)
-
-    // Without the window's move to pace it, the slide plays the system's resize animation itself.
-    if (grown === 0) {
-      pane = { ...pane!, slide: { width: `${to}px`, content } }
-      await wrapper!.animate([{ width: `${from}px` }, { width: `${to}px` }], {
-        duration: 200,
-        easing: 'ease-in-out'
-      }).finished
-    } else {
-      // The pane's width follows the window's through each frame of the system's animation.
-      const rate = (to - from) / grown
-
-      pane = {
-        ...pane!,
-        slide: { width: `calc(${from}px + (100vw - ${window.innerWidth}px) * ${rate})`, content }
-      }
-      await window.api.moveWindow()
-    }
-
-    if (destroyed) return
-
-    if (pane!.open !== open) return slide(pane!.open)
-
-    pane = open ? { ...pane!, slide: undefined } : undefined
-  }
 </script>
 
-<div bind:this={layout} class="absolute inset-0 flex">
-  <div
-    class="scroll-fade-y my-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-6"
-    style:min-width="{COLUMN_MIN_WIDTH}px"
-  >
+<SidePane item={selected}>
+  <div class="scroll-fade-y my-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-6">
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
@@ -239,32 +140,19 @@
     {/if}
   </div>
 
-  {#if shown}
-    <!-- Mid-slide, the pane content keeps its open width and rides the window's edge, and the
-         wrapper's border stands in for the content's own, which sits just past the clip. -->
-    <div
-      bind:this={wrapper}
-      class={['relative min-w-0', sliding && 'flex-none overflow-hidden border-l']}
-      style:width={sliding?.width ?? `${PANE_WIDTH}px`}
-    >
-      <div
-        class={sliding ? 'absolute inset-y-0 right-0' : 'size-full'}
-        style:width={sliding ? `${sliding.content}px` : undefined}
-      >
-        <CommitDiff path={repo.path} commit={shown} {revealed} onclose={dismiss} />
-      </div>
-    </div>
-  {/if}
-</div>
+  {#snippet pane(commit, revealed)}
+    <CommitDiff path={repo.path} {commit} {revealed} onclose={() => (selected = undefined)} />
+  {/snippet}
+</SidePane>
 
 {#snippet row(commit: Commit, published: boolean)}
+  {@const active = commit.hash === selected?.hash}
   <div
     role="listitem"
     class={[
       'rounded-md',
       !published && 'opacity-50',
-      commit.hash === selected?.hash &&
-        'bg-[color-mix(in_srgb,var(--foreground)_8%,var(--background))]'
+      active && 'bg-[color-mix(in_srgb,var(--foreground)_8%,var(--background))]'
     ]}
   >
     <Item.Root size="xs">
@@ -272,8 +160,8 @@
         <button
           {...props}
           type="button"
-          aria-pressed={commit.hash === selected?.hash}
-          onclick={() => select(commit)}
+          aria-pressed={active}
+          onclick={() => (selected = active ? undefined : commit)}
         >
           <!-- the title's flex display defeats clamping, so the inner spans clamp instead. -->
           <Item.Content>

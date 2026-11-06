@@ -221,56 +221,54 @@
   }
 </script>
 
-<section class="size-full border-l">
-  <div class={['flex size-full flex-col transition-opacity', !visible && 'opacity-0']}>
-    <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b pr-3 pl-5">
-      <div class="flex min-w-0 items-center gap-3">
-        <span class="font-mono">{shown.hash}</span>
-        {#if totals}
-          <span class="truncate text-muted-foreground">
-            {totals.files}
-            {totals.files === 1 ? 'file' : 'files'}
-          </span>
-          <span class="flex gap-2 font-mono text-xs">
-            <span class="text-success">+{totals.additions}</span>
-            <span class="text-destructive">-{totals.deletions}</span>
-          </span>
+<section class={['flex size-full flex-col transition-opacity', !visible && 'opacity-0']}>
+  <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b pr-3 pl-5">
+    <div class="flex min-w-0 items-center gap-3">
+      <span class="font-mono">{shown.hash}</span>
+      {#if totals}
+        <span class="truncate text-muted-foreground">
+          {totals.files}
+          {totals.files === 1 ? 'file' : 'files'}
+        </span>
+        <span class="flex gap-2 font-mono text-xs">
+          <span class="text-success">+{totals.additions}</span>
+          <span class="text-destructive">-{totals.deletions}</span>
+        </span>
+      {/if}
+    </div>
+    <div class="flex items-center gap-1 [-webkit-app-region:no-drag]">
+      <Toolbar>
+        {#if detail?.items.length}
+          <ToolbarButton
+            label={allCollapsed ? 'Expand all files' : 'Collapse all files'}
+            icon={allCollapsed ? IconArrowsMoveVertical : IconFold}
+            onclick={toggleAll}
+          />
         {/if}
-      </div>
-      <div class="flex items-center gap-1 [-webkit-app-region:no-drag]">
-        <Toolbar>
-          {#if detail?.items.length}
-            <ToolbarButton
-              label={allCollapsed ? 'Expand all files' : 'Collapse all files'}
-              icon={allCollapsed ? IconArrowsMoveVertical : IconFold}
-              onclick={toggleAll}
-            />
-          {/if}
-          {#if detail?.commit.url}
-            {@const url = detail.commit.url}
-            <ToolbarButton
-              label="Open in upstream"
-              icon={IconExternalLink}
-              onclick={() => window.open(url)}
-            />
-          {/if}
-          <ToolbarButton label="Close" icon={IconX} onclick={onclose} />
-        </Toolbar>
-      </div>
-    </header>
+        {#if detail?.commit.url}
+          {@const url = detail.commit.url}
+          <ToolbarButton
+            label="Open in upstream"
+            icon={IconExternalLink}
+            onclick={() => window.open(url)}
+          />
+        {/if}
+        <ToolbarButton label="Close" icon={IconX} onclick={onclose} />
+      </Toolbar>
+    </div>
+  </header>
 
-    <!-- The viewer moves the summary into the scroll content, above the first file. -->
-    <div bind:this={root} class="mb-2 min-h-0 flex-1 overflow-y-auto">
-      <div bind:this={summary} class="flex flex-col gap-2 p-5">
-        <h2 class="text-lg font-semibold tracking-tight wrap-anywhere">{shown.subject}</h2>
-        {#if detail?.body}
-          <p class="whitespace-pre-wrap text-foreground/74 wrap-anywhere">{detail.body}</p>
-        {/if}
-        <p class="flex gap-2 pt-1 text-xs">
-          <span class="text-foreground/74">{shown.author}</span>
-          <span class="text-muted-foreground">committed {ago(shown.date)}</span>
-        </p>
-      </div>
+  <!-- The viewer moves the summary into the scroll content, above the first file. -->
+  <div bind:this={root} class="mb-2 min-h-0 flex-1 overflow-y-auto">
+    <div bind:this={summary} class="flex flex-col gap-2 p-5">
+      <h2 class="text-lg font-semibold tracking-tight wrap-anywhere">{shown.subject}</h2>
+      {#if detail?.body}
+        <p class="whitespace-pre-wrap text-foreground/74 wrap-anywhere">{detail.body}</p>
+      {/if}
+      <p class="flex gap-2 pt-1 text-xs">
+        <span class="text-foreground/74">{shown.author}</span>
+        <span class="text-muted-foreground">committed {ago(shown.date)}</span>
+      </p>
     </div>
   </div>
 </section>
