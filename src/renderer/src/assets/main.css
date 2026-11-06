@@ -137,46 +137,6 @@
   --scroll-fade-reveal: 0px;
 }
 
-/* Feed HTML leans on browser defaults that preflight resets, such as list markers. */
-@utility release-notes {
-  @apply text-foreground/74 wrap-anywhere;
-
-  & > * + * {
-    @apply mt-2;
-  }
-  & :is(ul, ol) {
-    @apply pl-5;
-  }
-  & ul {
-    @apply list-disc;
-  }
-  & ol {
-    @apply list-decimal;
-  }
-  & li + li,
-  & li > :is(ul, ol) {
-    @apply mt-1;
-  }
-  & :is(h1, h2, h3, h4, h5, h6) {
-    @apply font-semibold;
-  }
-  & :is(h1, h2, h3, h4, h5, h6, strong, b) {
-    @apply text-foreground;
-  }
-  & a {
-    @apply text-info underline-offset-4 hover:underline;
-  }
-  & code {
-    @apply font-mono text-xs;
-  }
-  & pre {
-    @apply whitespace-pre-wrap;
-  }
-  & blockquote {
-    @apply border-l-2 pl-3;
-  }
-}
-
 @layer base {
   *,
   ::before,

@@ -1,6 +1,7 @@
 <script lang="ts" module>
   import DOMPurify from 'dompurify'
   import { marked } from 'marked'
+  import './release-notes.css'
 
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'A') node.setAttribute('target', '_blank')
