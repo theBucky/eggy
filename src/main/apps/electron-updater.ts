@@ -39,6 +39,8 @@ type Channel = string | number | undefined
 
 const tagLink = /\/tag\/(v?[^/]+)$/
 
+const configFile = 'Resources/app-update.yml'
+
 async function fetchInfo(url: string): Promise<Info> {
   return parse(await (await fetchFeed(url)).text())
 }
@@ -171,7 +173,7 @@ function github(bundle: Bundle, config: GitHub): Feed {
 
 async function locate(bundle: Bundle): Promise<Feed | undefined> {
   const config: Generic | GitHub = parse(
-    await readFile(join(bundle.path, 'Contents/Resources/app-update.yml'), 'utf8')
+    await readFile(join(bundle.path, 'Contents', configFile), 'utf8')
   )
 
   if (config.provider === 'generic') return generic(bundle, config)
@@ -181,4 +183,4 @@ async function locate(bundle: Bundle): Promise<Feed | undefined> {
   return undefined
 }
 
-export const electronUpdater: Framework = { marker: 'Resources/app-update.yml', locate }
+export const electronUpdater: Framework = { marker: configFile, locate }
