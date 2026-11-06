@@ -13,6 +13,8 @@ export default defineConfig({
       }
     },
     plugins: [svelte(), tailwindcss()],
+    // The diff highlighter's worker loads languages on demand, which only module workers can split.
+    worker: { format: 'es' },
     build: {
       minify: true,
       // Lightning CSS folds `animation-timeline` into the `animation` shorthand, which Chromium

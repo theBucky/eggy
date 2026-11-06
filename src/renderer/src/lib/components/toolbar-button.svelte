@@ -13,14 +13,14 @@
     label,
     icon: Icon,
     busy = false,
-    disabled,
+    disabled = false,
     onclick
   }: {
     tether: TooltipPrimitive.Tether<string>
     label: string
     icon: TablerIcon
     busy?: boolean
-    disabled: boolean
+    disabled?: boolean
     onclick: () => void
   } = $props()
 </script>

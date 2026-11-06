@@ -54,6 +54,8 @@
   --font-mono: 'Berkeley Mono', ui-monospace, monospace;
   --text-base: 13px;
   --text-base--line-height: 18px;
+  --text-lg: 16px;
+  --text-lg--line-height: 24px;
   --text-xl: 22px;
   --text-xl--line-height: 28px;
   --tracking-tight: -0.01em;

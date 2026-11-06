@@ -4,6 +4,7 @@ import { optimizer, is } from '@electron-toolkit/utils'
 import type { Ipc } from '../shared/api'
 import * as git from './git'
 import * as apps from './apps/updater'
+import { collapseWindow, expandWindow, leaveFullScreen, moveWindow } from './window'
 
 type Handlers = {
   [Channel in keyof Ipc]: (
@@ -24,6 +25,11 @@ const handlers: Handlers = {
   scan: (_, root) => git.scan(root),
   fetch: (_, path) => git.fetch(path),
   pull: (_, path, command) => git.pull(path, command),
+  show: (_, path, hash) => git.show(path, hash),
+  expandWindow: async (event, width) =>
+    expandWindow(BrowserWindow.fromWebContents(event.sender)!, width),
+  collapseWindow: async (event) => collapseWindow(BrowserWindow.fromWebContents(event.sender)!),
+  moveWindow: async (event) => moveWindow(BrowserWindow.fromWebContents(event.sender)!),
   listApps: () => apps.listApps(),
   check: (_, path) => apps.check(path),
   update: (event, path) =>
@@ -55,6 +61,7 @@ function createWindow(): BrowserWindow {
   optimizer.watchWindowShortcuts(mainWindow)
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
+  mainWindow.on('leave-full-screen', () => leaveFullScreen(mainWindow))
 
   // Hiding keeps the renderer, so an update underway still reports its progress and asks before it
   // force quits.

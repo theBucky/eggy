@@ -5,6 +5,11 @@ export type Commit = {
   date: number
 }
 
+export type CommitDetail = {
+  body: string
+  patch: string
+}
+
 export type History = {
   unpushed: Commit[]
   pushed: Commit[]
@@ -80,6 +85,10 @@ export type Ipc = {
   scan: (root: string) => Promise<Repo[]>
   fetch: (path: string) => Promise<FetchResult>
   pull: (path: string, command: PullCommand) => Promise<PullResult>
+  show: (path: string, hash: string) => Promise<CommitDetail>
+  expandWindow: (width: number) => Promise<number>
+  collapseWindow: () => Promise<number>
+  moveWindow: () => Promise<void>
   listApps: () => Promise<App[]>
   check: (path: string) => Promise<CheckOutcome>
   update: (path: string) => Promise<UpdateOutcome>

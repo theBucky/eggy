@@ -4,6 +4,7 @@ import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import type {
   Commit,
+  CommitDetail,
   Failure,
   FetchResult,
   History,
@@ -226,4 +227,26 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   if (count === 0) return { sync, history, outcome: { status: 'current' } }
 
   return { sync, history, outcome: { status: 'updated', count } }
+}
+
+export async function show(path: string, hash: string): Promise<CommitDetail> {
+  // A merge diffs against its first parent, since combined diffs have no patch form to parse. The
+  // prefixes override `diff.noprefix`, whose paths the parser misreads.
+  const { stdout } = await git(path, [
+    'show',
+    '--no-show-signature',
+    '--no-color',
+    '--no-ext-diff',
+    '--src-prefix=a/',
+    '--dst-prefix=b/',
+    '--diff-merges=first-parent',
+    '--ignore-all-space',
+    '--ignore-blank-lines',
+    '--format=%b%x00',
+    hash
+  ])
+
+  const split = stdout.indexOf('\0')
+
+  return { body: stdout.slice(0, split).trim(), patch: stdout.slice(split + 1) }
 }
