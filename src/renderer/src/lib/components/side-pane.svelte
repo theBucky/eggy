@@ -4,7 +4,7 @@
   // The pane's width, of which the column gives up `COLUMN_SHARE` and the window grows by the rest,
   // so the app stays narrow enough to sit on most screens.
   const PANE_WIDTH = 640
-  const COLUMN_SHARE = 160
+  const COLUMN_SHARE = 240
   const COLUMN_MIN_WIDTH = 384
 
   let {
