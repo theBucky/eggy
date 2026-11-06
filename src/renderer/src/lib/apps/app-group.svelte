@@ -11,9 +11,8 @@
 </script>
 
 <SidebarSection label="Applications">
-  {#snippet toolbar(tether)}
+  {#snippet toolbar()}
     <ToolbarButton
-      {tether}
       label="Check for updates"
       icon={IconRefresh}
       busy={apps.activity === 'scan' || apps.activity === 'check'}
@@ -21,7 +20,6 @@
       onclick={() => apps.refresh()}
     />
     <ToolbarButton
-      {tether}
       label="Update {apps.outdated.length} outdated"
       icon={IconCloudDownload}
       busy={apps.activity === 'update'}

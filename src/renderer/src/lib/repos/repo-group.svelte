@@ -36,16 +36,14 @@
 </script>
 
 <SidebarSection label="Repositories">
-  {#snippet toolbar(tether)}
+  {#snippet toolbar()}
     <ToolbarButton
-      {tether}
       label="Change folder"
       icon={IconFolderCog}
       disabled={workspace.busy}
       onclick={() => workspace.chooseRoot()}
     />
     <ToolbarButton
-      {tether}
       label="Refresh"
       icon={IconRefresh}
       busy={workspace.activity === 'scan' || workspace.activity === 'fetch'}
@@ -53,7 +51,6 @@
       onclick={() => workspace.refresh()}
     />
     <ToolbarButton
-      {tether}
       label="Pull {workspace.outdated.length} outdated"
       icon={IconCloudDownload}
       busy={workspace.activity === 'pull'}

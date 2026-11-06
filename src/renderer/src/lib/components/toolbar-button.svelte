@@ -1,6 +1,6 @@
 <script lang="ts">
   import type IconRefresh from '@tabler/icons-svelte/icons/refresh'
-  import { Tooltip as TooltipPrimitive } from 'bits-ui'
+  import { getTether } from '$lib/components/toolbar.svelte'
   import { Button } from '$lib/components/ui/button'
   import { Spinner } from '$lib/components/ui/spinner'
   import * as Tooltip from '$lib/components/ui/tooltip'
@@ -9,20 +9,20 @@
   type TablerIcon = typeof IconRefresh
 
   let {
-    tether,
     label,
     icon: Icon,
     busy = false,
     disabled = false,
     onclick
   }: {
-    tether: TooltipPrimitive.Tether<string>
     label: string
     icon: TablerIcon
     busy?: boolean
     disabled?: boolean
     onclick: () => void
   } = $props()
+
+  const tether = getTether()
 </script>
 
 <Tooltip.Trigger {tether} payload={label}>

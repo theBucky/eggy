@@ -4,11 +4,10 @@
   import IconExternalLink from '@tabler/icons-svelte/icons/external-link'
   import IconFold from '@tabler/icons-svelte/icons/fold'
   import IconX from '@tabler/icons-svelte/icons/x'
-  import { Tooltip as TooltipPrimitive } from 'bits-ui'
   import { mount, unmount } from 'svelte'
   import { SvelteSet } from 'svelte/reactivity'
+  import Toolbar from '$lib/components/toolbar.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
-  import * as Tooltip from '$lib/components/ui/tooltip'
   import { DIFF_THEME, highlighter } from '$lib/repos/highlighter'
   import FileHeader from '$lib/repos/file-header.svelte'
   import { ago } from '$lib/time'
@@ -29,8 +28,6 @@
     revealed: boolean
     onclose: () => void
   } = $props()
-
-  const tether = TooltipPrimitive.createTether<string>()
 
   let root: HTMLElement
   let summary: HTMLElement
@@ -239,29 +236,24 @@
         {/if}
       </div>
       <div class="flex items-center gap-1 [-webkit-app-region:no-drag]">
-        {#if detail?.items.length}
-          <ToolbarButton
-            {tether}
-            label={allCollapsed ? 'Expand all files' : 'Collapse all files'}
-            icon={allCollapsed ? IconArrowsMoveVertical : IconFold}
-            onclick={toggleAll}
-          />
-        {/if}
-        {#if detail?.url}
-          {@const url = detail.url}
-          <ToolbarButton
-            {tether}
-            label="Open in upstream"
-            icon={IconExternalLink}
-            onclick={() => window.open(url)}
-          />
-        {/if}
-        <ToolbarButton {tether} label="Close" icon={IconX} onclick={onclose} />
-        <Tooltip.Root {tether}>
-          {#snippet children({ payload })}
-            <Tooltip.Content>{payload}</Tooltip.Content>
-          {/snippet}
-        </Tooltip.Root>
+        <Toolbar>
+          {#if detail?.items.length}
+            <ToolbarButton
+              label={allCollapsed ? 'Expand all files' : 'Collapse all files'}
+              icon={allCollapsed ? IconArrowsMoveVertical : IconFold}
+              onclick={toggleAll}
+            />
+          {/if}
+          {#if detail?.url}
+            {@const url = detail.url}
+            <ToolbarButton
+              label="Open in upstream"
+              icon={IconExternalLink}
+              onclick={() => window.open(url)}
+            />
+          {/if}
+          <ToolbarButton label="Close" icon={IconX} onclick={onclose} />
+        </Toolbar>
       </div>
     </header>
 

@@ -1,10 +1,9 @@
 <script lang="ts">
   import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
-  import { Tooltip as TooltipPrimitive } from 'bits-ui'
   import type { Snippet } from 'svelte'
+  import Toolbar from '$lib/components/toolbar.svelte'
   import * as Collapsible from '$lib/components/ui/collapsible'
   import * as Sidebar from '$lib/components/ui/sidebar'
-  import * as Tooltip from '$lib/components/ui/tooltip'
   import { cn } from '$lib/utils'
 
   let {
@@ -13,11 +12,9 @@
     children
   }: {
     label: string
-    toolbar: Snippet<[TooltipPrimitive.Tether<string>]>
+    toolbar: Snippet
     children: Snippet
   } = $props()
-
-  const tether = TooltipPrimitive.createTether<string>()
 
   let open = $state(false)
 </script>
@@ -39,12 +36,9 @@
             </Collapsible.Trigger>
           {/snippet}
         </Sidebar.GroupLabel>
-        {@render toolbar(tether)}
-        <Tooltip.Root {tether}>
-          {#snippet children({ payload })}
-            <Tooltip.Content>{payload}</Tooltip.Content>
-          {/snippet}
-        </Tooltip.Root>
+        <Toolbar>
+          {@render toolbar()}
+        </Toolbar>
       </div>
       <Collapsible.Content hiddenUntilFound>
         {@render children()}
