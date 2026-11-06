@@ -23,6 +23,20 @@ export function releaseOf({ task }: Entry): Release | undefined {
   return task !== undefined && 'update' in task ? task.update : undefined
 }
 
+export function labelOf({ version, build }: App | Release): string {
+  return version === build ? version : `${version} (${build})`
+}
+
+const megabyte = new Intl.NumberFormat('en', {
+  style: 'unit',
+  unit: 'megabyte',
+  maximumFractionDigits: 1
+})
+
+export function megabytes(bytes: number): string {
+  return megabyte.format(bytes / 1e6)
+}
+
 export function statusOf({ task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
@@ -41,7 +55,8 @@ export class Apps {
       : this.entries.find(({ task }) => task?.status === 'running')?.task?.command
   )
   busy = $derived(this.activity !== undefined)
-  outdated = $derived(this.entries.filter((entry) => statusOf(entry) === 'outdated'))
+  // Counts an app through its download and after a failed install, so the tally holds steady.
+  outdated = $derived(this.entries.filter((entry) => releaseOf(entry) !== undefined))
 
   constructor() {
     window.api.onProgress((path, progress) => {

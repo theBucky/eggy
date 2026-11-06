@@ -1,10 +1,9 @@
 <script lang="ts">
   import FailureAlert from '$lib/components/failure-alert.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
-  import { Button } from '$lib/components/ui/button'
-  import { Spinner } from '$lib/components/ui/spinner'
-  import { releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
+  import { labelOf, megabytes, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
+  import UpdateButton from '$lib/apps/update-button.svelte'
   import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/time'
 
@@ -14,16 +13,6 @@
 
   const { app, task } = $derived(entry)
   const update = $derived(releaseOf(entry))
-
-  const progress = $derived(
-    task?.command === 'update' && task.status === 'running' ? task.progress : undefined
-  )
-
-  const megabytes = new Intl.NumberFormat('en', {
-    style: 'unit',
-    unit: 'megabyte',
-    maximumFractionDigits: 1
-  })
 
   const badge = $derived.by((): StatusBadge | undefined => {
     if (task?.command === 'check' && task.status === 'running') {
@@ -42,10 +31,6 @@
 
     return task === undefined ? undefined : { label: 'Up to date', variant: 'success' }
   })
-
-  function label({ version, build }: { version: string; build: string }): string {
-    return version === build ? version : `${version} (${build})`
-  }
 </script>
 
 <div class="absolute inset-0 flex flex-col">
@@ -60,17 +45,7 @@
       </div>
       {#if update}
         <div class="[-webkit-app-region:no-drag]">
-          <Button size="lg" disabled={apps.busy} onclick={() => apps.update([entry])}>
-            {#if progress?.stage === 'install'}
-              <Spinner data-icon="inline-start" />
-              Installing
-            {:else if progress}
-              <Spinner data-icon="inline-start" />
-              Downloading {progress.percent === undefined ? '' : `${progress.percent}%`}
-            {:else}
-              Update
-            {/if}
-          </Button>
+          <UpdateButton {apps} {entry} size="lg" />
         </div>
       {/if}
     </div>
@@ -78,7 +53,7 @@
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Installed</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px]">{label(app)}</span>
+        <span class="truncate font-mono text-xs/[18px]">{labelOf(app)}</span>
         {#if badge}
           <Badge variant={badge.variant}>{badge.label}</Badge>
         {/if}
@@ -86,7 +61,7 @@
       {#if update}
         <dt class="text-muted-foreground">Latest</dt>
         <dd class="flex min-w-0 items-center gap-2">
-          <span class="truncate font-mono text-xs/[18px]">{label(update)}</span>
+          <span class="truncate font-mono text-xs/[18px]">{labelOf(update)}</span>
           {#if update.date !== undefined}
             <span class="shrink-0 text-xs text-muted-foreground">{ago(update.date)}</span>
           {/if}
@@ -95,8 +70,7 @@
         <dd class="flex min-w-0 gap-2 font-mono text-xs/[18px]">
           <span class="truncate">{decodeURIComponent(nameOf(new URL(update.url).pathname))}</span>
           {#if update.size !== undefined}
-            <span class="shrink-0 text-muted-foreground">{megabytes.format(update.size / 1e6)}</span
-            >
+            <span class="shrink-0 text-muted-foreground">{megabytes(update.size)}</span>
           {/if}
         </dd>
       {/if}

@@ -1,0 +1,8 @@
+/* Unlayered, so full opacity beats the disabled fade, which only the share still to download keeps. */
+[data-slot='button'][data-progress] {
+  opacity: 1;
+  background-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  background-image: linear-gradient(var(--primary) 0 0);
+  background-size: attr(data-progress %) 100%;
+  background-repeat: no-repeat;
+}
