@@ -2,21 +2,22 @@
   import IconGitBranch from '@tabler/icons-svelte/icons/git-branch'
   import * as Empty from '$lib/components/ui/empty'
   import { Spinner } from '$lib/components/ui/spinner'
+  import type { Status } from '$lib/components/status-dot.svelte'
   import { tilde } from '$lib/paths'
   import { statusOf, type Workspace } from '$lib/repos/workspace.svelte'
 
   let { workspace }: { workspace: Workspace } = $props()
 
-  const outcomes = [
-    ['running', 'syncing'],
-    ['outdated', 'outdated'],
-    ['failed', 'failed'],
-    ['updated', 'updated'],
-    ['current', 'up to date']
-  ] as const
+  const labels = {
+    running: 'syncing',
+    outdated: 'outdated',
+    failed: 'failed',
+    updated: 'updated',
+    current: 'up to date'
+  } satisfies Record<Exclude<Status, 'unknown'>, string>
 
   const tally = $derived(
-    outcomes
+    Object.entries(labels)
       .flatMap(([status, label]) => {
         const count = workspace.entries.filter((entry) => statusOf(entry) === status).length
 
