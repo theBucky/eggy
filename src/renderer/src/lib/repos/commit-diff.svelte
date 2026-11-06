@@ -9,11 +9,13 @@
   import Toolbar from '$lib/components/toolbar.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import { DIFF_THEME, highlighter } from '$lib/repos/highlighter'
-  import FileHeader from '$lib/repos/file-header.svelte'
+  import FileHeader, { HEADER_HEIGHT } from '$lib/repos/file-header.svelte'
   import { ago } from '$lib/time'
   import type { Commit } from '$shared/api'
 
   type Detail = { commit: Commit; url: string | undefined; body: string; items: CodeViewDiffItem[] }
+
+  const LINE_HEIGHT = 20
 
   let {
     path,
@@ -67,7 +69,11 @@
       overflow: 'wrap',
       stickyHeaders: true,
       layout: { paddingTop: 0, paddingBottom: 0, gap: 0 },
-      itemMetrics: { lineHeight: 20, diffHeaderHeight: 36, hunkSeparatorHeight: 20 },
+      itemMetrics: {
+        lineHeight: LINE_HEIGHT,
+        diffHeaderHeight: HEADER_HEIGHT,
+        hunkSeparatorHeight: LINE_HEIGHT
+      },
       // Colors come from the design system's light editor palette. Changed lines take their colors
       // as is, where the viewer would tint the background with them, and run them unbroken through
       // the gutter. A pinned header tucks its top border under the pane header's, which would
@@ -77,7 +83,7 @@
         --diffs-font-family: var(--font-mono);
         --diffs-header-font-family: var(--font-mono);
         --diffs-font-size: 12px;
-        --diffs-line-height: 20px;
+        --diffs-line-height: ${LINE_HEIGHT}px;
         --diffs-addition-color-override: var(--success);
         --diffs-deletion-color-override: var(--destructive);
         --diffs-bg-addition-override: #14c16f24;
@@ -94,7 +100,7 @@
         border-right-color: transparent;
       }
       [data-separator='metadata'] {
-        height: 20px;
+        height: ${LINE_HEIGHT}px;
       }
       [data-separator='metadata'] [data-separator-wrapper] {
         background-color: transparent;

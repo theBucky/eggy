@@ -1,3 +1,7 @@
+<script lang="ts" module>
+  export const HEADER_HEIGHT = 36
+</script>
+
 <script lang="ts">
   import type { FileDiffMetadata } from '@pierre/diffs'
   import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
@@ -21,9 +25,10 @@
 <Collapsible.Root bind:open={() => open, ontoggle}>
   <Collapsible.Trigger
     class={[
-      'flex h-9 w-full items-center justify-between gap-3 border-y px-5 outline-none focus-visible:bg-muted',
+      'flex w-full items-center justify-between gap-3 border-y px-5 outline-none focus-visible:bg-muted',
       !open && 'border-b-transparent'
     ]}
+    style="height: {HEADER_HEIGHT}px"
   >
     <span class="flex min-w-0 items-center gap-2">
       <IconChevronRight
