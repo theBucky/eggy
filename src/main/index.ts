@@ -4,38 +4,13 @@ import { optimizer, is } from '@electron-toolkit/utils'
 import type { Ipc } from '../shared/api'
 import * as git from './git'
 import * as apps from './apps/updater'
-import { collapseWindow, expandWindow, leaveFullScreen, moveWindow } from './window'
+import { resizer } from './window'
 
 type Handlers = {
   [Channel in keyof Ipc]: (
     event: IpcMainInvokeEvent,
     ...args: Parameters<Ipc[Channel]>
   ) => ReturnType<Ipc[Channel]>
-}
-
-const handlers: Handlers = {
-  chooseRoot: async (event, current) => {
-    const { canceled, filePaths } = await dialog.showOpenDialog(
-      BrowserWindow.fromWebContents(event.sender)!,
-      { defaultPath: current, properties: ['openDirectory'] }
-    )
-
-    return canceled ? undefined : filePaths[0]
-  },
-  scan: (_, root) => git.scan(root),
-  fetch: (_, path) => git.fetch(path),
-  pull: (_, path, command) => git.pull(path, command),
-  show: (_, path, hash) => git.show(path, hash),
-  expandWindow: async (event, width) =>
-    expandWindow(BrowserWindow.fromWebContents(event.sender)!, width),
-  collapseWindow: async (event) => collapseWindow(BrowserWindow.fromWebContents(event.sender)!),
-  moveWindow: async (event) => moveWindow(BrowserWindow.fromWebContents(event.sender)!),
-  listApps: () => apps.listApps(),
-  check: (_, path) => apps.check(path),
-  update: (event, path) =>
-    apps.update(path, (progress) => event.sender.send('progress', path, progress)),
-  forceUpdate: (_, path) => apps.forceUpdate(path),
-  discardUpdate: (_, path) => apps.discardUpdate(path)
 }
 
 let quitting = false
@@ -61,7 +36,6 @@ function createWindow(): BrowserWindow {
   optimizer.watchWindowShortcuts(mainWindow)
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
-  mainWindow.on('leave-full-screen', () => leaveFullScreen(mainWindow))
 
   // Hiding keeps the renderer, so an update underway still reports its progress and asks before it
   // force quits.
@@ -88,9 +62,34 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
-  for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)
-
   const window = createWindow()
+  const pane = resizer(window)
+
+  const handlers: Handlers = {
+    chooseRoot: async (_, current) => {
+      const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+        defaultPath: current,
+        properties: ['openDirectory']
+      })
+
+      return canceled ? undefined : filePaths[0]
+    },
+    scan: (_, root) => git.scan(root),
+    fetch: (_, path) => git.fetch(path),
+    pull: (_, path, command) => git.pull(path, command),
+    show: (_, path, hash) => git.show(path, hash),
+    expandWindow: async (_, width) => pane.expand(width),
+    collapseWindow: async () => pane.collapse(),
+    moveWindow: async () => pane.move(),
+    listApps: () => apps.listApps(),
+    check: (_, path) => apps.check(path),
+    update: (event, path) =>
+      apps.update(path, (progress) => event.sender.send('progress', path, progress)),
+    forceUpdate: (_, path) => apps.forceUpdate(path),
+    discardUpdate: (_, path) => apps.discardUpdate(path)
+  }
+
+  for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)
 
   app.on('activate', () => window.show())
 })
