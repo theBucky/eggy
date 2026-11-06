@@ -84,8 +84,6 @@ export class Apps {
   }
 
   async update(entries: Entry[]): Promise<void> {
-    const quitting: Entry[] = []
-
     await Promise.all(
       entries.map(async (entry) => {
         entry.task = {
@@ -97,12 +95,11 @@ export class Apps {
 
         const outcome = await window.api.update(entry.app.path)
 
-        if (outcome.status === 'waiting') quitting.push(entry)
-        else this.settle(entry, outcome)
+        if (outcome.status !== 'waiting') this.settle(entry, outcome)
+        else if (this.prompt.open) this.prompt.quitting.push(entry)
+        else this.prompt = { open: true, quitting: [entry] }
       })
     )
-
-    if (quitting.length > 0) this.prompt = { open: true, quitting }
   }
 
   async confirm(): Promise<void> {
