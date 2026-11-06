@@ -36,9 +36,7 @@
   const updating = $derived(apps.updating || workspace.updating)
 
   const appRows = $derived(
-    apps.entries.filter(
-      (entry) => releaseOf(entry) !== undefined || entry.task?.status === 'failed'
-    )
+    apps.entries.filter((entry) => releaseOf(entry) || entry.task?.status === 'failed')
   )
 
   // Fetching flashes through every repo, so only pulls count as activity worth a row.
@@ -263,6 +261,7 @@
 {#snippet repoRow(entry: RepoEntry)}
   {@const { repo, task } = entry}
   {@const dir = dirOf(repo.path)}
+  {@const pull = runningPull(entry)}
   <Table.Row>
     <Table.Cell>
       <div class="flex w-6 justify-center"><StatusDot status={statusOf(entry)} /></div>
@@ -291,12 +290,12 @@
       </div>
     </Table.Cell>
     <Table.Cell>
-      {#if behind(entry) || runningPull(entry)}
+      {#if behind(entry) || pull}
         <div class="text-right">
           <PullButton
             {workspace}
             {entry}
-            command={runningPull(entry) ?? (diverged(entry) ? 'rebase' : 'pull')}
+            command={pull ?? (diverged(entry) ? 'rebase' : 'pull')}
             size="sm"
           />
         </div>

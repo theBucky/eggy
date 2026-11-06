@@ -61,7 +61,7 @@ export class Apps {
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'check')
   )
   // Counts an app through its download and after a failed install, so the tally holds steady.
-  outdated = $derived(this.entries.filter((entry) => releaseOf(entry) !== undefined))
+  outdated = $derived(this.entries.filter(releaseOf))
 
   constructor() {
     window.api.onProgress((path, progress) => {
