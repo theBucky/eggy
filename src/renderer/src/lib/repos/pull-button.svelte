@@ -1,8 +1,17 @@
+<script lang="ts" module>
+  import type { ButtonVariant } from '$lib/components/ui/button'
+  import type { PullCommand } from '$shared/api'
+
+  const looks = {
+    pull: { variant: 'default', idle: 'Pull', running: 'Pulling' },
+    rebase: { variant: 'destructive', idle: 'Rebase and pull', running: 'Rebasing' }
+  } satisfies Record<PullCommand, { variant: ButtonVariant; idle: string; running: string }>
+</script>
+
 <script lang="ts">
   import { Button, type ButtonSize } from '$lib/components/ui/button'
   import { Spinner } from '$lib/components/ui/spinner'
   import { runningPull, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
-  import type { PullCommand } from '$shared/api'
 
   let {
     workspace,
@@ -11,19 +20,19 @@
     size
   }: { workspace: Workspace; entry: Entry; command: PullCommand; size: ButtonSize } = $props()
 
-  const running = $derived(runningPull(entry) === command)
+  const look = $derived(looks[command])
 </script>
 
 <Button
   {size}
-  variant={command === 'rebase' ? 'destructive' : 'default'}
+  variant={look.variant}
   disabled={workspace.busy}
   onclick={() => workspace.pull(entry, command)}
 >
-  {#if running}
+  {#if runningPull(entry) === command}
     <Spinner data-icon="inline-start" />
-    {command === 'rebase' ? 'Rebasing' : 'Pulling'}
+    {look.running}
   {:else}
-    {command === 'rebase' ? 'Rebase and pull' : 'Pull'}
+    {look.idle}
   {/if}
 </Button>
