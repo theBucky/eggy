@@ -13,20 +13,18 @@
   import { ago } from '$lib/time'
   import type { Commit } from '$shared/api'
 
-  type Detail = { commit: Commit; url: string | undefined; body: string; items: CodeViewDiffItem[] }
+  type Detail = { commit: Commit; body: string; items: CodeViewDiffItem[] }
 
   const LINE_HEIGHT = 20
 
   let {
     path,
     commit,
-    url,
     revealed,
     onclose
   }: {
     path: string
     commit: Commit
-    url: string | undefined
     revealed: boolean
     onclose: () => void
   } = $props()
@@ -177,7 +175,6 @@
 
   $effect(() => {
     const current = commit
-    const link = url
     let live = true
 
     window.api.show(path, current.hash).then(({ body, patch }) => {
@@ -189,7 +186,6 @@
       expanded.clear()
       detail = {
         commit: current,
-        url: link,
         body,
         // A file whose type changes comes as a deletion and an addition under one name.
         items: files.map((fileDiff, index) => ({
@@ -250,8 +246,8 @@
               onclick={toggleAll}
             />
           {/if}
-          {#if detail?.url}
-            {@const url = detail.url}
+          {#if detail?.commit.url}
+            {@const url = detail.commit.url}
             <ToolbarButton
               label="Open in upstream"
               icon={IconExternalLink}

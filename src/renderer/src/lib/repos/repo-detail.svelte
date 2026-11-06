@@ -14,12 +14,11 @@
 
   type SyncBadge = { label: string; variant: BadgeVariant }
 
-  // The pane shows `commit`, whose page upstream is `url`, and points open or shut. While it slides,
+  // The pane shows `commit` and points open or shut. While it slides,
   // it's `slide.width` wide and its content holds `slide.content` pixels, which keeps the content
   // still against the moving edges.
   type Pane = {
     commit: Commit
-    url: string | undefined
     open: boolean
     slide: { width: string; content: number } | undefined
   }
@@ -48,7 +47,6 @@
   // The pane reads these rather than `pane`, so its effects skip the steps of a slide. Content
   // shows once the pane has come to rest open, never half in view.
   const shown = $derived(pane?.commit)
-  const shownUrl = $derived(pane?.url)
   const revealed = $derived(pane?.open === true && pane.slide === undefined)
 
   const diverged = $derived(repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0)
@@ -81,12 +79,10 @@
     window.api.collapseWindow().then(() => window.api.moveWindow())
   })
 
-  function select(commit: Commit, published: boolean): void {
+  function select(commit: Commit): void {
     if (pane?.open && pane.commit.hash === commit.hash) return dismiss()
 
-    const url = repo.commitUrl && published ? repo.commitUrl + commit.hash : undefined
-
-    steer({ commit, url, open: true })
+    steer({ commit, open: true })
   }
 
   function dismiss(): void {
@@ -255,7 +251,7 @@
         class={sliding ? 'absolute inset-y-0 right-0' : 'size-full'}
         style:width={sliding ? `${sliding.content}px` : undefined}
       >
-        <CommitDiff path={repo.path} commit={shown} url={shownUrl} {revealed} onclose={dismiss} />
+        <CommitDiff path={repo.path} commit={shown} {revealed} onclose={dismiss} />
       </div>
     </div>
   {/if}
@@ -277,7 +273,7 @@
           {...props}
           type="button"
           aria-pressed={commit.hash === selected?.hash}
-          onclick={() => select(commit, published)}
+          onclick={() => select(commit)}
         >
           <!-- the title's flex display defeats clamping, so the inner spans clamp instead. -->
           <Item.Content>

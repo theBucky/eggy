@@ -11,7 +11,8 @@ import type {
   PullCommand,
   PullResult,
   Repo,
-  Sync
+  Sync,
+  Tracking
 } from '../shared/api'
 
 type GitResult = {
@@ -59,7 +60,7 @@ async function readSync(path: string): Promise<Sync | undefined> {
 
 const log = ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']
 
-function parseLog({ ok, stdout }: GitResult): Commit[] {
+function parseLog({ ok, stdout }: GitResult, pages?: string): Commit[] {
   if (!ok) return []
 
   return stdout
@@ -67,28 +68,13 @@ function parseLog({ ok, stdout }: GitResult): Commit[] {
     .filter(Boolean)
     .map((line) => {
       const [hash, subject, author, date] = line.split('\x1f')
+      const url = pages === undefined ? undefined : `${pages}${hash}`
 
-      return { hash, subject, author, date: Number(date) * 1000 }
+      return { hash, subject, author, date: Number(date) * 1000, url }
     })
 }
 
-async function readHistory(path: string): Promise<History> {
-  const [unpushed, bases] = await Promise.all([
-    git(path, [...log, '@{upstream}..HEAD']),
-    git(path, ['merge-base', '--all', 'HEAD', '@{upstream}'])
-  ])
-
-  // Commits reachable from any merge base are exactly those on both sides. Without a local
-  // upstream ref both commands fail and every commit reads as pushed.
-  const pushed = await git(path, [
-    ...log,
-    ...(unpushed.ok ? bases.stdout.trim().split('\n') : ['HEAD'])
-  ])
-
-  return { unpushed: parseLog(unpushed), pushed: parseLog(pushed) }
-}
-
-function commitUrlOf(remote: string): string | undefined {
+function commitPagesOf(remote: string): string | undefined {
   const scp = /^(?:[^@/]+@)?([^/:]+):(?!\/\/)(.+)$/.exec(remote)
   const url = URL.parse(scp ? `ssh://${scp[1]}/${scp[2]}` : remote)
 
@@ -114,6 +100,32 @@ function commitUrlOf(remote: string): string | undefined {
   return undefined
 }
 
+async function readHistory(path: string, remote: string): Promise<History> {
+  const [unpushed, bases] = await Promise.all([
+    git(path, [...log, '@{upstream}..HEAD']),
+    git(path, ['merge-base', '--all', 'HEAD', '@{upstream}'])
+  ])
+
+  // Commits reachable from any merge base are exactly those on both sides. Without a local
+  // upstream ref both commands fail and every commit reads as pushed.
+  const pushed = await git(path, [
+    ...log,
+    ...(unpushed.ok ? bases.stdout.trim().split('\n') : ['HEAD'])
+  ])
+
+  return {
+    unpushed: parseLog(unpushed),
+    pushed: parseLog(pushed, commitPagesOf(remote))
+  }
+}
+
+async function readTracking(path: string): Promise<Tracking> {
+  const remote = (await git(path, ['ls-remote', '--get-url'])).stdout.trim()
+  const [sync, history] = await Promise.all([readSync(path), readHistory(path, remote)])
+
+  return { remote, sync, history }
+}
+
 async function readRepo(path: string): Promise<Repo | undefined> {
   // upstream config survives a missing local ref, where `@{upstream}` fails.
   const [commonDir, heads] = await Promise.all([
@@ -132,15 +144,7 @@ async function readRepo(path: string): Promise<Repo | undefined> {
   const [, branch, upstream] = current
   const gitDir = commonDir.stdout.trim()
 
-  const [{ stdout }, sync, history] = await Promise.all([
-    git(path, ['ls-remote', '--get-url']),
-    readSync(path),
-    readHistory(path)
-  ])
-
-  const remote = stdout.trim()
-
-  return { path, gitDir, branch, upstream, remote, commitUrl: commitUrlOf(remote), sync, history }
+  return { path, gitDir, branch, upstream, ...(await readTracking(path)) }
 }
 
 export async function scan(dir: string): Promise<Repo[]> {
@@ -165,15 +169,18 @@ export async function scan(dir: string): Promise<Repo[]> {
 
 export async function fetch(path: string): Promise<FetchResult> {
   const result = await git(path, ['fetch', '--tags', '--force'])
-  const sync = await readSync(path)
+  const tracking = await readTracking(path)
 
-  if (!result.ok) return { sync, outcome: failure(result) }
+  if (!result.ok) return { ...tracking, outcome: failure(result) }
 
-  if (sync === undefined) {
-    return { sync, outcome: { status: 'failed', message: 'The upstream branch no longer exists.' } }
+  if (tracking.sync === undefined) {
+    return {
+      ...tracking,
+      outcome: { status: 'failed', message: 'The upstream branch no longer exists.' }
+    }
   }
 
-  return { sync, outcome: { status: 'fetched' } }
+  return { ...tracking, outcome: { status: 'fetched' } }
 }
 
 export async function pull(path: string, command: PullCommand): Promise<PullResult> {
@@ -205,9 +212,8 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   const aborted =
     command === 'rebase' && !rebasing && !result.ok && (await git(path, ['rebase', '--abort'])).ok
 
-  const [sync, history, added, unmerged] = await Promise.all([
-    readSync(path),
-    readHistory(path),
+  const [tracking, added, unmerged] = await Promise.all([
+    readTracking(path),
     git(path, ['rev-list', '--count', `${before}..@{upstream}`]),
     // Git still exits cleanly when the stashed changes conflict on top of the rebased branch.
     git(path, ['diff', '--name-only', '--diff-filter=U'])
@@ -218,15 +224,15 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
 
     if (aborted) outcome.message += '\n\nRebase aborted, so the branch is unchanged.'
 
-    return { sync, history, outcome }
+    return { ...tracking, outcome }
   }
 
   // Counting from the upstream leaves out local commits that a rebase replays under new hashes.
   const count = Number(added.stdout)
 
-  if (count === 0) return { sync, history, outcome: { status: 'current' } }
+  if (count === 0) return { ...tracking, outcome: { status: 'current' } }
 
-  return { sync, history, outcome: { status: 'updated', count } }
+  return { ...tracking, outcome: { status: 'updated', count } }
 }
 
 export async function show(path: string, hash: string): Promise<CommitDetail> {

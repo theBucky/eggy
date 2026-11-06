@@ -62,9 +62,9 @@ export class Workspace {
     await each(this.entries, async (entry) => {
       entry.task = { command: 'fetch', status: 'running' }
 
-      const { sync, outcome } = await window.api.fetch(entry.repo.path)
+      const { outcome, ...tracking } = await window.api.fetch(entry.repo.path)
 
-      entry.repo.sync = sync
+      Object.assign(entry.repo, tracking)
       entry.task = { command: 'fetch', ...outcome }
     })
   }
@@ -82,10 +82,9 @@ export class Workspace {
   async pull(entry: Entry, command: PullCommand): Promise<void> {
     entry.task = { command, status: 'running' }
 
-    const { sync, history, outcome } = await window.api.pull(entry.repo.path, command)
+    const { outcome, ...tracking } = await window.api.pull(entry.repo.path, command)
 
-    entry.repo.sync = sync
-    entry.repo.history = history
+    Object.assign(entry.repo, tracking)
     entry.task = { command, ...outcome }
   }
 

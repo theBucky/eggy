@@ -3,6 +3,7 @@ export type Commit = {
   subject: string
   author: string
   date: number
+  url: string | undefined
 }
 
 export type CommitDetail = {
@@ -20,15 +21,18 @@ export type Sync = {
   behind: number
 }
 
-export type Repo = {
+// What a repo knows about its upstream, which every scan, fetch, and pull reads afresh.
+export type Tracking = {
+  remote: string
+  sync: Sync | undefined
+  history: History
+}
+
+export type Repo = Tracking & {
   path: string
   gitDir: string
   branch: string
   upstream: string
-  remote: string
-  commitUrl: string | undefined
-  sync: Sync | undefined
-  history: History
 }
 
 export type Failure = { status: 'failed'; message: string }
@@ -39,16 +43,9 @@ export type PullCommand = 'pull' | 'rebase'
 
 export type PullOutcome = { status: 'current' } | { status: 'updated'; count: number } | Failure
 
-export type FetchResult = {
-  sync: Sync | undefined
-  outcome: FetchOutcome
-}
+export type FetchResult = Tracking & { outcome: FetchOutcome }
 
-export type PullResult = {
-  sync: Sync | undefined
-  history: History
-  outcome: PullOutcome
-}
+export type PullResult = Tracking & { outcome: PullOutcome }
 
 export type App = {
   path: string
