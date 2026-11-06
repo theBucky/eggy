@@ -1,12 +1,13 @@
 <script lang="ts">
+  import IconHome from '@tabler/icons-svelte/icons/home'
   import AppDetail from '$lib/apps/app-detail.svelte'
   import AppGroup from '$lib/apps/app-group.svelte'
   import { Apps } from '$lib/apps/apps.svelte'
   import QuitDialog from '$lib/apps/quit-dialog.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
+  import Home from '$lib/home/home.svelte'
   import RepoDetail from '$lib/repos/repo-detail.svelte'
   import RepoGroup from '$lib/repos/repo-group.svelte'
-  import RepoOverview from '$lib/repos/repo-overview.svelte'
   import { Workspace } from '$lib/repos/workspace.svelte'
 
   const workspace = new Workspace()
@@ -16,6 +17,7 @@
 
   const repo = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
   const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
+  const pending = $derived(apps.outdated.length + workspace.outdated.length)
 
   workspace.scan()
 
@@ -27,7 +29,23 @@
 
 <Sidebar.Provider style="--sidebar-width: 18rem">
   <Sidebar.Root variant="inset">
-    <div class="h-8 shrink-0"></div>
+    <div class="shrink-0 px-1 pt-12 pb-2">
+      <Sidebar.Menu>
+        <Sidebar.MenuItem>
+          <Sidebar.MenuButton
+            size="sm"
+            isActive={repo === undefined && app === undefined}
+            onclick={() => (selected = undefined)}
+          >
+            <IconHome stroke={1.5} class="text-muted-foreground" />
+            <span class="flex-1 truncate-fade">Home</span>
+            {#if pending > 0}
+              <span class="font-mono text-xs text-info">{pending}</span>
+            {/if}
+          </Sidebar.MenuButton>
+        </Sidebar.MenuItem>
+      </Sidebar.Menu>
+    </div>
 
     <Sidebar.Content class="scroll-fade-y">
       <AppGroup {apps} bind:selected />
@@ -45,7 +63,7 @@
         <AppDetail {apps} entry={app} />
       {/key}
     {:else}
-      <RepoOverview {workspace} />
+      <Home {apps} {workspace} {pending} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>
