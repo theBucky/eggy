@@ -43,6 +43,7 @@
   --sidebar-primary-foreground: #ffffff;
   /* Opaque to hide the fluid hover highlight under selected rows. */
   --sidebar-accent: color-mix(in srgb, var(--sidebar-foreground) 8%, var(--sidebar));
+  --selected: color-mix(in srgb, var(--foreground) 8%, var(--background));
   --sidebar-accent-foreground: #1c1c1c;
   --sidebar-border: #1c1c1c14;
   --sidebar-ring: #1680f3;
@@ -73,6 +74,7 @@
   --color-destructive: var(--destructive);
   --color-success: var(--success);
   --color-info: var(--info);
+  --color-selected: var(--selected);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
