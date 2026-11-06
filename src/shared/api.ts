@@ -96,7 +96,11 @@ export type Ipc = {
   discardUpdate: (path: string) => Promise<void>
 }
 
+export type Events = {
+  progress: [path: string, progress: Progress]
+}
+
 export type Api = Ipc & {
   home: string
-  onProgress: (listener: (path: string, progress: Progress) => void) => void
+  onProgress: (listener: (...args: Events['progress']) => void) => void
 }

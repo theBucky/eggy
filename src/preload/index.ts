@@ -1,10 +1,16 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { homedir } from 'node:os'
-import type { Api, Ipc } from '../shared/api'
+import type { Api, Events, Ipc } from '../shared/api'
 
 function invoke<Channel extends keyof Ipc>(channel: Channel) {
   return (...args: Parameters<Ipc[Channel]>): Promise<Awaited<ReturnType<Ipc[Channel]>>> =>
     ipcRenderer.invoke(channel, ...args)
+}
+
+function on<Channel extends keyof Events>(channel: Channel) {
+  return (listener: (...args: Events[Channel]) => void): void => {
+    ipcRenderer.on(channel, (_, ...args: Events[Channel]) => listener(...args))
+  }
 }
 
 const api: Api = {
@@ -22,9 +28,7 @@ const api: Api = {
   update: invoke('update'),
   forceUpdate: invoke('forceUpdate'),
   discardUpdate: invoke('discardUpdate'),
-  onProgress: (listener) => {
-    ipcRenderer.on('progress', (_, path, progress) => listener(path, progress))
-  }
+  onProgress: on('progress')
 }
 
 contextBridge.exposeInMainWorld('api', api)

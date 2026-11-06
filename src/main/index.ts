@@ -1,7 +1,15 @@
-import { app, shell, BrowserWindow, dialog, ipcMain, type IpcMainInvokeEvent } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  type IpcMainInvokeEvent,
+  type WebContents
+} from 'electron'
 import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
-import type { Ipc } from '../shared/api'
+import type { Events, Ipc } from '../shared/api'
 import * as git from './git'
 import * as apps from './apps/updater'
 import { resizer } from './window'
@@ -11,6 +19,14 @@ type Handlers = {
     event: IpcMainInvokeEvent,
     ...args: Parameters<Ipc[Channel]>
   ) => ReturnType<Ipc[Channel]>
+}
+
+function send<Channel extends keyof Events>(
+  contents: WebContents,
+  channel: Channel,
+  ...args: Events[Channel]
+): void {
+  contents.send(channel, ...args)
 }
 
 let quitting = false
@@ -84,7 +100,7 @@ app.whenReady().then(() => {
     listApps: () => apps.listApps(),
     check: (_, path) => apps.check(path),
     update: (event, path) =>
-      apps.update(path, (progress) => event.sender.send('progress', path, progress)),
+      apps.update(path, (progress) => send(event.sender, 'progress', path, progress)),
     forceUpdate: (_, path) => apps.forceUpdate(path),
     discardUpdate: (_, path) => apps.discardUpdate(path)
   }
