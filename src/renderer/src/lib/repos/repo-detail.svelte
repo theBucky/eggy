@@ -6,10 +6,10 @@
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
-  import { Spinner } from '$lib/components/ui/spinner'
   import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/time'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
+  import PullButton from '$lib/repos/pull-button.svelte'
   import { diverged, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
   import type { Commit } from '$shared/api'
 
@@ -56,28 +56,9 @@
       </div>
       <div class="flex gap-2 [-webkit-app-region:no-drag]">
         {#if diverged(entry)}
-          <Button
-            size="lg"
-            variant="destructive"
-            disabled={workspace.busy}
-            onclick={() => workspace.pull(entry, 'rebase')}
-          >
-            {#if task?.command === 'rebase' && task.status === 'running'}
-              <Spinner data-icon="inline-start" />
-              Rebasing
-            {:else}
-              Rebase and pull
-            {/if}
-          </Button>
+          <PullButton {workspace} {entry} command="rebase" size="lg" />
         {/if}
-        <Button size="lg" disabled={workspace.busy} onclick={() => workspace.pull(entry, 'pull')}>
-          {#if task?.command === 'pull' && task.status === 'running'}
-            <Spinner data-icon="inline-start" />
-            Pulling
-          {:else}
-            Pull
-          {/if}
-        </Button>
+        <PullButton {workspace} {entry} command="pull" size="lg" />
       </div>
     </div>
 

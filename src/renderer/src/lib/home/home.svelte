@@ -13,6 +13,7 @@
   } from '$lib/apps/apps.svelte'
   import UpdateButton from '$lib/apps/update-button.svelte'
   import { dirOf, nameOf, tilde } from '$lib/paths'
+  import PullButton from '$lib/repos/pull-button.svelte'
   import {
     diverged,
     pulling,
@@ -267,7 +268,6 @@
 {#snippet repoRow(entry: RepoEntry)}
   {@const { repo, task } = entry}
   {@const dir = dirOf(repo.path)}
-  {@const command = diverged(entry) ? 'rebase' : 'pull'}
   <Table.Row>
     <Table.Cell>
       <div class="flex w-6 justify-center"><StatusDot status={statusOf(entry)} /></div>
@@ -298,19 +298,7 @@
     <Table.Cell>
       {#if workspace.outdated.includes(entry)}
         <div class="text-right">
-          <Button
-            size="sm"
-            variant={command === 'rebase' ? 'destructive' : 'default'}
-            disabled={workspace.busy}
-            onclick={() => workspace.pull(entry, command)}
-          >
-            {#if pulling(entry)}
-              <Spinner data-icon="inline-start" />
-              {task?.command === 'rebase' ? 'Rebasing' : 'Pulling'}
-            {:else}
-              {command === 'rebase' ? 'Rebase and pull' : 'Pull'}
-            {/if}
-          </Button>
+          <PullButton {workspace} {entry} command={diverged(entry) ? 'rebase' : 'pull'} size="sm" />
         </div>
       {/if}
     </Table.Cell>
