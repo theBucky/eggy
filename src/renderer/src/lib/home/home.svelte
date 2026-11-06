@@ -15,6 +15,7 @@
   import { dirOf, nameOf, tilde } from '$lib/paths'
   import PullButton from '$lib/repos/pull-button.svelte'
   import {
+    behind,
     diverged,
     pulling,
     statusOf,
@@ -35,14 +36,15 @@
   const updating = $derived(apps.updating || workspace.updating)
 
   const appRows = $derived(
-    apps.entries.filter((entry) => apps.outdated.includes(entry) || entry.task?.status === 'failed')
+    apps.entries.filter(
+      (entry) => releaseOf(entry) !== undefined || entry.task?.status === 'failed'
+    )
   )
 
   // Fetching flashes through every repo, so only pulls count as activity worth a row.
   const repoRows = $derived(
     workspace.entries.filter(
-      (entry) =>
-        workspace.outdated.includes(entry) || entry.task?.status === 'failed' || pulling(entry)
+      (entry) => behind(entry) || entry.task?.status === 'failed' || pulling(entry)
     )
   )
 
@@ -296,7 +298,7 @@
       </div>
     </Table.Cell>
     <Table.Cell>
-      {#if workspace.outdated.includes(entry)}
+      {#if behind(entry)}
         <div class="text-right">
           <PullButton {workspace} {entry} command={diverged(entry) ? 'rebase' : 'pull'} size="sm" />
         </div>

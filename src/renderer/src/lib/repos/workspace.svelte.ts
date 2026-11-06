@@ -12,14 +12,20 @@ export type Entry = {
   task?: Task
 }
 
-export function statusOf({ repo, task }: Entry): Status {
+export function statusOf(entry: Entry): Status {
+  const { task } = entry
+
   if (task?.status === 'running' || task?.status === 'failed') return task.status
 
-  if ((repo.sync?.behind ?? 0) > 0) return 'outdated'
+  if (behind(entry)) return 'outdated'
 
   if (task === undefined) return 'unknown'
 
   return task.status === 'updated' ? 'updated' : 'current'
+}
+
+export function behind({ repo }: Entry): boolean {
+  return (repo.sync?.behind ?? 0) > 0
 }
 
 export function diverged({ repo }: Entry): boolean {
@@ -56,7 +62,7 @@ export class Workspace {
   updating = $derived(this.entries.some(pulling))
   busy = $derived(this.checking || this.updating)
   // Counts a repo through its pull and after a failed one, so the tally holds steady.
-  outdated = $derived(this.entries.filter(({ repo }) => (repo.sync?.behind ?? 0) > 0))
+  outdated = $derived(this.entries.filter(behind))
 
   relative(dir: string): string {
     return dir.startsWith(`${this.root}/`) ? dir.slice(this.root.length + 1) : tilde(dir)

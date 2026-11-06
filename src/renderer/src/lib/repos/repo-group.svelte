@@ -11,7 +11,7 @@
   import StatusDot from '$lib/components/status-dot.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import { dirOf, nameOf } from '$lib/paths'
-  import { statusOf, type Workspace } from '$lib/repos/workspace.svelte'
+  import { behind, statusOf, type Workspace } from '$lib/repos/workspace.svelte'
 
   let {
     workspace,
@@ -74,9 +74,7 @@
                   {/if}
                   <span class="flex-1 truncate-fade">{workspace.relative(dir)}</span>
                   {#if !open}
-                    {@const outdated = entries.filter((entry) =>
-                      workspace.outdated.includes(entry)
-                    ).length}
+                    {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}
                       <span class="text-xs text-muted-foreground">{outdated} outdated</span>
                     {/if}
