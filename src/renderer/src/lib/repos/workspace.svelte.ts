@@ -32,8 +32,8 @@ export function diverged({ repo }: Entry): boolean {
   return repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0
 }
 
-export function pulling({ task }: Entry): boolean {
-  return task?.status === 'running' && task.command !== 'fetch'
+export function runningPull({ task }: Entry): PullCommand | undefined {
+  return task?.status === 'running' && task.command !== 'fetch' ? task.command : undefined
 }
 
 const CONCURRENCY = 8
@@ -59,7 +59,7 @@ export class Workspace {
     this.scanning ||
       this.entries.some(({ task }) => task?.status === 'running' && task.command === 'fetch')
   )
-  updating = $derived(this.entries.some(pulling))
+  updating = $derived(this.entries.some(runningPull))
   busy = $derived(this.checking || this.updating)
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')

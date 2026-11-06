@@ -17,7 +17,7 @@
   import {
     behind,
     diverged,
-    pulling,
+    runningPull,
     statusOf,
     type Entry as RepoEntry,
     type Workspace
@@ -44,7 +44,7 @@
   // Fetching flashes through every repo, so only pulls count as activity worth a row.
   const repoRows = $derived(
     workspace.entries.filter(
-      (entry) => behind(entry) || entry.task?.status === 'failed' || pulling(entry)
+      (entry) => behind(entry) || entry.task?.status === 'failed' || runningPull(entry)
     )
   )
 
@@ -63,13 +63,13 @@
   const subtitle = $derived.by(() => {
     if (scanning) return 'Listing applications and repositories.'
 
-    const behind = [
+    const lagging = [
       apps.outdated.length > 0 && plural(apps.outdated.length, 'application', 'applications'),
       workspace.outdated.length > 0 &&
         plural(workspace.outdated.length, 'repository', 'repositories')
     ].filter(Boolean)
 
-    if (behind.length > 0) return `${behind.join(' and ')} behind.`
+    if (lagging.length > 0) return `${lagging.join(' and ')} behind.`
 
     return `${plural(apps.entries.length, 'application', 'applications')} installed, ${plural(workspace.entries.length, 'repository', 'repositories')} under ${tilde(workspace.root)}.`
   })
@@ -293,7 +293,12 @@
     <Table.Cell>
       {#if behind(entry)}
         <div class="text-right">
-          <PullButton {workspace} {entry} command={diverged(entry) ? 'rebase' : 'pull'} size="sm" />
+          <PullButton
+            {workspace}
+            {entry}
+            command={runningPull(entry) ?? (diverged(entry) ? 'rebase' : 'pull')}
+            size="sm"
+          />
         </div>
       {/if}
     </Table.Cell>
