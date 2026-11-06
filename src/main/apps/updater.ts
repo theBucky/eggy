@@ -202,11 +202,11 @@ function kill(pid: number): void {
 }
 
 // Each pass also catches an instance that launchd restarts.
-async function forceQuit(bundle: Bundle): Promise<void> {
+async function forceQuit(bundle: Bundle): Promise<boolean> {
   for (let pass = 0; pass < 20; pass++) {
     const pids = await pidsOf(bundle)
 
-    if (pids.length === 0) return
+    if (pids.length === 0) return pass > 0
 
     for (const pid of pids) kill(pid)
 
@@ -253,13 +253,16 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   const { path } = bundle
 
   try {
-    await forceQuit(bundle)
+    const running = await forceQuit(bundle)
 
     // moving a whole bundle avoids the app management access needed to delete files inside.
     await shell.trashItem(path)
     await rename(replacement, path)
 
     const { version, build } = await readBundle(path)
+
+    // The update has landed, so an app that fails to reopen stays closed instead of failing it.
+    if (running) await run('open', ['-g', path]).catch(() => undefined)
 
     return { status: 'updated', version, build }
   } catch (cause) {

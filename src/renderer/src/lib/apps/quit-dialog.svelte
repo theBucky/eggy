@@ -28,7 +28,7 @@
           : `${apps.prompt.quitting.length} apps are running`}
       </AlertDialog.Title>
       <AlertDialog.Description>
-        Updating force quits {names}, and unsaved changes are lost.
+        Updating force quits and reopens {names}, and unsaved changes are lost.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
