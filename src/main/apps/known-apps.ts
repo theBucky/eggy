@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
+import * as z from 'zod'
 import type { Bundle } from './bundle'
 import type { Feed, Framework } from './framework'
 import { googleUpdaterFeed } from './google-updater'
@@ -9,7 +10,9 @@ import { run } from './run'
 import { sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
 
-const cursorTracks = ['stable', 'prerelease', 'dev', 'dogfood', 'candidate']
+const CursorSettings = z.object({
+  'update.releaseTrack': z.enum(['stable', 'prerelease', 'dev', 'dogfood', 'candidate'])
+})
 
 // Cursor's update server requires a machine identifier but answers the same for any.
 const anyMachine = '0'.repeat(64)
@@ -61,15 +64,16 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
   [
     'com.todesktop.230313mzl4w4u92',
     async (bundle) => {
-      const settings: { 'update.releaseTrack'?: string } | undefined = parse(
-        await readFile(
-          join(homedir(), 'Library/Application Support/Cursor/User/settings.json'),
-          'utf8'
-        ).catch(() => '')
+      const settings = CursorSettings.safeParse(
+        parse(
+          await readFile(
+            join(homedir(), 'Library/Application Support/Cursor/User/settings.json'),
+            'utf8'
+          ).catch(() => '')
+        )
       )
 
-      const track =
-        cursorTracks.find((known) => known === settings?.['update.releaseTrack']) ?? 'stable'
+      const track = settings.success ? settings.data['update.releaseTrack'] : 'stable'
 
       const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin'
 

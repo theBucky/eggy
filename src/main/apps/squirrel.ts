@@ -1,6 +1,9 @@
+import * as z from 'zod'
 import type { Bundle } from './bundle'
 import { fetchFeed, verifySigner, type Feed, type Update } from './framework'
 import { compare } from './version'
+
+const Offer = z.object({ url: z.string(), name: z.string() })
 
 type Source = {
   url: string
@@ -12,17 +15,17 @@ async function check(bundle: Bundle, source: Source): Promise<Update | undefined
 
   if (response.status === 204) return undefined
 
-  const body: { url: string; name: string } = JSON.parse(await response.text())
+  const offer = Offer.parse(JSON.parse(await response.text()))
 
   // Some feeds, like Figma's, answer with their latest release even when that one is installed.
-  if (compare(body.name, bundle.version) <= 0) return undefined
+  if (compare(offer.name, bundle.version) <= 0) return undefined
 
   return {
     release: {
-      version: body.name,
-      build: body.name,
+      version: offer.name,
+      build: offer.name,
       date: undefined,
-      url: new URL(body.url, source.url).href,
+      url: new URL(offer.url, source.url).href,
       size: undefined,
       notes: { format: 'link', url: source.changelog }
     },

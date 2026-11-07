@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
 import { gt, prerelease, valid } from 'semver'
 import { parse } from 'yaml'
+import * as z from 'zod'
 import type { Notes } from '../../shared/api'
 import type { Bundle } from './bundle'
 import {
@@ -15,37 +16,49 @@ import {
   type Update
 } from './framework'
 
-type Generic = {
-  provider: 'generic'
-  url: string
-  channel?: string
-}
+const Generic = z.object({
+  provider: z.literal('generic'),
+  url: z.string(),
+  channel: z.string().optional()
+})
 
-type GitHub = {
-  provider: 'github'
-  owner: string
-  repo: string
-  channel?: string
-}
+type Generic = z.infer<typeof Generic>
 
-type File = {
-  url: string
-  sha512: string
-  size?: number
-}
+const GitHub = z.object({
+  provider: z.literal('github'),
+  owner: z.string(),
+  repo: z.string(),
+  channel: z.string().optional()
+})
 
-type Info = {
-  version: string
-  files: File[]
-  releaseDate?: string
-}
+type GitHub = z.infer<typeof GitHub>
+
+const Config = z.discriminatedUnion('provider', [Generic, GitHub])
+
+const File = z.object({
+  url: z.string(),
+  sha512: z.string(),
+  size: z.number().optional()
+})
+
+type File = z.infer<typeof File>
+
+const Info = z.object({
+  version: z.string(),
+  files: z.array(File),
+  releaseDate: z.string().optional()
+})
+
+type Info = z.infer<typeof Info>
+
+const LatestRelease = z.object({ tag_name: z.string() })
 
 type Channel = string | number | undefined
 
 const tagLink = /\/tag\/(v?[^/]+)$/
 
 async function fetchInfo(url: string): Promise<Info> {
-  return parse(await (await fetchFeed(url)).text())
+  return Info.parse(parse(await (await fetchFeed(url)).text()))
 }
 
 // Like electron-updater, an arm64 Mac takes arm64 archives when the release has any.
@@ -116,9 +129,7 @@ async function findTag(
       headers: { accept: 'application/json' }
     })
 
-    const latest: { tag_name: string } = JSON.parse(await response.text())
-
-    return latest.tag_name
+    return LatestRelease.parse(JSON.parse(await response.text())).tag_name
   }
 
   return entries.find(
@@ -171,11 +182,11 @@ export const electronUpdater: Framework = async (bundle) => {
 
   if (!existsSync(path)) return undefined
 
-  const config: Generic | GitHub = parse(await readFile(path, 'utf8'))
+  const config = Config.safeParse(parse(await readFile(path, 'utf8')))
 
-  if (config.provider === 'generic') return generic(bundle, config)
+  if (!config.success) return undefined
 
-  if (config.provider === 'github') return github(bundle, config)
-
-  return undefined
+  return config.data.provider === 'generic'
+    ? generic(bundle, config.data)
+    : github(bundle, config.data)
 }

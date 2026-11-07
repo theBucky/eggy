@@ -4,6 +4,7 @@ import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { nativeImage, net, shell } from 'electron'
+import * as z from 'zod'
 import type {
   App,
   CheckOutcome,
@@ -35,7 +36,13 @@ const waiting = new Map<string, Staged>()
 
 const iconSize = { width: 96, height: 96 }
 
+const NoSuchProcess = z.object({ code: z.literal('ESRCH') })
+
 function failure(cause: unknown): Failure {
+  if (cause instanceof z.ZodError) {
+    return { status: 'failed', message: 'The update feed is malformed.' }
+  }
+
   return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
 }
 
@@ -215,7 +222,7 @@ function kill(pid: number): void {
   try {
     process.kill(pid, 'SIGKILL')
   } catch (cause) {
-    if (!(cause instanceof Error && 'code' in cause && cause.code === 'ESRCH')) throw cause
+    if (!NoSuchProcess.safeParse(cause).success) throw cause
   }
 }
 
