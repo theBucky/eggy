@@ -1,4 +1,4 @@
-import { execFile, spawnSync } from 'node:child_process'
+import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -22,18 +22,21 @@ type GitResult = {
 }
 
 // Finder starts the app with launchd's minimal PATH, which hides Homebrew tools that git runs by
-// name, such as git-lfs and credential helpers. A login shell reports the PATH the user expects.
-const shell = process.env.SHELL ?? '/bin/zsh'
-const { stdout: loginPath } = spawnSync(shell, ['-lc', 'printf %s "$PATH"'], { encoding: 'utf8' })
+// name, such as git-lfs and credential helpers. A login shell reports the PATH the user expects. A
+// repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
+const env = new Promise<NodeJS.ProcessEnv>((resolve) => {
+  execFile(process.env.SHELL ?? '/bin/zsh', ['-lc', 'printf %s "$PATH"'], (_, loginPath) => {
+    resolve({ ...process.env, PATH: loginPath || process.env.PATH, GIT_TERMINAL_PROMPT: '0' })
+  })
+})
 
-// A repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
-const env = { ...process.env, PATH: loginPath || process.env.PATH, GIT_TERMINAL_PROMPT: '0' }
+async function git(cwd: string, args: string[]): Promise<GitResult> {
+  // A large pull prints a diffstat line per file, and hitting the default 1 MB cap kills git
+  // midway through updating the working tree.
+  const options = { cwd, env: await env, maxBuffer: Infinity }
 
-function git(cwd: string, args: string[]): Promise<GitResult> {
   return new Promise((resolve) => {
-    // A large pull prints a diffstat line per file, and hitting the default 1 MB cap kills git
-    // midway through updating the working tree.
-    execFile('git', args, { cwd, env, maxBuffer: Infinity }, (error, stdout, stderr) => {
+    execFile('git', args, options, (error, stdout, stderr) => {
       resolve({ ok: error === null, stdout, stderr })
     })
   })
