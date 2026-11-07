@@ -56,9 +56,9 @@
       </div>
       <div class="flex gap-2 [-webkit-app-region:no-drag]">
         {#if diverged(entry)}
-          <PullButton {workspace} {entry} command="rebase" size="lg" />
+          <PullButton {workspace} {entry} command="rebase" size="pill" />
         {/if}
-        <PullButton {workspace} {entry} command="pull" size="lg" />
+        <PullButton {workspace} {entry} command="pull" size="pill" />
       </div>
     </div>
 

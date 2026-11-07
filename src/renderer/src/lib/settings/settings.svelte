@@ -22,12 +22,7 @@
               <span class="font-mono">{tilde(workspace.root)}</span>
             </Field.Description>
           </Field.Content>
-          <Button
-            variant="secondary"
-            size="lg"
-            disabled={workspace.busy}
-            onclick={() => workspace.chooseRoot()}
-          >
+          <Button size="lg" disabled={workspace.busy} onclick={() => workspace.chooseRoot()}>
             Change
           </Button>
         </Field.Field>

@@ -46,7 +46,7 @@
       </div>
       {#if update}
         <div class="[-webkit-app-region:no-drag]">
-          <UpdateButton {apps} {entry} size="lg" />
+          <UpdateButton {apps} {entry} size="pill" />
         </div>
       {/if}
     </div>

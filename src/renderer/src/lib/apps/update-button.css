@@ -1,8 +1,9 @@
-/* Unlayered, so full opacity beats the disabled fade, which only the share still to download keeps. */
+/* Unlayered, so full opacity beats the disabled fade, which the veil redraws over only the share
+   still to download. */
 [data-slot='button'][data-progress] {
   opacity: 1;
-  background-color: color-mix(in srgb, var(--primary) 50%, transparent);
-  background-image: linear-gradient(var(--primary) 0 0);
-  background-size: attr(data-progress %) 100%;
+  background-image: linear-gradient(color-mix(in srgb, var(--background) 50%, transparent) 0 0);
+  background-size: calc(100% - attr(data-progress %)) 100%;
+  background-position: right;
   background-repeat: no-repeat;
 }

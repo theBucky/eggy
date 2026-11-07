@@ -99,7 +99,7 @@
         <p class="truncate text-muted-foreground">{subtitle}</p>
       </div>
       <div class="flex shrink-0 gap-2 [-webkit-app-region:no-drag]">
-        <Button size="lg" variant="secondary" disabled={busy} onclick={check}>
+        <Button size="pill" variant="secondary" disabled={busy} onclick={check}>
           {#if checking}
             <Spinner data-icon="inline-start" />
             Checking
@@ -107,7 +107,7 @@
             {checked ? 'Check again' : 'Check for updates'}
           {/if}
         </Button>
-        <Button size="lg" disabled={busy || pending === 0} onclick={updateAll}>
+        <Button size="pill" disabled={busy || pending === 0} onclick={updateAll}>
           {#if updating}
             <Spinner data-icon="inline-start" />
             Updating
