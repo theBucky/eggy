@@ -69,11 +69,11 @@ export type Release = {
   notes: Notes | undefined
 }
 
-export type CheckOutcome = { status: 'checked'; update: Release | undefined } | Failure
+export type CheckOutcome = { status: 'checked'; release: Release | undefined } | Failure
 
-export type InstallOutcome = { status: 'updated'; version: string; build: string } | Failure
+export type InstallOutcome = { status: 'upgraded'; version: string; build: string } | Failure
 
-export type UpdateOutcome = InstallOutcome | { status: 'waiting' }
+export type UpgradeOutcome = InstallOutcome | { status: 'waiting' }
 
 export type Progress = { stage: 'download'; percent: number | undefined } | { stage: 'install' }
 
@@ -88,9 +88,9 @@ export type Ipc = {
   moveWindow: () => Promise<void>
   listApps: () => Promise<App[]>
   check: (path: string) => Promise<CheckOutcome>
-  update: (path: string) => Promise<UpdateOutcome>
-  forceUpdate: (path: string) => Promise<InstallOutcome>
-  discardUpdate: (path: string) => Promise<void>
+  upgrade: (path: string) => Promise<UpgradeOutcome>
+  forceUpgrade: (path: string) => Promise<InstallOutcome>
+  discardUpgrade: (path: string) => Promise<void>
 }
 
 export type Events = {

@@ -28,7 +28,7 @@
       <Field.Separator />
       <Field.Field orientation="horizontal">
         <Field.Content>
-          <Field.Label for="check-on-launch">Check for updates on launch</Field.Label>
+          <Field.Label for="check-on-launch">Check for upgrades on launch</Field.Label>
           <Field.Description>
             Fetch every repository and check every application as soon as the app opens.
           </Field.Description>

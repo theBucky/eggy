@@ -4,9 +4,9 @@ import type { App, CheckOutcome, Failure, InstallOutcome, Progress, Release } fr
 type Task =
   | { command: 'check'; status: 'running' }
   | ({ command: 'check' } & CheckOutcome)
-  | { command: 'update'; status: 'running'; update: Release; progress: Progress }
-  | ({ command: 'update'; update: Release } & Failure)
-  | { command: 'update'; status: 'updated' }
+  | { command: 'upgrade'; status: 'running'; release: Release; progress: Progress }
+  | ({ command: 'upgrade'; release: Release } & Failure)
+  | { command: 'upgrade'; status: 'upgraded' }
 
 export type Entry = {
   app: App
@@ -16,11 +16,11 @@ export type Entry = {
 // Kept after closing, so the dialog fades out with the apps it named.
 type Prompt = {
   open: boolean
-  quitting: { entry: Entry; update: Release }[]
+  quitting: { entry: Entry; release: Release }[]
 }
 
 export function releaseOf({ task }: Entry): Release | undefined {
-  return task !== undefined && 'update' in task ? task.update : undefined
+  return task !== undefined && 'release' in task ? task.release : undefined
 }
 
 export function labelOf({ version, build }: App | Release): string {
@@ -40,9 +40,9 @@ export function megabytes(bytes: number): string {
 export function statusOf({ task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
-  if (task.status === 'checked') return task.update === undefined ? 'current' : 'outdated'
+  if (task.status === 'checked') return task.release === undefined ? 'current' : 'outdated'
 
-  return task.status
+  return task.status === 'upgraded' ? 'current' : task.status
 }
 
 export class Apps {
@@ -53,10 +53,10 @@ export class Apps {
     this.scanning ||
       this.entries.some(({ task }) => task?.status === 'running' && task.command === 'check')
   )
-  updating = $derived(
-    this.entries.some(({ task }) => task?.status === 'running' && task.command === 'update')
+  upgrading = $derived(
+    this.entries.some(({ task }) => task?.status === 'running' && task.command === 'upgrade')
   )
-  busy = $derived(this.checking || this.updating)
+  busy = $derived(this.checking || this.upgrading)
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'check')
   )
@@ -67,7 +67,7 @@ export class Apps {
     window.api.onProgress((path, progress) => {
       const task = this.entries.find((entry) => entry.app.path === path)?.task
 
-      if (task?.command === 'update' && task.status === 'running') task.progress = progress
+      if (task?.command === 'upgrade' && task.status === 'running') task.progress = progress
     })
   }
 
@@ -88,25 +88,25 @@ export class Apps {
     )
   }
 
-  async update(entries: Entry[]): Promise<void> {
+  async upgrade(entries: Entry[]): Promise<void> {
     await Promise.all(
       entries.map(async (entry) => {
-        const update = releaseOf(entry)
+        const release = releaseOf(entry)
 
-        if (update === undefined) return
+        if (release === undefined) return
 
         entry.task = {
-          command: 'update',
+          command: 'upgrade',
           status: 'running',
-          update,
+          release,
           progress: { stage: 'download', percent: 0 }
         }
 
-        const outcome = await window.api.update(entry.app.path)
+        const outcome = await window.api.upgrade(entry.app.path)
 
-        if (outcome.status !== 'waiting') this.settle(entry, update, outcome)
-        else if (this.prompt.open) this.prompt.quitting.push({ entry, update })
-        else this.prompt = { open: true, quitting: [{ entry, update }] }
+        if (outcome.status !== 'waiting') this.settle(entry, release, outcome)
+        else if (this.prompt.open) this.prompt.quitting.push({ entry, release })
+        else this.prompt = { open: true, quitting: [{ entry, release }] }
       })
     )
   }
@@ -115,8 +115,8 @@ export class Apps {
     this.prompt.open = false
 
     await Promise.all(
-      this.prompt.quitting.map(async ({ entry, update }) => {
-        this.settle(entry, update, await window.api.forceUpdate(entry.app.path))
+      this.prompt.quitting.map(async ({ entry, release }) => {
+        this.settle(entry, release, await window.api.forceUpgrade(entry.app.path))
       })
     )
   }
@@ -125,20 +125,20 @@ export class Apps {
     this.prompt.open = false
 
     await Promise.all(
-      this.prompt.quitting.map(async ({ entry, update }) => {
-        await window.api.discardUpdate(entry.app.path)
-        entry.task = { command: 'check', status: 'checked', update }
+      this.prompt.quitting.map(async ({ entry, release }) => {
+        await window.api.discardUpgrade(entry.app.path)
+        entry.task = { command: 'check', status: 'checked', release }
       })
     )
   }
 
-  private settle(entry: Entry, update: Release, outcome: InstallOutcome): void {
-    if (outcome.status === 'updated') {
+  private settle(entry: Entry, release: Release, outcome: InstallOutcome): void {
+    if (outcome.status === 'upgraded') {
       entry.app.version = outcome.version
       entry.app.build = outcome.build
-      entry.task = { command: 'update', status: 'updated' }
+      entry.task = { command: 'upgrade', status: 'upgraded' }
     } else {
-      entry.task = { command: 'update', update, ...outcome }
+      entry.task = { command: 'upgrade', release, ...outcome }
     }
   }
 }

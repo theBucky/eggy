@@ -17,18 +17,18 @@
 <SidebarSection label="Applications">
   {#snippet toolbar()}
     <ToolbarButton
-      label="Check for updates"
+      label="Check for upgrades"
       icon={IconRefresh}
       busy={apps.checking}
       disabled={apps.busy}
       onclick={() => apps.refresh()}
     />
     <ToolbarButton
-      label="Update {apps.outdated.length} outdated"
+      label="Upgrade {apps.outdated.length} outdated"
       icon={IconCloudDownload}
-      busy={apps.updating}
+      busy={apps.upgrading}
       disabled={apps.busy || apps.outdated.length === 0}
-      onclick={() => apps.update(apps.outdated)}
+      onclick={() => apps.upgrade(apps.outdated)}
     />
   {/snippet}
   <Sidebar.Menu>

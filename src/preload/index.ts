@@ -27,9 +27,9 @@ const api: Api = {
   moveWindow: invoke('moveWindow'),
   listApps: invoke('listApps'),
   check: invoke('check'),
-  update: invoke('update'),
-  forceUpdate: invoke('forceUpdate'),
-  discardUpdate: invoke('discardUpdate'),
+  upgrade: invoke('upgrade'),
+  forceUpgrade: invoke('forceUpgrade'),
+  discardUpgrade: invoke('discardUpgrade'),
   onProgress: on('progress')
 }
 

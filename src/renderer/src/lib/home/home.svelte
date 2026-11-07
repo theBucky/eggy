@@ -10,7 +10,7 @@
     type Apps,
     type Entry as AppEntry
   } from '$lib/apps/apps.svelte'
-  import UpdateButton from '$lib/apps/update-button.svelte'
+  import UpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { dirOf, nameOf, tilde } from '$lib/paths'
   import PullButton from '$lib/repos/pull-button.svelte'
   import {
@@ -32,7 +32,7 @@
   const scanning = $derived(apps.scanning || workspace.scanning)
 
   const checking = $derived(apps.checking || workspace.checking)
-  const updating = $derived(apps.updating || workspace.updating)
+  const upgrading = $derived(apps.upgrading || workspace.pulling)
 
   const appRows = $derived(
     apps.entries.filter((entry) => releaseOf(entry) || entry.task?.status === 'failed')
@@ -48,9 +48,9 @@
   const headline = $derived.by(() => {
     if (scanning) return 'Scanning'
 
-    if (checking) return 'Checking for updates'
+    if (checking) return 'Checking for upgrades'
 
-    if (pending > 0) return `${plural(pending, 'update', 'updates')} waiting`
+    if (pending > 0) return `${plural(pending, 'upgrade', 'upgrades')} waiting`
 
     if (apps.checkFailed || workspace.checkFailed) return 'Some checks failed'
 
@@ -84,8 +84,8 @@
     workspace.refresh()
   }
 
-  function updateAll(): void {
-    apps.update(apps.outdated)
+  function upgradeAll(): void {
+    apps.upgrade(apps.outdated)
     workspace.pullAll()
   }
 </script>
@@ -103,11 +103,11 @@
         {:else if checked}
           Check again
         {:else}
-          Check for updates
+          Check for upgrades
         {/if}
       </Button>
-      <Button size="pill" disabled={busy || pending === 0} onclick={updateAll}>
-        {updating ? 'Updating' : 'Update everything'}
+      <Button size="pill" disabled={busy || pending === 0} onclick={upgradeAll}>
+        {upgrading ? 'Upgrading' : 'Upgrade everything'}
       </Button>
     </div>
   </div>
@@ -132,9 +132,9 @@
                   variant="ghost"
                   size="sm"
                   disabled={apps.busy}
-                  onclick={() => apps.update(apps.outdated)}
+                  onclick={() => apps.upgrade(apps.outdated)}
                 >
-                  Update all {apps.outdated.length}
+                  Upgrade all {apps.outdated.length}
                 </Button>
               </div>
             {/if}
@@ -214,7 +214,7 @@
      that is zero wide until it stretches to the cell. -->
 {#snippet appRow(entry: AppEntry)}
   {@const { app, task } = entry}
-  {@const update = releaseOf(entry)}
+  {@const release = releaseOf(entry)}
   <Table.Row>
     <Table.Cell><img src={app.icon} alt="" class="size-6" /></Table.Cell>
     <Table.Cell><div class="w-0 min-w-full truncate text-base">{app.name}</div></Table.Cell>
@@ -222,29 +222,29 @@
       <Table.Cell colspan={3}>
         <div class="w-0 min-w-full truncate text-destructive">{task.message}</div>
       </Table.Cell>
-    {:else if update}
+    {:else if release}
       <Table.Cell>
         <div class="flex w-0 min-w-full items-center gap-2 font-mono text-xs/[18px]">
           <span class="truncate text-muted-foreground">{labelOf(app)}</span>
           <IconArrowRight class="size-3 shrink-0 text-muted-foreground" />
-          <span class="truncate">{labelOf(update)}</span>
+          <span class="truncate">{labelOf(release)}</span>
         </div>
       </Table.Cell>
       <Table.Cell>
         <div class="text-right text-muted-foreground">
-          {#if update.size !== undefined}{megabytes(update.size)}{/if}
+          {#if release.size !== undefined}{megabytes(release.size)}{/if}
         </div>
       </Table.Cell>
       <Table.Cell>
         <div class="text-right text-muted-foreground">
-          {#if update.date !== undefined}{ago(update.date)}{/if}
+          {#if release.date !== undefined}{ago(release.date)}{/if}
         </div>
       </Table.Cell>
     {/if}
     <Table.Cell>
-      {#if update}
+      {#if release}
         <div class="text-right">
-          <UpdateButton {apps} {entry} size="sm" />
+          <UpgradeButton {apps} {entry} size="sm" />
         </div>
       {/if}
     </Table.Cell>

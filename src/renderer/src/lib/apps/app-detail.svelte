@@ -4,7 +4,7 @@
   import { Button } from '$lib/components/ui/button'
   import { labelOf, megabytes, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
-  import UpdateButton from '$lib/apps/update-button.svelte'
+  import UpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/time'
 
@@ -13,7 +13,7 @@
   let { apps, entry }: { apps: Apps; entry: Entry } = $props()
 
   const { app, task } = $derived(entry)
-  const update = $derived(releaseOf(entry))
+  const release = $derived(releaseOf(entry))
 
   const feedLabel = $derived.by(() => {
     const { origin, pathname } = new URL(app.feed)
@@ -26,14 +26,14 @@
       return { label: 'Checking', variant: 'secondary' }
     }
 
-    if (update !== undefined) return { label: 'Update available', variant: 'info' }
+    if (release !== undefined) return { label: 'Upgrade available', variant: 'info' }
 
     if (task?.command === 'check' && task.status === 'failed') {
       return { label: 'Check failed', variant: 'destructive' }
     }
 
-    if (task?.command === 'update' && task.status === 'updated') {
-      return { label: 'Updated', variant: 'success' }
+    if (task?.command === 'upgrade' && task.status === 'upgraded') {
+      return { label: 'Upgraded', variant: 'success' }
     }
 
     return task === undefined ? undefined : { label: 'Up to date', variant: 'success' }
@@ -51,9 +51,9 @@
         </p>
       </div>
     </div>
-    {#if update}
+    {#if release}
       <div class="[-webkit-app-region:no-drag]">
-        <UpdateButton {apps} {entry} size="pill" />
+        <UpgradeButton {apps} {entry} size="pill" />
       </div>
     {/if}
   </div>
@@ -66,21 +66,21 @@
         <Badge variant={badge.variant}>{badge.label}</Badge>
       {/if}
     </dd>
-    {#if update}
+    {#if release}
       <dt class="text-muted-foreground">Latest</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(update)}</span>
-        {#if update.date !== undefined}
-          <span class="shrink-0 text-xs text-muted-foreground">{ago(update.date)}</span>
+        <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(release)}</span>
+        {#if release.date !== undefined}
+          <span class="shrink-0 text-xs text-muted-foreground">{ago(release.date)}</span>
         {/if}
       </dd>
       <dt class="text-muted-foreground">Download</dt>
       <dd class="flex min-w-0 gap-2 font-mono text-xs/[18px]">
         <span class="truncate select-text"
-          >{decodeURIComponent(nameOf(new URL(update.url).pathname))}</span
+          >{decodeURIComponent(nameOf(new URL(release.url).pathname))}</span
         >
-        {#if update.size !== undefined}
-          <span class="shrink-0 text-muted-foreground">{megabytes(update.size)}</span>
+        {#if release.size !== undefined}
+          <span class="shrink-0 text-muted-foreground">{megabytes(release.size)}</span>
         {/if}
       </dd>
     {/if}
@@ -93,17 +93,17 @@
   {#if task?.status === 'failed'}
     <div class="mt-8">
       <FailureAlert
-        title={task.command === 'check' ? 'Check failed' : 'Update failed'}
+        title={task.command === 'check' ? 'Check failed' : 'Upgrade failed'}
         message={task.message}
       />
     </div>
   {/if}
 
-  {#if update?.notes}
+  {#if release?.notes}
     <section class="mt-8 flex min-h-0 max-w-160 flex-col">
       <h2 class="text-muted-foreground">Release notes</h2>
       <div class="scroll-fade-y -mx-scrollbar my-2 overflow-y-auto px-scrollbar py-1">
-        <ReleaseNotes notes={update.notes} />
+        <ReleaseNotes notes={release.notes} />
       </div>
     </section>
   {/if}

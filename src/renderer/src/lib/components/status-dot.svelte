@@ -1,11 +1,10 @@
 <script lang="ts" module>
-  export type Status = 'unknown' | 'running' | 'failed' | 'outdated' | 'updated' | 'current'
+  export type Status = 'unknown' | 'running' | 'failed' | 'outdated' | 'current'
 
   const dots = {
     unknown: 'bg-muted-foreground/30',
     failed: 'bg-destructive',
     outdated: 'bg-info',
-    updated: 'bg-success',
     current: 'bg-success'
   } satisfies Record<Exclude<Status, 'running'>, string>
 </script>

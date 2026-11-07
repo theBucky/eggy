@@ -28,13 +28,13 @@
           : `${apps.prompt.quitting.length} apps are running`}
       </AlertDialog.Title>
       <AlertDialog.Description>
-        Updating force quits and reopens {names}, and unsaved changes are lost.
+        Upgrading force quits and reopens {names}, and unsaved changes are lost.
       </AlertDialog.Description>
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
       <AlertDialog.Action variant="destructive" onclick={() => apps.confirm()}>
-        Quit and update
+        Quit and upgrade
       </AlertDialog.Action>
     </AlertDialog.Footer>
   </AlertDialog.Content>

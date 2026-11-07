@@ -10,8 +10,8 @@ import {
 import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
 import type { Events, Ipc } from '../shared/api'
+import * as apps from './apps/upgrader'
 import * as git from './git'
-import * as apps from './apps/updater'
 import { resizer } from './window'
 
 type Handlers = {
@@ -53,7 +53,7 @@ function createWindow(): BrowserWindow {
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
 
-  // Hiding keeps the renderer, so an update underway still reports its progress and asks before it
+  // Hiding keeps the renderer, so an upgrade underway still reports its progress and asks before it
   // force quits.
   mainWindow.on('close', (event) => {
     if (quitting) return
@@ -99,10 +99,10 @@ app.whenReady().then(() => {
     moveWindow: async () => pane.move(),
     listApps: () => apps.listApps(),
     check: (_, path) => apps.check(path),
-    update: (event, path) =>
-      apps.update(path, (progress) => send(event.sender, 'progress', path, progress)),
-    forceUpdate: (_, path) => apps.forceUpdate(path),
-    discardUpdate: (_, path) => apps.discardUpdate(path)
+    upgrade: (event, path) =>
+      apps.upgrade(path, (progress) => send(event.sender, 'progress', path, progress)),
+    forceUpgrade: (_, path) => apps.forceUpgrade(path),
+    discardUpgrade: (_, path) => apps.discardUpgrade(path)
   }
 
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)

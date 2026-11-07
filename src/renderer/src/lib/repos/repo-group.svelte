@@ -51,7 +51,7 @@
     <ToolbarButton
       label="Pull {workspace.outdated.length} outdated"
       icon={IconCloudDownload}
-      busy={workspace.updating}
+      busy={workspace.pulling}
       disabled={workspace.busy || workspace.outdated.length === 0}
       onclick={() => workspace.pullAll()}
     />

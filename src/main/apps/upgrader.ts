@@ -12,7 +12,7 @@ import type {
   InstallOutcome,
   Progress,
   Release,
-  UpdateOutcome
+  UpgradeOutcome
 } from '../../shared/api'
 import { readBundle, type Bundle } from './bundle'
 import { electronUpdater } from './electron-updater'
@@ -94,7 +94,7 @@ export async function check(path: string): Promise<CheckOutcome> {
   try {
     const update = await fetchUpdate(await readBundle(path))
 
-    return { status: 'checked', update: update?.release }
+    return { status: 'checked', release: update?.release }
   } catch (cause) {
     return failure(cause)
   }
@@ -203,7 +203,7 @@ async function unpack(archive: string, work: string, id: string): Promise<string
     return unpack(join(wrapped, image), work, id)
   }
 
-  throw new Error(`Updates packaged as ${type || 'files without an extension'} aren't supported.`)
+  throw new Error(`Upgrades packaged as ${type || 'files without an extension'} aren't supported.`)
 }
 
 // bundles can also ship cli tools whose processes must stay running.
@@ -286,10 +286,10 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
 
     const { version, build } = await readBundle(path)
 
-    // The update has landed, so an app that fails to reopen stays closed instead of failing it.
+    // The upgrade has landed, so an app that fails to reopen stays closed instead of failing it.
     if (running) await run('open', ['-g', path]).catch(() => undefined)
 
-    return { status: 'updated', version, build }
+    return { status: 'upgraded', version, build }
   } catch (cause) {
     return failure(cause)
   } finally {
@@ -297,10 +297,10 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   }
 }
 
-export async function update(
+export async function upgrade(
   path: string,
   report: (progress: Progress) => void
-): Promise<UpdateOutcome> {
+): Promise<UpgradeOutcome> {
   try {
     const staged = await stage(path, report)
 
@@ -317,18 +317,18 @@ export async function update(
 function takeWaiting(path: string): Staged {
   const staged = waiting.get(path)
 
-  if (staged === undefined) throw new Error('No update is waiting for this app.')
+  if (staged === undefined) throw new Error('No upgrade is waiting for this app.')
 
   waiting.delete(path)
 
   return staged
 }
 
-export function forceUpdate(path: string): Promise<InstallOutcome> {
+export function forceUpgrade(path: string): Promise<InstallOutcome> {
   return install(takeWaiting(path))
 }
 
-export async function discardUpdate(path: string): Promise<void> {
+export async function discardUpgrade(path: string): Promise<void> {
   await rm(takeWaiting(path).work, { recursive: true, force: true })
 }
 

@@ -19,9 +19,7 @@ export function statusOf(entry: Entry): Status {
 
   if (behind(entry)) return 'outdated'
 
-  if (task === undefined) return 'unknown'
-
-  return task.status === 'updated' ? 'updated' : 'current'
+  return task === undefined ? 'unknown' : 'current'
 }
 
 export function behind({ repo }: Entry): boolean {
@@ -59,8 +57,8 @@ export class Workspace {
     this.scanning ||
       this.entries.some(({ task }) => task?.status === 'running' && task.command === 'fetch')
   )
-  updating = $derived(this.entries.some(runningPull))
-  busy = $derived(this.checking || this.updating)
+  pulling = $derived(this.entries.some(runningPull))
+  busy = $derived(this.checking || this.pulling)
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
   )
