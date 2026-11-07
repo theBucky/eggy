@@ -4,6 +4,8 @@ directories:
   buildResources: build
 files:
   - out/**
+electronLanguages: en
+afterPack: ./build/after-pack.js
 mac:
   icon: build/icon.icon
   # self-signed local identity for personal use; no team id, so hardened runtime
