@@ -50,10 +50,10 @@
     </span>
     <span class="flex gap-2">
       {#if additions > 0}
-        <span class="text-success">+{additions}</span>
+        <span class="text-added">+{additions}</span>
       {/if}
       {#if deletions > 0}
-        <span class="text-destructive">-{deletions}</span>
+        <span class="text-removed">-{deletions}</span>
       {/if}
     </span>
   </Collapsible.Trigger>

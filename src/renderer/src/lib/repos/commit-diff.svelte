@@ -8,7 +8,7 @@
   import { SvelteSet } from 'svelte/reactivity'
   import Toolbar from '$lib/components/toolbar.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
-  import { DIFF_THEME, highlighter } from '$lib/repos/highlighter'
+  import { DIFF_THEMES, highlighter } from '$lib/repos/highlighter'
   import FileHeader, { HEADER_HEIGHT } from '$lib/repos/file-header.svelte'
   import { ago } from '$lib/time'
   import type { Commit } from '$shared/api'
@@ -59,8 +59,7 @@
 
   const viewer = new CodeView(
     {
-      theme: DIFF_THEME,
-      themeType: 'light',
+      theme: DIFF_THEMES,
       diffStyle: 'unified',
       diffIndicators: 'none',
       hunkSeparators: 'metadata',
@@ -72,27 +71,27 @@
         diffHeaderHeight: HEADER_HEIGHT,
         hunkSeparatorHeight: LINE_HEIGHT
       },
-      // Colors come from the design system's light editor palette. Changed lines take their colors
-      // as is, where the viewer would tint the background with them, and run them unbroken through
-      // the gutter. A pinned header tucks its top border under the pane header's, which would
-      // otherwise double it.
+      // Changed lines take their colors as is, where the viewer would tint the background with them,
+      // and run them unbroken through the gutter. A pinned header tucks its top border under the
+      // pane header's, which would otherwise double it.
       unsafeCSS: `
       :host {
         --diffs-font-family: var(--font-mono);
         --diffs-header-font-family: var(--font-mono);
         --diffs-font-size: 12px;
         --diffs-line-height: ${LINE_HEIGHT}px;
-        --diffs-addition-color-override: var(--success);
-        --diffs-deletion-color-override: var(--destructive);
-        --diffs-bg-addition-override: #14c16f24;
-        --diffs-bg-addition-number-override: #14c16f24;
-        --diffs-bg-deletion-override: #fb2b3e38;
-        --diffs-bg-deletion-number-override: #fb2b3e38;
-        --diffs-fg-number-override: #1c1c1c5c;
-        --diffs-bg-separator-override: #1c1c1c0a;
+        --diffs-addition-color-override: var(--added);
+        --diffs-deletion-color-override: var(--removed);
+        --diffs-bg-addition-override: var(--added-line);
+        --diffs-bg-addition-number-override: var(--added-line);
+        --diffs-bg-deletion-override: var(--removed-line);
+        --diffs-bg-deletion-number-override: var(--removed-line);
+        --diffs-fg-number-override: color-mix(in srgb, var(--foreground) 36%, transparent);
+        --diffs-bg-separator-override: color-mix(in srgb, var(--foreground) 4%, transparent);
       }
       [data-line-type^='change'] {
         --mix-light: 0%;
+        --mix-dark: 0%;
       }
       [data-column-number] {
         border-right-color: transparent;
@@ -232,8 +231,8 @@
           {totals.files === 1 ? 'file' : 'files'}
         </span>
         <span class="flex gap-2 font-mono text-xs">
-          <span class="text-success">+{totals.additions}</span>
-          <span class="text-destructive">-{totals.deletions}</span>
+          <span class="text-added">+{totals.additions}</span>
+          <span class="text-removed">-{totals.deletions}</span>
         </span>
       {/if}
     </div>

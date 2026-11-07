@@ -11,42 +11,48 @@
     format('woff2-variations');
 }
 
-/* Nothing sets `.dark`, which keeps the vendored components' `dark:` styles off under a dark OS
-   appearance. */
+/* Main's `nativeTheme` picks each token's light or dark value. Nothing sets `.dark`, which keeps the
+   vendored components' `dark:` styles off. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #1c1c1c;
-  --card: #ffffff;
-  --card-foreground: #1c1c1c;
-  --popover: #ffffff;
-  --popover-foreground: #1c1c1c;
-  --primary: #1c1c1c;
-  --primary-foreground: #ffffff;
-  --secondary: #1c1c1c14;
-  --secondary-foreground: #1c1c1c;
-  --muted: #1c1c1c0f;
-  --muted-foreground: #1c1c1c99;
-  --accent: #1c1c1c14;
-  --accent-foreground: #1c1c1c;
-  --destructive: #cd2834;
-  --success: #00854a;
-  --info: #0b6dd3;
-  --border: #1c1c1c14;
-  --input: #1c1c1c1f;
-  --ring: #1680f3;
+  color-scheme: light dark;
+  --background: light-dark(#ffffff, #181818);
+  --foreground: light-dark(#1c1c1c, #f0f0f0);
+  --card: light-dark(#ffffff, #181818);
+  --card-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --popover: light-dark(#ffffff, #121211);
+  --popover-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --primary: light-dark(#1c1c1c, #f0f0f0);
+  --primary-foreground: light-dark(#ffffff, #181818);
+  --secondary: light-dark(#1c1c1c14, #f0f0f014);
+  --secondary-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --muted: light-dark(#1c1c1c0f, #f0f0f00f);
+  --muted-foreground: light-dark(#1c1c1c99, #f0f0f099);
+  --accent: light-dark(#1c1c1c14, #f0f0f014);
+  --accent-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --destructive: light-dark(#cd2834, #e34671);
+  --success: light-dark(#00854a, #3fa266);
+  --info: light-dark(#0b6dd3, #599ce7);
+  --added: light-dark(#00854a, #70b489);
+  --removed: light-dark(#cd2834, #fc6b83);
+  --added-line: light-dark(#14c16f24, #3fa26633);
+  --removed-line: light-dark(#fb2b3e38, #b8004933);
+  --border: light-dark(#1c1c1c14, #f0f0f014);
+  --input: light-dark(#1c1c1c1f, #f0f0f01f);
+  --ring: light-dark(#1680f3, #f0f0f0);
+  --scrim: light-dark(#1c1c1c33, #00000099);
   --radius: 8px;
-  --sidebar: #f5f5f5;
-  --sidebar-foreground: #1c1c1c;
-  --sidebar-primary: #1c1c1c;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar: light-dark(#f5f5f5, #141414);
+  --sidebar-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --sidebar-primary: light-dark(#1c1c1c, #f0f0f0);
+  --sidebar-primary-foreground: light-dark(#ffffff, #181818);
   /* Opaque to hide the fluid hover highlight under selected rows. */
   --sidebar-accent: color-mix(in srgb, var(--sidebar-foreground) 8%, var(--sidebar));
   --selected: color-mix(in srgb, var(--foreground) 8%, var(--background));
-  --sidebar-accent-foreground: #1c1c1c;
-  --sidebar-border: #1c1c1c14;
-  --sidebar-ring: #1680f3;
+  --sidebar-accent-foreground: light-dark(#1c1c1c, #f0f0f0);
+  --sidebar-border: light-dark(#1c1c1c14, #f0f0f014);
+  --sidebar-ring: light-dark(#1680f3, #f0f0f0);
 }
 
 @theme inline {
@@ -72,8 +78,11 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-scrim: var(--scrim);
   --color-success: var(--success);
   --color-info: var(--info);
+  --color-added: var(--added);
+  --color-removed: var(--removed);
   --color-selected: var(--selected);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);

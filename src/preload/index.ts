@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { homedir } from 'node:os'
-import type { Api, Events, Ipc } from '../shared/api'
+import type { Api, Events, Ipc, Theme } from '../shared/api'
 
 function invoke<Channel extends keyof Ipc>(channel: Channel) {
   return (...args: Parameters<Ipc[Channel]>) =>
@@ -17,6 +17,8 @@ function on<Channel extends keyof Events>(channel: Channel) {
 
 const api: Api = {
   home: homedir(),
+  // SAFETY: main answers with `nativeTheme.themeSource`, whose values `Theme` lists.
+  theme: ipcRenderer.sendSync('theme') as Theme,
   chooseRoot: invoke('chooseRoot'),
   scan: invoke('scan'),
   fetch: invoke('fetch'),
@@ -33,6 +35,7 @@ const api: Api = {
   listPackages: invoke('listPackages'),
   checkPackages: invoke('checkPackages'),
   upgradePackage: invoke('upgradePackage'),
+  setTheme: invoke('setTheme'),
   onProgress: on('progress'),
   onOutput: on('output')
 }

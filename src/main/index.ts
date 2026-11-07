@@ -4,6 +4,7 @@ import {
   BrowserWindow,
   dialog,
   ipcMain,
+  nativeTheme,
   type IpcMainInvokeEvent,
   type WebContents
 } from 'electron'
@@ -13,6 +14,7 @@ import type { Events, Ipc } from '../shared/api'
 import * as apps from './apps/upgrader'
 import * as brew from './brew'
 import * as git from './git'
+import { restoreTheme, setTheme, sidebarColor } from './theme'
 import { resizer } from './window'
 
 type Handlers = {
@@ -42,8 +44,7 @@ function createWindow(): BrowserWindow {
     autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     trafficLightPosition: { x: 17, y: 17 },
-    // Matches `--sidebar` in main.css, so a resize never flashes another color past the page.
-    backgroundColor: '#f5f5f5',
+    backgroundColor: sidebarColor(),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.mjs'),
       sandbox: false
@@ -51,6 +52,8 @@ function createWindow(): BrowserWindow {
   })
 
   optimizer.watchWindowShortcuts(mainWindow)
+
+  nativeTheme.on('updated', () => mainWindow.setBackgroundColor(sidebarColor()))
 
   mainWindow.once('ready-to-show', () => mainWindow.show())
 
@@ -79,6 +82,13 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  restoreTheme()
+
+  // The preload reads the theme synchronously, before the page renders.
+  ipcMain.on('theme', (event) => {
+    event.returnValue = nativeTheme.themeSource
+  })
+
   const window = createWindow()
   const pane = resizer(window)
 
@@ -107,7 +117,8 @@ app.whenReady().then(() => {
     listPackages: () => brew.listPackages(),
     checkPackages: () => brew.check(),
     upgradePackage: (event, kind, fullName) =>
-      brew.upgrade(kind, fullName, (text) => send(event.sender, 'output', kind, fullName, text))
+      brew.upgrade(kind, fullName, (text) => send(event.sender, 'output', kind, fullName, text)),
+    setTheme: async (_, theme) => setTheme(theme)
   }
 
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)

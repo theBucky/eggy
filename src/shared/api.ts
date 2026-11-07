@@ -102,6 +102,10 @@ export type PackageList =
 
 export type PackageUpgrade = { status: 'upgraded' } | Failure
 
+export const THEMES = ['system', 'light', 'dark'] as const
+
+export type Theme = (typeof THEMES)[number]
+
 export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scan: (root: string) => Promise<Repo[]>
@@ -119,6 +123,7 @@ export type Ipc = {
   listPackages: () => Promise<PackageList>
   checkPackages: () => Promise<PackageList>
   upgradePackage: (kind: PackageKind, fullName: string) => Promise<PackageUpgrade>
+  setTheme: (theme: Theme) => Promise<void>
 }
 
 export type Events = {
@@ -128,6 +133,7 @@ export type Events = {
 
 export type Api = Ipc & {
   home: string
+  theme: Theme
   onProgress: (listener: (...args: Events['progress']) => void) => void
   onOutput: (listener: (...args: Events['output']) => void) => void
 }
