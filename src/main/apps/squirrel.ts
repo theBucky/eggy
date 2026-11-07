@@ -1,3 +1,4 @@
+import { compare } from './appcast'
 import type { Bundle } from './bundle'
 import { verifySigner } from './codesign'
 import { fetchFeed, type Feed, type Update } from './framework'
@@ -13,6 +14,9 @@ async function check(bundle: Bundle, source: Source): Promise<Update | undefined
   if (response.status === 204) return undefined
 
   const body: { url: string; name: string } = JSON.parse(await response.text())
+
+  // Some feeds, like Figma's, answer with their latest release even when that one is installed.
+  if (compare(body.name, bundle.version) <= 0) return undefined
 
   return {
     release: {

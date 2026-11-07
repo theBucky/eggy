@@ -61,7 +61,7 @@ function pad(shorter: string[], longer: string[]): void {
 }
 
 // follows sparkle's SUStandardVersionComparator rather than semver.
-function compare(a: string, b: string): number {
+export function compare(a: string, b: string): number {
   const partsA = split(a)
   const partsB = split(b)
 

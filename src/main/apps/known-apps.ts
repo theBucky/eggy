@@ -89,6 +89,14 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
         changelog: 'https://x.ai/changelog/bot'
       })
     }
+  ],
+  [
+    'com.figma.Desktop',
+    async (bundle) =>
+      squirrelFeed(bundle, {
+        url: `https://desktop.figma.com/${process.arch === 'arm64' ? 'mac-arm' : 'mac'}/RELEASE.json`,
+        changelog: 'https://www.figma.com/release-notes/'
+      })
   ]
 ])
 
