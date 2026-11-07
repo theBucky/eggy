@@ -16,7 +16,7 @@ export type Entry = {
 // Kept after closing, so the dialog fades out with the apps it named.
 type Prompt = {
   open: boolean
-  quitting: Entry[]
+  quitting: { entry: Entry; update: Release }[]
 }
 
 export function releaseOf({ task }: Entry): Release | undefined {
@@ -91,18 +91,22 @@ export class Apps {
   async update(entries: Entry[]): Promise<void> {
     await Promise.all(
       entries.map(async (entry) => {
+        const update = releaseOf(entry)
+
+        if (update === undefined) return
+
         entry.task = {
           command: 'update',
           status: 'running',
-          update: releaseOf(entry)!,
+          update,
           progress: { stage: 'download', percent: 0 }
         }
 
         const outcome = await window.api.update(entry.app.path)
 
-        if (outcome.status !== 'waiting') this.settle(entry, outcome)
-        else if (this.prompt.open) this.prompt.quitting.push(entry)
-        else this.prompt = { open: true, quitting: [entry] }
+        if (outcome.status !== 'waiting') this.settle(entry, update, outcome)
+        else if (this.prompt.open) this.prompt.quitting.push({ entry, update })
+        else this.prompt = { open: true, quitting: [{ entry, update }] }
       })
     )
   }
@@ -111,8 +115,8 @@ export class Apps {
     this.prompt.open = false
 
     await Promise.all(
-      this.prompt.quitting.map(async (entry) => {
-        this.settle(entry, await window.api.forceUpdate(entry.app.path))
+      this.prompt.quitting.map(async ({ entry, update }) => {
+        this.settle(entry, update, await window.api.forceUpdate(entry.app.path))
       })
     )
   }
@@ -121,20 +125,20 @@ export class Apps {
     this.prompt.open = false
 
     await Promise.all(
-      this.prompt.quitting.map(async (entry) => {
+      this.prompt.quitting.map(async ({ entry, update }) => {
         await window.api.discardUpdate(entry.app.path)
-        entry.task = { command: 'check', status: 'checked', update: releaseOf(entry) }
+        entry.task = { command: 'check', status: 'checked', update }
       })
     )
   }
 
-  private settle(entry: Entry, outcome: InstallOutcome): void {
+  private settle(entry: Entry, update: Release, outcome: InstallOutcome): void {
     if (outcome.status === 'updated') {
       entry.app.version = outcome.version
       entry.app.build = outcome.build
       entry.task = { command: 'update', status: 'updated' }
     } else {
-      entry.task = { command: 'update', update: releaseOf(entry)!, ...outcome }
+      entry.task = { command: 'update', update, ...outcome }
     }
   }
 }

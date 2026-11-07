@@ -3,13 +3,15 @@ import { homedir } from 'node:os'
 import type { Api, Events, Ipc } from '../shared/api'
 
 function invoke<Channel extends keyof Ipc>(channel: Channel) {
-  return (...args: Parameters<Ipc[Channel]>): Promise<Awaited<ReturnType<Ipc[Channel]>>> =>
-    ipcRenderer.invoke(channel, ...args)
+  return (...args: Parameters<Ipc[Channel]>) =>
+    // SAFETY: main answers each channel through the handler that its `Ipc` signature types.
+    ipcRenderer.invoke(channel, ...args) as ReturnType<Ipc[Channel]>
 }
 
 function on<Channel extends keyof Events>(channel: Channel) {
   return (listener: (...args: Events[Channel]) => void): void => {
-    ipcRenderer.on(channel, (_, ...args: Events[Channel]) => listener(...args))
+    // SAFETY: main sends each event through `send`, which types its arguments by `Events`.
+    ipcRenderer.on(channel, (_, ...args) => listener(...(args as Events[Channel])))
   }
 }
 

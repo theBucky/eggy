@@ -3,4 +3,4 @@ import './assets/main.css'
 import { mount } from 'svelte'
 import App from './App.svelte'
 
-mount(App, { target: document.getElementById('root')! })
+mount(App, { target: document.body })

@@ -42,7 +42,7 @@
 
   // A switch keeps the last commit on screen until the next one is ready to replace it whole.
   const shown = $derived(detail?.commit ?? commit)
-  const visible = $derived(revealed && detail !== undefined)
+  const rendered = $derived(revealed ? detail : undefined)
   const allCollapsed = $derived(expanded.size === 0)
 
   const totals = $derived.by(() => {
@@ -206,10 +206,10 @@
 
   // Rendering waits for the pane to come to rest, so the slide never stalls on it.
   $effect(() => {
-    if (!visible) return
+    if (!rendered) return
 
     viewer.setItems(
-      detail!.items.map((item) => {
+      rendered.items.map((item) => {
         const open = expanded.has(item.id)
 
         return { ...item, collapsed: !open, version: Number(open) }
@@ -217,13 +217,13 @@
     )
   })
 
-  function toggleAll(): void {
-    if (allCollapsed) for (const { id } of detail!.items) expanded.add(id)
+  function toggleAll(items: CodeViewDiffItem[]): void {
+    if (allCollapsed) for (const { id } of items) expanded.add(id)
     else expanded.clear()
   }
 </script>
 
-<section class={['flex size-full flex-col transition-opacity', !visible && 'opacity-0']}>
+<section class={['flex size-full flex-col transition-opacity', !rendered && 'opacity-0']}>
   <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b pr-3 pl-5">
     <div class="flex min-w-0 items-center gap-3">
       <span class="font-mono">{shown.hash}</span>
@@ -241,10 +241,11 @@
     <div class="flex items-center gap-1 [-webkit-app-region:no-drag]">
       <Toolbar>
         {#if detail?.items.length}
+          {@const items = detail.items}
           <ToolbarButton
             label={allCollapsed ? 'Expand all files' : 'Collapse all files'}
             icon={allCollapsed ? IconArrowsMoveVertical : IconFold}
-            onclick={toggleAll}
+            onclick={() => toggleAll(items)}
           />
         {/if}
         {#if detail?.commit.url}

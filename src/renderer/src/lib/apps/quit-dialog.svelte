@@ -6,7 +6,7 @@
 
   const list = new Intl.ListFormat('en')
 
-  const names = $derived(list.format(apps.prompt.quitting.map(({ app }) => app.name)))
+  const names = $derived(list.format(apps.prompt.quitting.map(({ entry }) => entry.app.name)))
 </script>
 
 <AlertDialog.Root
@@ -17,8 +17,8 @@
 >
   <AlertDialog.Content>
     <div class="flex flex-wrap gap-2">
-      {#each apps.prompt.quitting as { app } (app.path)}
-        <img src={app.icon} alt="" class="size-10" />
+      {#each apps.prompt.quitting as { entry } (entry.app.path)}
+        <img src={entry.app.icon} alt="" class="size-10" />
       {/each}
     </div>
     <AlertDialog.Header>
