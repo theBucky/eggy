@@ -10,7 +10,6 @@
 
 <script lang="ts">
   import { Button, type ButtonSize } from '$lib/components/ui/button'
-  import { Spinner } from '$lib/components/ui/spinner'
   import { runningPull, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
 
   let {
@@ -29,10 +28,5 @@
   disabled={workspace.busy}
   onclick={() => workspace.pull(entry, command)}
 >
-  {#if runningPull(entry) === command}
-    <Spinner data-icon="inline-start" />
-    {look.running}
-  {:else}
-    {look.idle}
-  {/if}
+  {runningPull(entry) === command ? look.running : look.idle}
 </Button>

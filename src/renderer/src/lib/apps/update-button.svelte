@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Button, type ButtonSize } from '$lib/components/ui/button'
-  import { Spinner } from '$lib/components/ui/spinner'
   import type { Apps, Entry } from '$lib/apps/apps.svelte'
   import './update-button.css'
 
@@ -20,10 +19,8 @@
   onclick={() => apps.update([entry])}
 >
   {#if progress?.stage === 'install'}
-    <Spinner data-icon="inline-start" />
     Installing
   {:else if progress}
-    <Spinner data-icon="inline-start" />
     Downloading
   {:else}
     Update

@@ -2,7 +2,6 @@
   import IconArrowRight from '@tabler/icons-svelte/icons/arrow-right'
   import StatusDot from '$lib/components/status-dot.svelte'
   import { Button } from '$lib/components/ui/button'
-  import { Spinner } from '$lib/components/ui/spinner'
   import * as Table from '$lib/components/ui/table'
   import {
     labelOf,
@@ -101,19 +100,15 @@
       <div class="flex shrink-0 gap-2 [-webkit-app-region:no-drag]">
         <Button size="pill" variant="secondary" disabled={busy} onclick={check}>
           {#if checking}
-            <Spinner data-icon="inline-start" />
             Checking
+          {:else if checked}
+            Check again
           {:else}
-            {checked ? 'Check again' : 'Check for updates'}
+            Check for updates
           {/if}
         </Button>
         <Button size="pill" disabled={busy || pending === 0} onclick={updateAll}>
-          {#if updating}
-            <Spinner data-icon="inline-start" />
-            Updating
-          {:else}
-            Update everything
-          {/if}
+          {updating ? 'Updating' : 'Update everything'}
         </Button>
       </div>
     </div>
