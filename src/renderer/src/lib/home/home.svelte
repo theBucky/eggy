@@ -118,7 +118,7 @@
       </div>
     </div>
 
-    <section class="mt-10">
+    <section class="mt-8">
       <Table.Root>
         <colgroup>
           <col class="w-10" />
