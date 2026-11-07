@@ -7,7 +7,11 @@
   import * as Sidebar from '$lib/components/ui/sidebar'
   import { statusOf, type Apps } from '$lib/apps/apps.svelte'
 
-  let { apps, selected = $bindable() }: { apps: Apps; selected: string | undefined } = $props()
+  let {
+    apps,
+    selected,
+    onselect
+  }: { apps: Apps; selected: string | undefined; onselect: (path: string) => void } = $props()
 </script>
 
 <SidebarSection label="Applications">
@@ -34,7 +38,7 @@
         <Sidebar.MenuButton
           size="sm"
           isActive={app.path === selected}
-          onclick={() => (selected = app.path)}
+          onclick={() => onselect(app.path)}
         >
           <StatusDot status={statusOf(entry)} />
           <img src={app.icon} alt="" class="size-4 shrink-0" />

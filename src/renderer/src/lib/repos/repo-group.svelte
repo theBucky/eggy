@@ -1,7 +1,6 @@
 <script lang="ts">
   import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
   import IconFolder from '@tabler/icons-svelte/icons/folder'
-  import IconFolderCog from '@tabler/icons-svelte/icons/folder-cog'
   import IconFolderOpen from '@tabler/icons-svelte/icons/folder-open'
   import IconRefresh from '@tabler/icons-svelte/icons/refresh'
   import { SvelteSet } from 'svelte/reactivity'
@@ -15,8 +14,13 @@
 
   let {
     workspace,
-    selected = $bindable()
-  }: { workspace: Workspace; selected: string | undefined } = $props()
+    selected,
+    onselect
+  }: {
+    workspace: Workspace
+    selected: string | undefined
+    onselect: (path: string) => void
+  } = $props()
 
   const expanded = new SvelteSet<string>()
 
@@ -37,12 +41,6 @@
 
 <SidebarSection label="Repositories">
   {#snippet toolbar()}
-    <ToolbarButton
-      label="Change folder"
-      icon={IconFolderCog}
-      disabled={workspace.busy}
-      onclick={() => workspace.chooseRoot()}
-    />
     <ToolbarButton
       label="Refresh"
       icon={IconRefresh}
@@ -90,7 +88,7 @@
                     <Sidebar.MenuButton
                       size="sm"
                       isActive={entry.repo.path === selected}
-                      onclick={() => (selected = entry.repo.path)}
+                      onclick={() => onselect(entry.repo.path)}
                     >
                       <StatusDot {status} />
                       <span class="flex-1 truncate-fade">{nameOf(entry.repo.path)}</span>
