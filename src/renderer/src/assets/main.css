@@ -99,6 +99,22 @@
   /* Fits the macOS overlay scrollbar, whose track widens to 16px under the pointer. */
   --spacing-scrollbar: 16px;
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: linear(
+    0,
+    0.079 5%,
+    0.236 10%,
+    0.403 15%,
+    0.551 20%,
+    0.671 25%,
+    0.764 30%,
+    0.833 35%,
+    0.883 40%,
+    0.944 50%,
+    0.974 60%,
+    0.988 70%,
+    0.995 80%,
+    1
+  );
   --transition-duration-collapsible: 260ms;
 }
 
