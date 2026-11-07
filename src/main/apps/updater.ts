@@ -1,4 +1,4 @@
-import { existsSync, rmSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import { mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
@@ -15,10 +15,10 @@ import type {
 } from '../../shared/api'
 import { readBundle, type Bundle } from './bundle'
 import { electronUpdater } from './electron-updater'
-import type { Framework, Update } from './framework'
+import type { Feed, Framework, Update } from './framework'
+import { knownApps } from './known-apps'
 import { run } from './run'
 import { sparkle } from './sparkle'
-import { squirrel } from './squirrel'
 
 type Staged = {
   work: string
@@ -26,8 +26,8 @@ type Staged = {
   bundle: Bundle
 }
 
-// electron-updater installs through Squirrel, so its marker is the more specific one.
-const frameworks: Framework[] = [sparkle, electronUpdater, squirrel]
+// Known apps come first since their feed overrides the one their bundle names.
+const frameworks: Framework[] = [knownApps, sparkle, electronUpdater]
 
 const folders = ['/Applications', join(homedir(), 'Applications')]
 
@@ -39,12 +39,18 @@ function failure(cause: unknown): Failure {
   return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
 }
 
-function frameworkOf(path: string): Framework | undefined {
-  return frameworks.find(({ marker }) => existsSync(join(path, 'Contents', marker)))
+async function feedOf(bundle: Bundle): Promise<Feed | undefined> {
+  for (const framework of frameworks) {
+    const feed = await framework(bundle)
+
+    if (feed !== undefined) return feed
+  }
+
+  return undefined
 }
 
 async function fetchUpdate(bundle: Bundle): Promise<Update | undefined> {
-  const feed = await frameworkOf(bundle.path)?.locate(bundle)
+  const feed = await feedOf(bundle)
 
   if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
 
@@ -53,7 +59,7 @@ async function fetchUpdate(bundle: Bundle): Promise<Update | undefined> {
 
 async function readApp(path: string): Promise<App | undefined> {
   const bundle = await readBundle(path)
-  const feed = await frameworkOf(bundle.path)?.locate(bundle)
+  const feed = await feedOf(bundle)
 
   if (feed === undefined) return undefined
 
@@ -70,9 +76,7 @@ export async function listApps(): Promise<App[]> {
     )
   )
 
-  const paths = listed
-    .flat()
-    .filter((path) => path.endsWith('.app') && frameworkOf(path) !== undefined)
+  const paths = listed.flat().filter((path) => path.endsWith('.app'))
 
   const apps = await Promise.all(paths.map((path) => readApp(path).catch(() => undefined)))
 

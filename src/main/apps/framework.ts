@@ -12,11 +12,7 @@ export type Feed = {
   check: () => Promise<Update | undefined>
 }
 
-// An update framework, recognized by a file it puts in an app's Contents folder.
-export type Framework = {
-  marker: string
-  locate: (bundle: Bundle) => Promise<Feed | undefined>
-}
+export type Framework = (bundle: Bundle) => Promise<Feed | undefined>
 
 export async function fetchFeed(url: string, accept = '*/*'): Promise<Response> {
   const response = await net.fetch(url, { headers: { accept } })
