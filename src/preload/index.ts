@@ -30,7 +30,11 @@ const api: Api = {
   upgrade: invoke('upgrade'),
   forceUpgrade: invoke('forceUpgrade'),
   discardUpgrade: invoke('discardUpgrade'),
-  onProgress: on('progress')
+  listPackages: invoke('listPackages'),
+  checkPackages: invoke('checkPackages'),
+  upgradePackage: invoke('upgradePackage'),
+  onProgress: on('progress'),
+  onOutput: on('output')
 }
 
 contextBridge.exposeInMainWorld('api', api)

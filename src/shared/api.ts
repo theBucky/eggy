@@ -77,6 +77,31 @@ export type UpgradeOutcome = InstallOutcome | { status: 'waiting' }
 
 export type Progress = { stage: 'download'; percent: number | undefined } | { stage: 'install' }
 
+export type PackageKind = 'formula' | 'cask'
+
+export type Package = {
+  kind: PackageKind
+  name: string
+  // Includes the tap for packages outside Homebrew's own, which brew needs to tell them apart.
+  fullName: string
+  description: string | undefined
+  homepage: string | undefined
+  tap: string | undefined
+  version: string
+  latest: string
+  requested: boolean
+  pinned: boolean
+  // Leaves out pinned packages, which brew skips when upgrading.
+  outdated: boolean
+}
+
+export type PackageList =
+  | { status: 'listed'; packages: Package[] }
+  | { status: 'missing' }
+  | Failure
+
+export type PackageUpgrade = { status: 'upgraded' } | Failure
+
 export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scan: (root: string) => Promise<Repo[]>
@@ -91,13 +116,18 @@ export type Ipc = {
   upgrade: (path: string) => Promise<UpgradeOutcome>
   forceUpgrade: (path: string) => Promise<InstallOutcome>
   discardUpgrade: (path: string) => Promise<void>
+  listPackages: () => Promise<PackageList>
+  checkPackages: () => Promise<PackageList>
+  upgradePackage: (kind: PackageKind, fullName: string) => Promise<PackageUpgrade>
 }
 
 export type Events = {
   progress: [path: string, progress: Progress]
+  output: [kind: PackageKind, fullName: string, text: string]
 }
 
 export type Api = Ipc & {
   home: string
   onProgress: (listener: (...args: Events['progress']) => void) => void
+  onOutput: (listener: (...args: Events['output']) => void) => void
 }

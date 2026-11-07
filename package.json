@@ -1,7 +1,7 @@
 {
   "name": "eggy",
   "version": "1.0.0",
-  "description": "Keeps installed applications and local git repositories up to date.",
+  "description": "Keeps installed applications, Homebrew packages, and local git repositories up to date.",
   "type": "module",
   "main": "./out/main/index.js",
   "author": "revolt",

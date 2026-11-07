@@ -11,6 +11,7 @@ import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
 import type { Events, Ipc } from '../shared/api'
 import * as apps from './apps/upgrader'
+import * as brew from './brew'
 import * as git from './git'
 import { resizer } from './window'
 
@@ -26,7 +27,7 @@ function send<Channel extends keyof Events>(
   channel: Channel,
   ...args: Events[Channel]
 ): void {
-  contents.send(channel, ...args)
+  if (!contents.isDestroyed()) contents.send(channel, ...args)
 }
 
 let quitting = false
@@ -102,7 +103,11 @@ app.whenReady().then(() => {
     upgrade: (event, path) =>
       apps.upgrade(path, (progress) => send(event.sender, 'progress', path, progress)),
     forceUpgrade: (_, path) => apps.forceUpgrade(path),
-    discardUpgrade: (_, path) => apps.discardUpgrade(path)
+    discardUpgrade: (_, path) => apps.discardUpgrade(path),
+    listPackages: () => brew.listPackages(),
+    checkPackages: () => brew.check(),
+    upgradePackage: (event, kind, fullName) =>
+      brew.upgrade(kind, fullName, (text) => send(event.sender, 'output', kind, fullName, text))
   }
 
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)

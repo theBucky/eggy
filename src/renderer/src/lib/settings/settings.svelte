@@ -30,7 +30,7 @@
         <Field.Content>
           <Field.Label for="check-on-launch">Check for upgrades on launch</Field.Label>
           <Field.Description>
-            Fetch every repository and check every application as soon as the app opens.
+            Check every application and package and fetch every repository as soon as the app opens.
           </Field.Description>
         </Field.Content>
         <Switch id="check-on-launch" bind:checked={preferences.checkOnLaunch} />

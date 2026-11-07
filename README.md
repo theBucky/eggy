@@ -2,7 +2,7 @@
 
 # eggy
 
-A macOS app that keeps installed applications and local git repositories up to date from one window.
+A macOS app that keeps installed applications, Homebrew packages, and local git repositories up to date from one window.
 
 ![Home with an application upgrade and a repository behind its upstream](docs/screenshots/home.png)
 
@@ -13,6 +13,10 @@ eggy lists the apps in `/Applications` and `~/Applications` that publish an upda
 Each app shows its installed and latest versions, the release date, the download size, and release notes when the feed has them. Upgrading downloads and verifies the release, then swaps the bundle in place and moves the old one to the Trash. A running app is force quit and reopened only after you confirm.
 
 ![ChatGPT with an upgrade available](docs/screenshots/application.png)
+
+## Packages
+
+The Homebrew formulae and casks you installed show up with their installed and latest versions, along with any dependency that has fallen behind. Checking runs `brew update` first. Upgrades run `brew upgrade` one package at a time and show their output on the package's page. Pinned packages and casks that update themselves are left alone, as Homebrew does by default.
 
 ## Repositories
 

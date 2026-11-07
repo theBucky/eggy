@@ -7,32 +7,45 @@
   import QuitDialog from '$lib/apps/quit-dialog.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import Home from '$lib/home/home.svelte'
+  import PackageDetail from '$lib/packages/package-detail.svelte'
+  import PackageGroup from '$lib/packages/package-group.svelte'
+  import { idOf, Packages } from '$lib/packages/packages.svelte'
   import RepoDetail from '$lib/repos/repo-detail.svelte'
   import RepoGroup from '$lib/repos/repo-group.svelte'
   import { Workspace } from '$lib/repos/workspace.svelte'
   import { Preferences } from '$lib/settings/preferences.svelte'
   import Settings from '$lib/settings/settings.svelte'
 
-  type View = { page: 'home' | 'settings' } | { page: 'detail'; path: string }
+  type View = { page: 'home' | 'settings' } | { page: 'detail'; id: string }
 
   const workspace = new Workspace()
   const apps = new Apps()
+  const packages = new Packages()
   const preferences = new Preferences()
 
   let view = $state<View>({ page: 'home' })
 
-  const selected = $derived(view.page === 'detail' ? view.path : undefined)
+  const selected = $derived(view.page === 'detail' ? view.id : undefined)
   const repo = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
   const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
-  const home = $derived(view.page !== 'settings' && repo === undefined && app === undefined)
-  const pending = $derived(apps.outdated.length + workspace.outdated.length)
+  const pkg = $derived(packages.entries.find((entry) => idOf(entry.package) === selected))
+
+  const home = $derived(
+    view.page !== 'settings' && repo === undefined && app === undefined && pkg === undefined
+  )
+
+  const pending = $derived(
+    apps.outdated.length + packages.outdated.length + workspace.outdated.length
+  )
 
   if (preferences.checkOnLaunch) {
     workspace.refresh()
     apps.refresh()
+    packages.refresh()
   } else {
     workspace.scan()
     apps.scan()
+    packages.scan()
   }
 </script>
 
@@ -56,8 +69,11 @@
     </div>
 
     <Sidebar.Content class="scroll-fade-y">
-      <AppGroup {apps} {selected} onselect={(path) => (view = { page: 'detail', path })} />
-      <RepoGroup {workspace} {selected} onselect={(path) => (view = { page: 'detail', path })} />
+      <AppGroup {apps} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+      {#if packages.installed}
+        <PackageGroup {packages} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+      {/if}
+      <RepoGroup {workspace} {selected} onselect={(id) => (view = { page: 'detail', id })} />
     </Sidebar.Content>
 
     <div class="px-1 py-2">
@@ -87,8 +103,12 @@
       {#key app.app.path}
         <AppDetail {apps} entry={app} />
       {/key}
+    {:else if pkg}
+      {#key idOf(pkg.package)}
+        <PackageDetail {packages} entry={pkg} />
+      {/key}
     {:else}
-      <Home {apps} {workspace} {pending} />
+      <Home {apps} {packages} {workspace} {pending} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>
