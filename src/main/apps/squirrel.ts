@@ -1,6 +1,5 @@
 import type { Bundle } from './bundle'
-import { verifySigner } from './codesign'
-import { fetchFeed, type Feed, type Update } from './framework'
+import { fetchFeed, verifySigner, type Feed, type Update } from './framework'
 import { compare } from './version'
 
 type Source = {

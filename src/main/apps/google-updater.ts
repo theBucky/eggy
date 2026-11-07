@@ -1,8 +1,5 @@
-import { createHash } from 'node:crypto'
-import { createReadStream } from 'node:fs'
 import type { Bundle } from './bundle'
-import { verifySigner } from './codesign'
-import { fetchFeed, type Feed, type Update } from './framework'
+import { fetchFeed, verifyChecksum, verifySigner, type Feed, type Update } from './framework'
 
 type Download = {
   size: number
@@ -21,16 +18,6 @@ type Reply = {
 }
 
 const server = 'https://update.googleapis.com/service/update2/json'
-
-async function verifyChecksum(archive: string, sha256: string): Promise<void> {
-  const hash = createHash('sha256')
-
-  for await (const chunk of createReadStream(archive)) hash.update(chunk)
-
-  if (hash.digest('hex') !== sha256) {
-    throw new Error("The download doesn't match the update's checksum.")
-  }
-}
 
 async function check(bundle: Bundle): Promise<Update | undefined> {
   const response = await fetchFeed(server, {
@@ -84,7 +71,7 @@ async function check(bundle: Bundle): Promise<Update | undefined> {
       notes: undefined
     },
     verify: async (archive, replacement) => {
-      await verifyChecksum(archive, download.out.sha256)
+      await verifyChecksum(archive, 'sha256', 'hex', download.out.sha256)
       await verifySigner(bundle.path, replacement)
     }
   }

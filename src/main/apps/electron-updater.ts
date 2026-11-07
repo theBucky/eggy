@@ -1,5 +1,4 @@
-import { createHash } from 'node:crypto'
-import { createReadStream, existsSync } from 'node:fs'
+import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
@@ -7,8 +6,14 @@ import { gt, prerelease, valid } from 'semver'
 import { parse } from 'yaml'
 import type { Notes } from '../../shared/api'
 import type { Bundle } from './bundle'
-import { verifySigner } from './codesign'
-import { fetchFeed, type Feed, type Framework, type Update } from './framework'
+import {
+  fetchFeed,
+  verifyChecksum,
+  verifySigner,
+  type Feed,
+  type Framework,
+  type Update
+} from './framework'
 
 type Generic = {
   provider: 'generic'
@@ -55,16 +60,6 @@ function pickArchive(files: File[]): File {
   return zip
 }
 
-async function verifyChecksum(archive: string, sha512: string): Promise<void> {
-  const hash = createHash('sha512')
-
-  for await (const chunk of createReadStream(archive)) hash.update(chunk)
-
-  if (hash.digest('base64') !== sha512) {
-    throw new Error("The download doesn't match the update's checksum.")
-  }
-}
-
 function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update | undefined {
   if (!gt(info.version, bundle.version)) return undefined
 
@@ -81,7 +76,7 @@ function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update 
       notes
     },
     verify: async (archive, replacement) => {
-      await verifyChecksum(archive, file.sha512)
+      await verifyChecksum(archive, 'sha512', 'base64', file.sha512)
       await verifySigner(bundle.path, replacement)
     }
   }
