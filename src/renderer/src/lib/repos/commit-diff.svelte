@@ -180,7 +180,9 @@
     window.api.show(path, current.hash).then(({ body, patch }) => {
       if (!live) return
 
-      const files = parsePatchFiles(patch).flatMap((parsed) => parsed.files)
+      const files = parsePatchFiles(patch, { cacheKeyPrefix: `${path}:${current.hash}` }).flatMap(
+        (parsed) => parsed.files
+      )
 
       unmountHeaders()
       expanded.clear()
