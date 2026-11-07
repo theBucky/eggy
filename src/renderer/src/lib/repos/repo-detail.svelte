@@ -126,7 +126,7 @@
 
 {#snippet row(commit: Commit, published: boolean)}
   {@const active = commit.hash === selected?.hash}
-  <div role="listitem" class={['rounded-md', !published && 'opacity-50', active && 'bg-selected']}>
+  <div role="listitem" class={[!published && 'opacity-50']}>
     <Item.Root size="xs">
       {#snippet child({ props })}
         <button
