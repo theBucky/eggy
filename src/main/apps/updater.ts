@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, rmSync } from 'node:fs'
 import { mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
@@ -305,4 +305,8 @@ export function forceUpdate(path: string): Promise<InstallOutcome> {
 
 export async function discardUpdate(path: string): Promise<void> {
   await rm(takeWaiting(path).work, { recursive: true, force: true })
+}
+
+export function discardWaiting(): void {
+  for (const { work } of waiting.values()) rmSync(work, { recursive: true, force: true })
 }

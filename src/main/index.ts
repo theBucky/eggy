@@ -113,3 +113,5 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   quitting = true
 })
+
+app.on('will-quit', apps.discardWaiting)
