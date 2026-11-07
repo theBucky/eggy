@@ -59,17 +59,8 @@ async function readApp(path: string): Promise<App | undefined> {
 
   const { name, version, build } = bundle
   const icon = await nativeImage.createThumbnailFromPath(path, iconSize)
-  // Deeper path segments and queries can hold license keys and machine identifiers.
-  const { origin, pathname } = new URL(feed.url)
 
-  return {
-    path,
-    name,
-    version,
-    build,
-    feed: origin + pathname.split('/', 2).join('/'),
-    icon: icon.toDataURL()
-  }
+  return { path, name, version, build, feed: feed.url, icon: icon.toDataURL() }
 }
 
 export async function listApps(): Promise<App[]> {

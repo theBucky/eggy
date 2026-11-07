@@ -14,6 +14,11 @@
 
   const { app, task } = $derived(entry)
   const update = $derived(releaseOf(entry))
+  const feedLabel = $derived.by(() => {
+    const { origin, pathname } = new URL(app.feed)
+
+    return origin + pathname.split('/', 2).join('/')
+  })
 
   const badge = $derived.by((): StatusBadge | undefined => {
     if (task?.command === 'check' && task.status === 'running') {
@@ -77,7 +82,7 @@
       {/if}
       <dt class="text-muted-foreground">Feed</dt>
       <dd class="-my-1 -ml-2 flex font-mono">
-        <Button variant="link" size="sm" href={app.feed} target="_blank">{app.feed}</Button>
+        <Button variant="link" size="sm" href={app.feed} target="_blank">{feedLabel}</Button>
       </dd>
     </dl>
 
