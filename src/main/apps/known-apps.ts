@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
 import type { Bundle } from './bundle'
 import type { Feed, Framework } from './framework'
+import { googleUpdaterFeed } from './google-updater'
 import { run } from './run'
 import { sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
@@ -90,6 +91,9 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
       })
     }
   ],
+  // Chrome, whose updates hold the app itself, unlike Google apps that update through an installer
+  // package.
+  ['com.google.Chrome', async (bundle) => googleUpdaterFeed(bundle)],
   [
     'com.figma.Desktop',
     async (bundle) =>

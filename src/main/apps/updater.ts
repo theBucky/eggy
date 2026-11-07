@@ -1,5 +1,5 @@
 import { rmSync } from 'node:fs'
-import { mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
+import { mkdir, mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -180,6 +180,20 @@ async function unpack(archive: string, work: string, id: string): Promise<string
     } finally {
       await run('hdiutil', ['detach', mount, '-force'])
     }
+  }
+
+  // Google's updater wraps a disk image in a crx3, a zip behind a signed header that tar skips.
+  if (type === '.crx3') {
+    const wrapped = join(work, 'wrapped')
+
+    await mkdir(wrapped)
+    await run('tar', ['-xf', archive, '-C', wrapped])
+
+    const image = (await readdir(wrapped)).find((name) => extname(name) === '.dmg')
+
+    if (image === undefined) throw new Error('The download holds no disk image.')
+
+    return unpack(join(wrapped, image), work, id)
   }
 
   throw new Error(`Updates packaged as ${type || 'files without an extension'} aren't supported.`)

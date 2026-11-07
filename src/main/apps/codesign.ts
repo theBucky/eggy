@@ -8,8 +8,16 @@ export async function verifySigner(installed: string, replacement: string): Prom
     ''
   )
 
+  // Chrome ships Finder info on its files, which sits outside the signature, so the sideband check
+  // stays off.
   try {
-    await run('codesign', ['--verify', '--deep', '--strict', `-R=${requirement}`, replacement])
+    await run('codesign', [
+      '--verify',
+      '--deep',
+      '--strict=symlinks',
+      `-R=${requirement}`,
+      replacement
+    ])
   } catch {
     throw new Error("The update isn't signed by the app's developer.")
   }

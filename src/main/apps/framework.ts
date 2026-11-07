@@ -14,8 +14,8 @@ export type Feed = {
 
 export type Framework = (bundle: Bundle) => Promise<Feed | undefined>
 
-export async function fetchFeed(url: string, accept = '*/*'): Promise<Response> {
-  const response = await net.fetch(url, { headers: { accept } })
+export async function fetchFeed(url: string, init?: RequestInit): Promise<Response> {
+  const response = await net.fetch(url, { headers: { accept: '*/*' }, ...init })
 
   if (!response.ok) throw new Error(`The update feed answered with HTTP ${response.status}.`)
 
