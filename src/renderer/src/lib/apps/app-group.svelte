@@ -31,7 +31,7 @@
       onclick={() => apps.update(apps.outdated)}
     />
   {/snippet}
-  <Sidebar.Menu class="pt-1">
+  <Sidebar.Menu>
     {#each apps.entries as entry (entry.app.path)}
       {@const { app } = entry}
       <Sidebar.MenuItem>

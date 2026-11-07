@@ -41,7 +41,9 @@
         </Toolbar>
       </div>
       <Collapsible.Content hiddenUntilFound>
-        {@render children()}
+        <div class="pt-1">
+          {@render children()}
+        </div>
       </Collapsible.Content>
     </Sidebar.Group>
   {/snippet}

@@ -56,7 +56,7 @@
       onclick={() => workspace.pullAll()}
     />
   {/snippet}
-  <Sidebar.Menu class="pt-1">
+  <Sidebar.Menu>
     {#each folders as [dir, entries] (dir)}
       {@const open = expanded.has(dir)}
       <Collapsible.Root bind:open={() => open, (value) => setExpanded(dir, value)}>
