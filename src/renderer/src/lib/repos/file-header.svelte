@@ -25,7 +25,7 @@
 <Collapsible.Root bind:open={() => open, ontoggle}>
   <Collapsible.Trigger
     class={[
-      'flex w-full items-center justify-between gap-3 border-y px-5 outline-none focus-visible:bg-muted',
+      'flex w-full items-center justify-between gap-3 border-y px-5 outline-none select-none focus-visible:bg-muted',
       !open && 'border-b-transparent'
     ]}
     style="height: {HEADER_HEIGHT}px"

@@ -19,7 +19,7 @@
           <Field.Content>
             <Field.Title>Repository folder</Field.Title>
             <Field.Description>
-              <span class="font-mono">{tilde(workspace.root)}</span>
+              <span class="font-mono select-text">{tilde(workspace.root)}</span>
             </Field.Description>
           </Field.Content>
           <Button size="lg" disabled={workspace.busy} onclick={() => workspace.chooseRoot()}>

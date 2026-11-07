@@ -47,7 +47,9 @@
         <img src={app.icon} alt="" class="size-12 shrink-0" />
         <div class="flex min-w-0 flex-col gap-1">
           <h1 class="truncate text-xl font-semibold tracking-tight">{app.name}</h1>
-          <p class="truncate font-mono text-xs text-muted-foreground">{tilde(app.path)}</p>
+          <p class="truncate font-mono text-xs text-muted-foreground select-text">
+            {tilde(app.path)}
+          </p>
         </div>
       </div>
       {#if update}
@@ -60,7 +62,7 @@
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Installed</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px]">{labelOf(app)}</span>
+        <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(app)}</span>
         {#if badge}
           <Badge variant={badge.variant}>{badge.label}</Badge>
         {/if}
@@ -68,14 +70,16 @@
       {#if update}
         <dt class="text-muted-foreground">Latest</dt>
         <dd class="flex min-w-0 items-center gap-2">
-          <span class="truncate font-mono text-xs/[18px]">{labelOf(update)}</span>
+          <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(update)}</span>
           {#if update.date !== undefined}
             <span class="shrink-0 text-xs text-muted-foreground">{ago(update.date)}</span>
           {/if}
         </dd>
         <dt class="text-muted-foreground">Download</dt>
         <dd class="flex min-w-0 gap-2 font-mono text-xs/[18px]">
-          <span class="truncate">{decodeURIComponent(nameOf(new URL(update.url).pathname))}</span>
+          <span class="truncate select-text"
+            >{decodeURIComponent(nameOf(new URL(update.url).pathname))}</span
+          >
           {#if update.size !== undefined}
             <span class="shrink-0 text-muted-foreground">{megabytes(update.size)}</span>
           {/if}

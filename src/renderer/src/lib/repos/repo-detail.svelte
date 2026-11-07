@@ -52,7 +52,9 @@
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
-        <p class="truncate font-mono text-xs text-muted-foreground">{tilde(repo.path)}</p>
+        <p class="truncate font-mono text-xs text-muted-foreground select-text">
+          {tilde(repo.path)}
+        </p>
       </div>
       <div class="flex gap-2 [-webkit-app-region:no-drag]">
         {#if diverged(entry)}
@@ -64,14 +66,14 @@
 
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Branch</dt>
-      <dd class="truncate font-mono text-xs/[18px]">{repo.branch}</dd>
+      <dd class="truncate font-mono text-xs/[18px] select-text">{repo.branch}</dd>
       <dt class="text-muted-foreground">Upstream</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px]">{repo.upstream}</span>
+        <span class="truncate font-mono text-xs/[18px] select-text">{repo.upstream}</span>
         <Badge variant={badge.variant}>{badge.label}</Badge>
       </dd>
       <dt class="text-muted-foreground">Remote</dt>
-      <dd class="truncate font-mono text-xs/[18px]">{repo.remote}</dd>
+      <dd class="truncate font-mono text-xs/[18px] select-text">{repo.remote}</dd>
     </dl>
 
     {#if task?.status === 'failed'}

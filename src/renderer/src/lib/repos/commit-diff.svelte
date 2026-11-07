@@ -226,7 +226,7 @@
 <section class={['flex size-full flex-col transition-opacity', !rendered && 'opacity-0']}>
   <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b pr-3 pl-5">
     <div class="flex min-w-0 items-center gap-3">
-      <span class="font-mono">{shown.hash}</span>
+      <span class="font-mono select-text">{shown.hash}</span>
       {#if totals}
         <span class="truncate text-muted-foreground">
           {totals.files}
@@ -262,7 +262,7 @@
   </header>
 
   <!-- The viewer moves the summary into the scroll content, above the first file. -->
-  <div bind:this={root} class="mb-2 min-h-0 flex-1 overflow-y-auto">
+  <div bind:this={root} class="mb-2 min-h-0 flex-1 overflow-y-auto select-text">
     <div bind:this={summary} class="flex flex-col gap-2 p-5">
       <h2 class="text-lg font-semibold tracking-tight wrap-anywhere">{shown.subject}</h2>
       {#if detail?.body}

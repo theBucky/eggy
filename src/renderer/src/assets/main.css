@@ -161,7 +161,7 @@
     corner-shape: superellipse(1.25);
   }
   body {
-    @apply bg-background text-base text-foreground antialiased;
+    @apply bg-background text-base text-foreground antialiased select-none;
   }
   html {
     @apply font-sans;
