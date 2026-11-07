@@ -14,6 +14,7 @@ import type {
   Sync,
   Tracking
 } from '../shared/api'
+import { loginEnv } from './login-env'
 
 type GitResult = {
   ok: boolean
@@ -21,14 +22,8 @@ type GitResult = {
   stderr: string
 }
 
-// Finder starts the app with launchd's minimal PATH, which hides Homebrew tools that git runs by
-// name, such as git-lfs and credential helpers. A login shell reports the PATH the user expects. A
-// repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
-const env = new Promise<NodeJS.ProcessEnv>((resolve) => {
-  execFile(process.env.SHELL ?? '/bin/zsh', ['-lc', 'printf %s "$PATH"'], (_, loginPath) => {
-    resolve({ ...process.env, PATH: loginPath || process.env.PATH, GIT_TERMINAL_PROMPT: '0' })
-  })
-})
+// A repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
+const env = loginEnv.then((env) => ({ ...env, GIT_TERMINAL_PROMPT: '0' }))
 
 async function git(cwd: string, args: string[]): Promise<GitResult> {
   // A large pull prints a diffstat line per file, and hitting the default 1 MB cap kills git
