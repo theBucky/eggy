@@ -10,7 +10,7 @@
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "lint": "oxlint",
-    "typecheck": "svelte-check --tsconfig ./tsconfig.node.json && svelte-check --tsconfig ./tsconfig.web.json",
+    "typecheck": "tsc -p tsconfig.node.json && svelte-check --tsconfig ./tsconfig.web.json",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "pnpm typecheck && electron-vite build",

@@ -59,7 +59,7 @@ async function check(installed: string, source: Source): Promise<Update | undefi
 
   if (response.status === 204) return undefined
 
-  const body: { url: string; name: string } = await response.json()
+  const body: { url: string; name: string } = JSON.parse(await response.text())
 
   return {
     release: {

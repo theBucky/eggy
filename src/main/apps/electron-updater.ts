@@ -119,9 +119,8 @@ async function findTag(
   const channel = prerelease(installed)?.[0]
 
   if (channel === undefined) {
-    const latest: { tag_name: string } = await (
-      await fetchFeed(`${releases}/latest`, 'application/json')
-    ).json()
+    const response = await fetchFeed(`${releases}/latest`, 'application/json')
+    const latest: { tag_name: string } = JSON.parse(await response.text())
 
     return latest.tag_name
   }

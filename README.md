@@ -20,7 +20,7 @@ pnpm dev
 | ------------------- | --------------------------------------------- |
 | `pnpm dev`          | Dev server + Electron with HMR                |
 | `pnpm build`        | Typecheck and build all processes             |
-| `pnpm typecheck`    | `svelte-check` on node + web tsconfigs        |
+| `pnpm typecheck`    | `tsc` on node, `svelte-check` on web tsconfig |
 | `pnpm lint`         | oxlint                                        |
 | `pnpm format`       | oxfmt (write)                                 |
 | `pnpm format:check` | oxfmt (check only)                            |
