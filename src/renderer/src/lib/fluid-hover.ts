@@ -47,8 +47,13 @@ export function fluidHover(selector: string): Attachment<HTMLElement> {
       const shown = lit !== undefined
       const next = pick()
 
-      if (next !== undefined && next !== lit) {
-        container.style.setProperty('--hover-radius', getComputedStyle(next).borderRadius)
+      if (next !== lit) {
+        lit?.removeAttribute('data-highlighted')
+
+        if (next !== undefined) {
+          next.setAttribute('data-highlighted', '')
+          container.style.setProperty('--hover-radius', getComputedStyle(next).borderRadius)
+        }
       }
 
       lit = next

@@ -45,7 +45,7 @@
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton size="sm" isActive={home} onclick={() => (view = { page: 'home' })}>
-            <IconHome stroke={1.5} class="text-muted-foreground" />
+            <IconHome stroke={1.5} />
             <span class="flex-1 truncate-fade">Home</span>
             {#if pending > 0}
               <span class="font-mono text-xs text-info">{pending}</span>
@@ -68,7 +68,7 @@
             isActive={view.page === 'settings'}
             onclick={() => (view = { page: 'settings' })}
           >
-            <IconSettings stroke={1.5} class="text-muted-foreground" />
+            <IconSettings stroke={1.5} />
             <span class="flex-1 truncate-fade">Settings</span>
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>

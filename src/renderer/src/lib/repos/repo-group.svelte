@@ -66,15 +66,15 @@
               {#snippet child({ props })}
                 <Sidebar.MenuButton {...props} size="sm">
                   {#if open}
-                    <IconFolderOpen stroke={1.5} class="text-muted-foreground" />
+                    <IconFolderOpen stroke={1.5} />
                   {:else}
-                    <IconFolder stroke={1.5} class="text-muted-foreground" />
+                    <IconFolder stroke={1.5} />
                   {/if}
                   <span class="flex-1 truncate-fade">{workspace.relative(dir)}</span>
                   {#if !open}
                     {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}
-                      <span class="text-xs text-muted-foreground">{outdated} outdated</span>
+                      <span class="text-xs">{outdated} outdated</span>
                     {/if}
                   {/if}
                 </Sidebar.MenuButton>

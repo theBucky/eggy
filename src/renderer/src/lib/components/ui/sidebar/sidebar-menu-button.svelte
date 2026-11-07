@@ -1,9 +1,8 @@
 <script lang="ts" module>
 	import { tv, type VariantProps } from "tailwind-variants";
 
-	// Rows sit as far inside the window's corners as the inset panel, so they share its radius.
 	export const sidebarMenuButtonVariants = tv({
-		base: "ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground gap-2 rounded-xl p-2 text-left text-base transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+		base: "text-muted-foreground ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-highlighted:text-sidebar-accent-foreground gap-2 rounded-xl p-2 text-left text-base transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
 		variants: {
 			variant: {
 				default: "",
