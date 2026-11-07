@@ -246,7 +246,7 @@ async function makeWork(path: string): Promise<string> {
   const folder = dirname(path)
   const [app, temporary] = await Promise.all([stat(folder), stat(tmpdir())])
 
-  return mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.app-to-date-'))
+  return mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.eggy-'))
 }
 
 async function stage(path: string, report: (progress: Progress) => void): Promise<Staged> {

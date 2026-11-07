@@ -1,5 +1,5 @@
-appId: com.revolt.apptodate
-productName: app
+appId: com.revolt.eggy
+productName: eggy
 directories:
   buildResources: build
 files:
