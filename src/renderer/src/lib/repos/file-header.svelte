@@ -25,7 +25,7 @@
 <Collapsible.Root bind:open={() => open, ontoggle}>
   <Collapsible.Trigger
     class={[
-      'flex w-full items-center justify-between gap-3 border-y px-5 outline-none select-none focus-visible:bg-muted',
+      'flex w-full items-center justify-between gap-3 border-y px-5 font-mono text-xs text-muted-foreground outline-none select-none focus-visible:bg-muted',
       !open && 'border-b-transparent'
     ]}
     style="height: {HEADER_HEIGHT}px"
@@ -34,12 +34,12 @@
       <IconChevronRight
         stroke={1.5}
         class={cn(
-          'size-3 shrink-0 text-muted-foreground transition-transform duration-collapsible ease-out-expo',
+          'size-3 shrink-0 transition-transform duration-collapsible ease-out-expo',
           open && 'rotate-90'
         )}
       />
       <!-- Right-to-left overflow keeps the file name in view and cuts the directories instead. -->
-      <span class="truncate font-mono text-xs text-muted-foreground" dir="rtl">
+      <span class="truncate" dir="rtl">
         <bdi>
           {#if fileDiff.prevName}{fileDiff.prevName} →
           {/if}{directory}<span class="text-foreground"
@@ -48,7 +48,7 @@
         </bdi>
       </span>
     </span>
-    <span class="flex shrink-0 gap-2 font-mono text-xs">
+    <span class="flex gap-2">
       {#if additions > 0}
         <span class="text-success">+{additions}</span>
       {/if}

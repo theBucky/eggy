@@ -111,7 +111,6 @@
       }
     `,
       renderCodeViewHeader: () => summary,
-      // Every item is a diff, though the callback serves file items too.
       renderCustomHeader: (_, { item }) => (item.type === 'diff' ? header(item) : undefined)
     },
     highlighter
@@ -262,11 +261,11 @@
   </header>
 
   <!-- The viewer moves the summary into the scroll content, above the first file. -->
-  <div bind:this={root} class="mb-2 min-h-0 flex-1 overflow-y-auto select-text">
-    <div bind:this={summary} class="flex flex-col gap-2 p-5">
-      <h2 class="text-lg font-semibold tracking-tight wrap-anywhere">{shown.subject}</h2>
+  <div bind:this={root} class="mb-2 flex-1 overflow-y-auto select-text">
+    <div bind:this={summary} class="flex flex-col gap-2 p-5 wrap-anywhere">
+      <h2 class="text-lg font-semibold tracking-tight">{shown.subject}</h2>
       {#if detail?.body}
-        <p class="whitespace-pre-wrap text-foreground/74 wrap-anywhere">{detail.body}</p>
+        <p class="whitespace-pre-wrap text-foreground/74">{detail.body}</p>
       {/if}
       <p class="flex gap-2 pt-1 text-xs">
         <span class="text-foreground/74">{shown.author}</span>

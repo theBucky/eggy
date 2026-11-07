@@ -41,7 +41,7 @@
 
 <Sidebar.Provider style="--sidebar-width: 18rem">
   <Sidebar.Root variant="inset">
-    <div class="shrink-0 px-1 pt-12 pb-2">
+    <div class="px-1 pt-12 pb-2">
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton size="sm" isActive={home} onclick={() => (view = { page: 'home' })}>
@@ -60,7 +60,7 @@
       <RepoGroup {workspace} {selected} onselect={(path) => (view = { page: 'detail', path })} />
     </Sidebar.Content>
 
-    <div class="shrink-0 px-1 py-2">
+    <div class="px-1 py-2">
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton

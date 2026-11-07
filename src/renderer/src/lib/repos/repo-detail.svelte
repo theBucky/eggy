@@ -48,7 +48,7 @@
 </script>
 
 <SidePane item={selected}>
-  <div class="scroll-fade-y my-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-6">
+  <div class="scroll-fade-y my-2 flex flex-1 flex-col overflow-y-auto px-8 py-6">
     <div class="flex items-start justify-between gap-4">
       <div class="flex min-w-0 flex-col gap-1">
         <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
@@ -105,7 +105,7 @@
             </Button>
           {/if}
         </div>
-        <div class="scroll-fade-y -mx-scrollbar my-2 min-h-0 overflow-y-auto px-scrollbar py-1">
+        <div class="scroll-fade-y -mx-scrollbar my-2 overflow-y-auto px-scrollbar py-1">
           <Item.Group>
             {#if showUnpushed}
               {#each unpushed as commit (commit.hash)}
@@ -137,7 +137,7 @@
           aria-pressed={active}
           onclick={() => (selected = active ? undefined : commit)}
         >
-          <!-- the title's flex display defeats clamping, so the inner spans clamp instead. -->
+          <!-- The title's flex display defeats clamping, so the inner spans clamp instead. -->
           <Item.Content>
             <Item.Title>
               <Badge variant="secondary">

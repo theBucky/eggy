@@ -90,126 +90,124 @@
   }
 </script>
 
-<div class="absolute inset-0 flex flex-col">
-  <div class="scroll-fade-y my-2 flex min-h-0 flex-1 flex-col overflow-y-auto px-8 py-6">
-    <div class="flex items-start justify-between gap-4">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="truncate text-xl font-semibold tracking-tight">{headline}</h1>
-        <p class="truncate text-muted-foreground">{subtitle}</p>
-      </div>
-      <div class="flex shrink-0 gap-2 [-webkit-app-region:no-drag]">
-        <Button size="pill" variant="secondary" disabled={busy} onclick={check}>
-          {#if checking}
-            Checking
-          {:else if checked}
-            Check again
-          {:else}
-            Check for updates
-          {/if}
-        </Button>
-        <Button size="pill" disabled={busy || pending === 0} onclick={updateAll}>
-          {updating ? 'Updating' : 'Update everything'}
-        </Button>
-      </div>
+<div class="scroll-fade-y absolute inset-0 my-2 overflow-y-auto px-8 py-6">
+  <div class="flex items-start justify-between gap-4">
+    <div class="flex min-w-0 flex-col gap-1">
+      <h1 class="truncate text-xl font-semibold tracking-tight">{headline}</h1>
+      <p class="truncate text-muted-foreground">{subtitle}</p>
     </div>
-
-    <section class="mt-8">
-      <Table.Root>
-        <colgroup>
-          <col class="w-10" />
-          <col class="w-48" />
-          <col />
-          <col class="w-22" />
-          <col class="w-28" />
-          <col class="w-40" />
-        </colgroup>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head colspan={5}>Applications</Table.Head>
-            <Table.Head>
-              {#if apps.outdated.length > 0}
-                <div class="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={apps.busy}
-                    onclick={() => apps.update(apps.outdated)}
-                  >
-                    Update all {apps.outdated.length}
-                  </Button>
-                </div>
-              {/if}
-            </Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {#each appRows as entry (entry.app.path)}
-            {@render appRow(entry)}
-          {:else}
-            <Table.Row>
-              <Table.Cell colspan={6}>
-                <span class="text-muted-foreground">
-                  {apps.entries.length === 0
-                    ? 'No applications.'
-                    : appsChecked
-                      ? 'All up to date.'
-                      : 'Not checked yet.'}
-                </span>
-              </Table.Cell>
-            </Table.Row>
-          {/each}
-        </Table.Body>
-      </Table.Root>
-    </section>
-
-    <section class="mt-8">
-      <Table.Root>
-        <colgroup>
-          <col class="w-10" />
-          <col class="w-48" />
-          <col />
-          <col class="w-22" />
-          <col class="w-32" />
-        </colgroup>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head colspan={4}>Repositories</Table.Head>
-            <Table.Head>
-              {#if workspace.outdated.length > 0}
-                <div class="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={workspace.busy}
-                    onclick={() => workspace.pullAll()}
-                  >
-                    Pull all {workspace.outdated.length}
-                  </Button>
-                </div>
-              {/if}
-            </Table.Head>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {#each repoRows as entry (entry.repo.path)}
-            {@render repoRow(entry)}
-          {:else}
-            <Table.Row>
-              <Table.Cell colspan={5}>
-                <span class="text-muted-foreground">
-                  {workspace.entries.length === 0
-                    ? `Nothing under ${tilde(workspace.root)} tracks an upstream branch.`
-                    : reposChecked
-                      ? 'All up to date.'
-                      : 'Not checked yet.'}
-                </span>
-              </Table.Cell>
-            </Table.Row>
-          {/each}
-        </Table.Body>
-      </Table.Root>
-    </section>
+    <div class="flex gap-2 [-webkit-app-region:no-drag]">
+      <Button size="pill" variant="secondary" disabled={busy} onclick={check}>
+        {#if checking}
+          Checking
+        {:else if checked}
+          Check again
+        {:else}
+          Check for updates
+        {/if}
+      </Button>
+      <Button size="pill" disabled={busy || pending === 0} onclick={updateAll}>
+        {updating ? 'Updating' : 'Update everything'}
+      </Button>
+    </div>
   </div>
+
+  <section class="mt-8">
+    <Table.Root>
+      <colgroup>
+        <col class="w-10" />
+        <col class="w-48" />
+        <col />
+        <col class="w-22" />
+        <col class="w-28" />
+        <col class="w-40" />
+      </colgroup>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head colspan={5}>Applications</Table.Head>
+          <Table.Head>
+            {#if apps.outdated.length > 0}
+              <div class="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={apps.busy}
+                  onclick={() => apps.update(apps.outdated)}
+                >
+                  Update all {apps.outdated.length}
+                </Button>
+              </div>
+            {/if}
+          </Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each appRows as entry (entry.app.path)}
+          {@render appRow(entry)}
+        {:else}
+          <Table.Row>
+            <Table.Cell colspan={6}>
+              <span class="text-muted-foreground">
+                {apps.entries.length === 0
+                  ? 'No applications.'
+                  : appsChecked
+                    ? 'All up to date.'
+                    : 'Not checked yet.'}
+              </span>
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
+  </section>
+
+  <section class="mt-8">
+    <Table.Root>
+      <colgroup>
+        <col class="w-10" />
+        <col class="w-48" />
+        <col />
+        <col class="w-22" />
+        <col class="w-32" />
+      </colgroup>
+      <Table.Header>
+        <Table.Row>
+          <Table.Head colspan={4}>Repositories</Table.Head>
+          <Table.Head>
+            {#if workspace.outdated.length > 0}
+              <div class="text-right">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={workspace.busy}
+                  onclick={() => workspace.pullAll()}
+                >
+                  Pull all {workspace.outdated.length}
+                </Button>
+              </div>
+            {/if}
+          </Table.Head>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {#each repoRows as entry (entry.repo.path)}
+          {@render repoRow(entry)}
+        {:else}
+          <Table.Row>
+            <Table.Cell colspan={5}>
+              <span class="text-muted-foreground">
+                {workspace.entries.length === 0
+                  ? `Nothing under ${tilde(workspace.root)} tracks an upstream branch.`
+                  : reposChecked
+                    ? 'All up to date.'
+                    : 'Not checked yet.'}
+              </span>
+            </Table.Cell>
+          </Table.Row>
+        {/each}
+      </Table.Body>
+    </Table.Root>
+  </section>
 </div>
 
 <!-- Auto table layout widens a column to fit its content, so long text truncates inside a block
@@ -227,9 +225,9 @@
     {:else if update}
       <Table.Cell>
         <div class="flex w-0 min-w-full items-center gap-2 font-mono text-xs/[18px]">
-          <span class="min-w-0 truncate text-muted-foreground">{labelOf(app)}</span>
+          <span class="truncate text-muted-foreground">{labelOf(app)}</span>
           <IconArrowRight class="size-3 shrink-0 text-muted-foreground" />
-          <span class="min-w-0 truncate">{labelOf(update)}</span>
+          <span class="truncate">{labelOf(update)}</span>
         </div>
       </Table.Cell>
       <Table.Cell>

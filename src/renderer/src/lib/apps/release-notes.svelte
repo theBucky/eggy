@@ -45,12 +45,10 @@
 </script>
 
 {#if notes.format === 'link'}
-  <div>
-    <Button variant="outline" size="sm" href={notes.url} target="_blank">
-      Open release notes
-      <IconExternalLink data-icon="inline-end" />
-    </Button>
-  </div>
+  <Button variant="outline" size="sm" href={notes.url} target="_blank">
+    Open release notes
+    <IconExternalLink data-icon="inline-end" />
+  </Button>
 {:else if notes.format === 'plain-text'}
   <p class="release-notes whitespace-pre-wrap">{notes.text}</p>
 {:else}

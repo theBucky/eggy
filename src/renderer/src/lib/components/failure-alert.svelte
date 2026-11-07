@@ -9,6 +9,6 @@
   <IconAlertCircle />
   <Alert.Title>{title}</Alert.Title>
   <Alert.Description>
-    <pre class="font-mono wrap-anywhere whitespace-pre-wrap select-text">{message}</pre>
+    <pre class="wrap-anywhere whitespace-pre-wrap select-text">{message}</pre>
   </Alert.Description>
 </Alert.Root>
