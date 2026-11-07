@@ -75,6 +75,13 @@ async function brew(args: string[]): Promise<string> {
   })
 }
 
+// brew skips pinned packages when upgrading, so a pinned package never counts as outdated.
+function stateOf({ pinned, outdated }: { pinned: boolean; outdated: boolean }): Package['state'] {
+  if (pinned) return 'pinned'
+
+  return outdated ? 'outdated' : 'current'
+}
+
 function fromFormula(formula: z.infer<typeof Formula>): Package {
   const { stable } = formula.versions
   const version = formula.linked_keg ?? formula.installed[formula.installed.length - 1].version
@@ -90,8 +97,7 @@ function fromFormula(formula: z.infer<typeof Formula>): Package {
     version,
     latest: stable === null ? version : stable + revision,
     requested: formula.installed.some((keg) => keg.installed_on_request),
-    pinned: formula.pinned,
-    outdated: formula.outdated && !formula.pinned
+    state: stateOf(formula)
   }
 }
 
@@ -106,8 +112,7 @@ function fromCask(cask: z.infer<typeof Cask>): Package {
     version: cask.installed,
     latest: cask.version,
     requested: true,
-    pinned: cask.pinned,
-    outdated: cask.outdated && !cask.pinned
+    state: stateOf(cask)
   }
 }
 

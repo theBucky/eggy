@@ -90,9 +90,7 @@ export type Package = {
   version: string
   latest: string
   requested: boolean
-  pinned: boolean
-  // Leaves out pinned packages, which brew skips when upgrading.
-  outdated: boolean
+  state: 'pinned' | 'outdated' | 'current'
 }
 
 export type PackageList =

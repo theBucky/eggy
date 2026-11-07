@@ -15,7 +15,7 @@
 
   const shown = $derived(
     packages.entries.filter(
-      ({ package: pkg, task }) => pkg.requested || pkg.outdated || task !== undefined
+      ({ package: pkg, task }) => pkg.requested || pkg.state === 'outdated' || task !== undefined
     )
   )
 </script>

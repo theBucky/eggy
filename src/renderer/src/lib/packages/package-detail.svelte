@@ -16,9 +16,9 @@
   const badge = $derived.by((): StatusBadge | undefined => {
     if (packages.check?.status === 'running') return { label: 'Checking', variant: 'secondary' }
 
-    if (pkg.pinned) return { label: 'Pinned', variant: 'secondary' }
+    if (pkg.state === 'pinned') return { label: 'Pinned', variant: 'secondary' }
 
-    if (pkg.outdated) return { label: 'Upgrade available', variant: 'info' }
+    if (pkg.state === 'outdated') return { label: 'Upgrade available', variant: 'info' }
 
     if (task?.status === 'upgraded') return { label: 'Upgraded', variant: 'success' }
 
@@ -56,7 +56,7 @@
         <p class="truncate text-muted-foreground">{pkg.description}</p>
       {/if}
     </div>
-    {#if pkg.outdated || task?.status === 'running'}
+    {#if pkg.state === 'outdated' || task?.status === 'running'}
       <div class="[-webkit-app-region:no-drag]">
         <UpgradeButton {packages} {entry} size="pill" />
       </div>

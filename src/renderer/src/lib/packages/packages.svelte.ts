@@ -23,7 +23,7 @@ export class Packages {
   checking = $derived(this.scanning || this.check?.status === 'running')
   upgrading = $derived(this.entries.some(({ task }) => task?.status === 'running'))
   busy = $derived(this.checking || this.upgrading)
-  outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.outdated))
+  outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
 
   constructor() {
     window.api.onOutput((kind, fullName, text) => {
@@ -40,7 +40,7 @@ export class Packages {
 
     if (this.check?.status === 'running') return 'running'
 
-    if (pkg.outdated) return 'outdated'
+    if (pkg.state === 'outdated') return 'outdated'
 
     return task === undefined && this.check?.status !== 'checked' ? 'unknown' : 'current'
   }
@@ -72,7 +72,7 @@ export class Packages {
   async upgrade(entries: Entry[]): Promise<void> {
     for (const entry of entries) {
       // An earlier upgrade in the batch may have upgraded this one as a dependency.
-      if (!entry.package.outdated) continue
+      if (entry.package.state !== 'outdated') continue
 
       entry.task = { status: 'running', output: '' }
 
