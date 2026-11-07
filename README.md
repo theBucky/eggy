@@ -2,29 +2,37 @@
 
 # eggy
 
-A macOS app that keeps installed applications, Homebrew packages, and local git repositories up to date from one window.
+macOS app that updates installed applications, Homebrew packages, and local git repositories.
 
-![Home with an application upgrade and a repository behind its upstream](docs/screenshots/home.png)
+![Home with upgrades waiting across applications, packages, and repositories](docs/screenshots/home.png)
 
 ## Applications
 
-eggy lists the apps in `/Applications` and `~/Applications` that publish an update feed: Sparkle appcasts, electron-updater feeds, and a few apps such as Chrome, Cursor, Figma, and Ghostty that pick their feed at launch.
+Scans `/Applications` and `~/Applications` for apps with a supported update feed:
 
-Each app shows its installed and latest versions, the release date, the download size, and release notes when the feed has them. Upgrading downloads and verifies the release, then swaps the bundle in place and moves the old one to the Trash. A running app is force quit and reopened only after you confirm.
+- Sparkle appcasts
+- electron-updater feeds
+- per-app feeds for apps that resolve their feed at launch, such as Chrome, Cursor, Figma, and Ghostty
 
-![ChatGPT with an upgrade available](docs/screenshots/application.png)
+Each app shows installed and latest versions, release date, download size, and release notes when the feed provides them.
+
+An upgrade downloads and unpacks the release, then verifies it. Sparkle releases are checked against the app's EdDSA key. Other releases must satisfy the installed app's designated code signing requirement and match the feed's checksum when one is published. The new bundle replaces the old one in place, and the old bundle moves to the Trash. Running apps are force quit and relaunched only after confirmation.
+
+![CleanShot X with an upgrade available and its release notes](docs/screenshots/application.png)
 
 ## Packages
 
-The Homebrew formulae and casks you installed show up with their installed and latest versions, along with any dependency that has fallen behind. Checking runs `brew update` first. Upgrades run `brew upgrade` one package at a time and show their output on the package's page. Pinned packages and casks that update themselves are left alone, as Homebrew does by default.
+Lists installed Homebrew formulae and casks with installed and latest versions, including outdated dependencies. Checking runs `brew update` first. Upgrading runs `brew upgrade` for one package at a time and streams the output to the package page. Pinned packages and `auto_updates` casks are skipped, matching Homebrew's defaults.
+
+![ffmpeg upgrading along with an outdated dependency](docs/screenshots/package.png)
 
 ## Repositories
 
-Every git repository under a folder you pick, `~/repo` by default, whose current branch tracks an upstream shows up with how far it is ahead or behind. Pulling only fast-forwards. A branch that has diverged can rebase instead, and a rebase that hits a conflict is aborted so the branch stays as it was.
+Scans a configurable folder, `~/repo` by default, for git repositories whose current branch tracks an upstream, and shows ahead and behind counts. Pulling uses `git pull --ff-only`. Diverged branches can rebase with `git pull --rebase --autostash`. A rebase that stops on a conflict is aborted, restoring the branch and any stashed changes.
 
-Selecting a commit opens its message and diff beside the history.
+Selecting a commit shows its message and diff next to the history.
 
-![The codex repository with a commit diff open](docs/screenshots/repository.png)
+![The eggy repository with a commit diff open](docs/screenshots/repository.png)
 
 ## Development
 
@@ -33,4 +41,4 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm build:mac` packages the app, signed with a local code signing identity named `Local Development Code Signing`.
+`pnpm build:mac` packages the app and signs it with a local code signing identity named `Local Development Code Signing`.
