@@ -150,24 +150,35 @@ async function readRepo(path: string): Promise<Repo | undefined> {
   return { path, gitDir, branch, upstream, ...(await readTracking(path)) }
 }
 
-export async function scan(dir: string): Promise<Repo[]> {
+async function findRepos(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
 
-  if (entries.some((entry) => entry.name === '.git')) {
-    const repo = await readRepo(dir)
-
-    return repo === undefined ? [] : [repo]
-  }
+  if (entries.some((entry) => entry.name === '.git')) return [dir]
 
   const nested = await Promise.all(
     entries.flatMap((entry) =>
       entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules'
-        ? [scan(join(dir, entry.name))]
+        ? [findRepos(join(dir, entry.name))]
         : []
     )
   )
 
   return nested.flat()
+}
+
+const CONCURRENCY = 16
+
+export async function scan(root: string): Promise<Repo[]> {
+  const queue = (await findRepos(root)).entries()
+  const repos: (Repo | undefined)[] = []
+
+  await Promise.all(
+    Array.from({ length: CONCURRENCY }, async () => {
+      for (const [index, path] of queue) repos[index] = await readRepo(path)
+    })
+  )
+
+  return repos.filter((repo) => repo !== undefined)
 }
 
 export async function fetch(path: string): Promise<FetchResult> {
