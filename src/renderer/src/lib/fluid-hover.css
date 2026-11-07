@@ -22,17 +22,23 @@
   inherits: false;
 }
 
+@property --hover-radius {
+  syntax: '*';
+  inherits: false;
+}
+
 @layer components {
   [data-fluid-hover] {
     position: relative;
     isolation: isolate;
 
     &::before {
-      @apply rounded-md bg-muted ease-out;
+      @apply bg-muted ease-out;
       --hover-x: inherit;
       --hover-y: inherit;
       --hover-width: inherit;
       --hover-height: inherit;
+      --hover-radius: inherit;
       content: '';
       position: absolute;
       top: 0;
@@ -40,6 +46,7 @@
       z-index: -1;
       width: var(--hover-width);
       height: var(--hover-height);
+      border-radius: var(--hover-radius);
       translate: var(--hover-x) var(--hover-y);
       opacity: 0;
       transition-property: opacity;

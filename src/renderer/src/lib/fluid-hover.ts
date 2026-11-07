@@ -45,8 +45,13 @@ export function fluidHover(selector: string): Attachment<HTMLElement> {
 
     function update(): void {
       const shown = lit !== undefined
+      const next = pick()
 
-      lit = pick()
+      if (next !== undefined && next !== lit) {
+        container.style.setProperty('--hover-radius', getComputedStyle(next).borderRadius)
+      }
+
+      lit = next
 
       if (lit === undefined) {
         container.dataset.fluidHover = 'none'
