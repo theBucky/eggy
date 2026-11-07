@@ -1,6 +1,6 @@
 import { registerCustomTheme } from '@pierre/diffs'
 import { WorkerPoolManager } from '@pierre/diffs/worker'
-import HighlightWorker from '@pierre/diffs/worker/worker.js?worker'
+import HighlightWorker from '@pierre/diffs/worker/worker-portable.js?worker'
 
 export const DIFF_THEME = 'app-light'
 
