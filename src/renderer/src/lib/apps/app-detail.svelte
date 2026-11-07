@@ -14,6 +14,7 @@
 
   const { app, task } = $derived(entry)
   const update = $derived(releaseOf(entry))
+
   const feedLabel = $derived.by(() => {
     const { origin, pathname } = new URL(app.feed)
 
