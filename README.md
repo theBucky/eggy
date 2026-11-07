@@ -4,7 +4,7 @@
 
 macOS app that updates installed applications, Homebrew packages, and local git repositories.
 
-![Home with upgrades waiting across applications, packages, and repositories](docs/screenshots/home.png)
+![Home in the light and dark themes with upgrades waiting across applications, packages, and repositories](docs/screenshots/home.png)
 
 ## Applications
 
