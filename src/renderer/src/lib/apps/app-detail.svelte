@@ -1,6 +1,7 @@
 <script lang="ts">
   import FailureAlert from '$lib/components/failure-alert.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
+  import { Button } from '$lib/components/ui/button'
   import { labelOf, megabytes, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
   import UpdateButton from '$lib/apps/update-button.svelte'
@@ -75,7 +76,9 @@
         </dd>
       {/if}
       <dt class="text-muted-foreground">Feed</dt>
-      <dd class="truncate font-mono text-xs/[18px]">{app.feed}</dd>
+      <dd class="-my-1 -ml-2 flex font-mono">
+        <Button variant="link" size="sm" href={app.feed} target="_blank">{app.feed}</Button>
+      </dd>
     </dl>
 
     {#if task?.status === 'failed'}
