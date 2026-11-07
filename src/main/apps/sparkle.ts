@@ -1,5 +1,6 @@
 import { createPublicKey, verify } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
 import { findItem, type Appcast } from './appcast'
 import type { Bundle } from './bundle'
 import { fetchFeed, type Feed, type Framework, type Update } from './framework'
@@ -49,7 +50,13 @@ const knownSources = new Map<string, (bundle: Bundle) => Promise<Source>>([
   ]
 ])
 
-function verifySignature(archive: Buffer, signature: string | undefined, key: string): void {
+const verifyAsync = promisify(verify)
+
+async function verifySignature(
+  archive: Buffer,
+  signature: string | undefined,
+  key: string
+): Promise<void> {
   if (signature === undefined) {
     throw new Error('The update is unsigned, but the app expects a signature.')
   }
@@ -59,7 +66,7 @@ function verifySignature(archive: Buffer, signature: string | undefined, key: st
     format: 'jwk'
   })
 
-  if (!verify(null, archive, publicKey, Buffer.from(signature, 'base64'))) {
+  if (!(await verifyAsync(null, archive, publicKey, Buffer.from(signature, 'base64')))) {
     throw new Error("The update's signature doesn't match the app's key.")
   }
 }
@@ -81,7 +88,7 @@ async function check(bundle: Bundle, source: Source): Promise<Update | undefined
   return {
     release: item.release,
     verify: async (archive) => {
-      if (key !== undefined) verifySignature(await readFile(archive), item.signature, key)
+      if (key !== undefined) await verifySignature(await readFile(archive), item.signature, key)
     }
   }
 }
