@@ -66,15 +66,14 @@ const log = ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%
 function parseLog({ ok, stdout }: GitResult, pages?: string): Commit[] {
   if (!ok) return []
 
-  return stdout
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [hash, subject, author, date] = line.split('\x1f')
-      const url = pages === undefined ? undefined : `${pages}${hash}`
+  return stdout.split('\n').flatMap((line) => {
+    if (line === '') return []
 
-      return { hash, subject, author, date: Number(date) * 1000, url }
-    })
+    const [hash, subject, author, date] = line.split('\x1f')
+    const url = pages === undefined ? undefined : `${pages}${hash}`
+
+    return [{ hash, subject, author, date: Number(date) * 1000, url }]
+  })
 }
 
 function commitPagesOf(remote: string): string | undefined {

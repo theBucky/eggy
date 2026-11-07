@@ -79,13 +79,13 @@ async function readApp(path: string): Promise<App | undefined> {
 export async function listApps(): Promise<App[]> {
   const listed = await Promise.all(
     folders.map(async (folder) =>
-      (await readdir(folder).catch(() => [])).map((name) => join(folder, name))
+      (await readdir(folder).catch(() => [])).flatMap((name) =>
+        name.endsWith('.app') ? [join(folder, name)] : []
+      )
     )
   )
 
-  const paths = listed.flat().filter((path) => path.endsWith('.app'))
-
-  const apps = await Promise.all(paths.map((path) => readApp(path).catch(() => undefined)))
+  const apps = await Promise.all(listed.flat().map((path) => readApp(path).catch(() => undefined)))
 
   return apps.filter((app) => app !== undefined).toSorted((a, b) => a.name.localeCompare(b.name))
 }
