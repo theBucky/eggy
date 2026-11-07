@@ -13,10 +13,12 @@ type Source = {
 
 const cursorTracks = ['stable', 'prerelease', 'dev', 'dogfood', 'candidate']
 
+// Cursor's update server requires a machine identifier but answers the same for any.
+const anyMachine = '0'.repeat(64)
+
 // Squirrel apps build their feed in code, so these build it the way the app does.
 const knownSources = new Map<string, (bundle: Bundle) => Promise<Source>>([
-  // Cursor, which asks for the release track picked in its settings. The server requires a machine
-  // identifier but answers the same for any.
+  // Cursor, which asks for the release track picked in its settings.
   [
     'com.todesktop.230313mzl4w4u92',
     async ({ version }) => {
@@ -33,8 +35,20 @@ const knownSources = new Map<string, (bundle: Bundle) => Promise<Source>>([
       const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin'
 
       return {
-        url: `https://api2.cursor.sh/updates/api/update/${platform}/cursor/${version}/${'0'.repeat(64)}/${track}`,
+        url: `https://api2.cursor.sh/updates/api/update/${platform}/cursor/${version}/${anyMachine}/${track}`,
         changelog: 'https://cursor.com/changelog'
+      }
+    }
+  ],
+  // Grok Bot, whose other release tracks are internal.
+  [
+    'com.anysphere.sand',
+    async ({ version }) => {
+      const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64'
+
+      return {
+        url: `https://api2.cursor.sh/updates/api/update/${platform}/sand/${version}/${anyMachine}/stable`,
+        changelog: 'https://x.ai/changelog/bot'
       }
     }
   ]
