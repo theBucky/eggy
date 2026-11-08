@@ -1,4 +1,5 @@
 <script lang="ts">
+  import IconGauge from '@tabler/icons-svelte/icons/gauge'
   import IconHome from '@tabler/icons-svelte/icons/home'
   import IconSettings from '@tabler/icons-svelte/icons/settings'
   import AppDetail from '$lib/apps/app-detail.svelte'
@@ -6,7 +7,10 @@
   import { Apps } from '$lib/apps/apps.svelte'
   import QuitDialog from '$lib/apps/quit-dialog.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
+  import { Spinner } from '$lib/components/ui/spinner'
   import Home from '$lib/home/home.svelte'
+  import Optimize from '$lib/optimize/optimize.svelte'
+  import { Optimizer } from '$lib/optimize/optimizer.svelte'
   import PackageDetail from '$lib/packages/package-detail.svelte'
   import PackageGroup from '$lib/packages/package-group.svelte'
   import { idOf, Packages } from '$lib/packages/packages.svelte'
@@ -16,11 +20,12 @@
   import { Preferences } from '$lib/settings/preferences.svelte'
   import Settings from '$lib/settings/settings.svelte'
 
-  type View = { page: 'home' | 'settings' } | { page: 'detail'; id: string }
+  type View = { page: 'home' | 'optimize' | 'settings' } | { page: 'detail'; id: string }
 
   const workspace = new Workspace()
   const apps = new Apps()
   const packages = new Packages()
+  const optimizer = new Optimizer()
   const preferences = new Preferences()
 
   let view = $state<View>({ page: 'home' })
@@ -30,8 +35,10 @@
   const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
   const pkg = $derived(packages.entries.find((entry) => idOf(entry.package) === selected))
 
+  // A detail whose entry is gone falls back to home.
   const home = $derived(
-    view.page !== 'settings' && repo === undefined && app === undefined && pkg === undefined
+    view.page === 'home' ||
+      (view.page === 'detail' && repo === undefined && app === undefined && pkg === undefined)
   )
 
   const pending = $derived(
@@ -65,6 +72,19 @@
             {/if}
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>
+        <Sidebar.MenuItem>
+          <Sidebar.MenuButton
+            size="sm"
+            isActive={view.page === 'optimize'}
+            onclick={() => (view = { page: 'optimize' })}
+          >
+            <IconGauge stroke={1.5} />
+            <span class="flex-1 truncate-fade">Optimize</span>
+            {#if optimizer.running}
+              <Spinner />
+            {/if}
+          </Sidebar.MenuButton>
+        </Sidebar.MenuItem>
       </Sidebar.Menu>
     </div>
 
@@ -95,6 +115,8 @@
   <Sidebar.Inset>
     {#if view.page === 'settings'}
       <Settings {workspace} {preferences} />
+    {:else if view.page === 'optimize'}
+      <Optimize {optimizer} />
     {:else if repo}
       {#key repo.repo.path}
         <RepoDetail {workspace} entry={repo} />

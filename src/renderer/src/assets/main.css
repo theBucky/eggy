@@ -33,6 +33,7 @@
   --accent-foreground: light-dark(#1c1c1c, #f0f0f0);
   --destructive: light-dark(#cd2834, #e34671);
   --success: light-dark(#00854a, #3fa266);
+  --warn: light-dark(#aa6300, #f1b467);
   --info: light-dark(#0b6dd3, #599ce7);
   --added: light-dark(#00854a, #70b489);
   --removed: light-dark(#cd2834, #fc6b83);
@@ -80,6 +81,7 @@
   --color-destructive: var(--destructive);
   --color-scrim: var(--scrim);
   --color-success: var(--success);
+  --color-warn: var(--warn);
   --color-info: var(--info);
   --color-added: var(--added);
   --color-removed: var(--removed);

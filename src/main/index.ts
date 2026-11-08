@@ -14,6 +14,7 @@ import type { Events, Ipc } from '../shared/api'
 import * as apps from './apps/upgrader'
 import * as brew from './brew'
 import * as git from './git'
+import * as optimize from './optimize'
 import { restoreTheme, setTheme, sidebarColor } from './theme'
 import { resizer } from './window'
 
@@ -118,7 +119,13 @@ app.whenReady().then(() => {
     checkPackages: () => brew.check(),
     upgradePackage: (event, kind, fullName) =>
       brew.upgrade(kind, fullName, (text) => send(event.sender, 'output', kind, fullName, text)),
-    setTheme: async (_, theme) => setTheme(theme)
+    setTheme: async (_, theme) => setTheme(theme),
+    inspectMachine: () => optimize.inspectMachine(),
+    optimize: (event, optimizations) =>
+      optimize.run(optimizations, (optimization, state) =>
+        send(event.sender, 'optimization', optimization, state)
+      ),
+    review: (_, target) => optimize.review(target)
   }
 
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)

@@ -18,6 +18,7 @@ mac:
   extendInfo:
     NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    NSAppleEventsUsageDescription: eggy asks System Events for your login items to find ones whose apps are gone.
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}

@@ -2,7 +2,7 @@
 
 # eggy
 
-macOS app that updates installed applications, Homebrew packages, and local git repositories.
+macOS app that updates installed applications, Homebrew packages, and local git repositories, and runs routine system maintenance.
 
 ![Home in the light and dark themes with upgrades waiting across applications, packages, and repositories](docs/screenshots/home.png)
 
@@ -33,6 +33,14 @@ Scans a configurable folder, `~/repo` by default, for git repositories whose cur
 Selecting a commit shows its message and diff next to the history.
 
 ![The eggy repository with a commit diff open](docs/screenshots/repository.png)
+
+## Optimize
+
+Runs maintenance tasks for applications, Finder, the network, and macOS services, and reports each as applied, unchanged, skipped, unavailable, failed, or needing attention.
+
+Removed files move to the Trash: saved window states older than 30 days, and preference files and Finder lists that no longer parse. Login items and launch agents that point at missing apps are reported, not removed. Safari and Messages databases are compacted only while both apps are closed.
+
+Refreshing the DNS cache, flushing the routing table, and rebuilding the Spotlight index run as root, together, after one administrator prompt. The network tasks skip while a VPN is connected, and the Spotlight index is rebuilt only on AC power after two searches in a row stall. Tasks that read other apps' data, such as Safari's history or Notification Center's database, need Full Disk Access.
 
 ## Development
 

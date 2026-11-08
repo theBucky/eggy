@@ -36,8 +36,12 @@ const api: Api = {
   checkPackages: invoke('checkPackages'),
   upgradePackage: invoke('upgradePackage'),
   setTheme: invoke('setTheme'),
+  inspectMachine: invoke('inspectMachine'),
+  optimize: invoke('optimize'),
+  review: invoke('review'),
   onProgress: on('progress'),
-  onOutput: on('output')
+  onOutput: on('output'),
+  onOptimization: on('optimization')
 }
 
 contextBridge.exposeInMainWorld('api', api)

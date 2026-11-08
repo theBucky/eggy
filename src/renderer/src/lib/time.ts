@@ -18,12 +18,23 @@ const tick = createSubscriber((update) => {
   return () => clearInterval(timer)
 })
 
+function largest(span: number): (typeof units)[number] {
+  return units.find(([, size]) => span >= size) ?? units[units.length - 1]
+}
+
 export function ago(date: number): string {
   tick()
 
   // A committer clock running ahead would otherwise read as a future time.
   const elapsed = Math.max(Date.now() - date, 0)
-  const [unit, size] = units.find(([, size]) => elapsed >= size) ?? units[units.length - 1]
+  const [unit, size] = largest(elapsed)
 
   return relative.format(-Math.floor(elapsed / size), unit)
+}
+
+export function duration(span: number): string {
+  const [unit, size] = largest(span)
+  const format = new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'long' })
+
+  return format.format(Math.floor(span / size))
 }

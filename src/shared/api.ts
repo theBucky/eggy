@@ -100,6 +100,51 @@ export type PackageList =
 
 export type PackageUpgrade = { status: 'upgraded' } | Failure
 
+export const OPTIMIZATIONS = [
+  'savedStates',
+  'preferences',
+  'appDatabases',
+  'loginItems',
+  'launchAgents',
+  'quickLook',
+  'sharedFileLists',
+  'networkVolumes',
+  'dnsCache',
+  'networkStack',
+  'spotlight',
+  'notifications',
+  'quarantine'
+] as const
+
+export type Optimization = (typeof OPTIMIZATIONS)[number]
+
+export const PRIVILEGED = [
+  'dnsCache',
+  'networkStack',
+  'spotlight'
+] as const satisfies readonly Optimization[]
+
+export type Privileged = (typeof PRIVILEGED)[number]
+
+export function isPrivileged(optimization: Optimization): optimization is Privileged {
+  return PRIVILEGED.some((candidate) => candidate === optimization)
+}
+
+export type Review = 'loginItems' | 'launchAgents'
+
+export type OptimizeOutcome =
+  | { status: 'applied' | 'unchanged' | 'skipped' | 'unavailable'; message: string }
+  | { status: 'attention'; message: string; review: Review }
+  | Failure
+
+export type OptimizeState = { status: 'running' } | OptimizeOutcome
+
+export type Machine = {
+  memory: { used: number; total: number }
+  disk: { free: number; total: number }
+  uptime: number
+}
+
 export const THEMES = ['system', 'light', 'dark'] as const
 
 export type Theme = (typeof THEMES)[number]
@@ -122,11 +167,15 @@ export type Ipc = {
   checkPackages: () => Promise<PackageList>
   upgradePackage: (kind: PackageKind, fullName: string) => Promise<PackageUpgrade>
   setTheme: (theme: Theme) => Promise<void>
+  inspectMachine: () => Promise<Machine>
+  optimize: (optimizations: Optimization[]) => Promise<void>
+  review: (target: Review) => Promise<void>
 }
 
 export type Events = {
   progress: [path: string, progress: Progress]
   output: [kind: PackageKind, fullName: string, text: string]
+  optimization: [optimization: Optimization, state: OptimizeState]
 }
 
 export type Api = Ipc & {
@@ -134,4 +183,5 @@ export type Api = Ipc & {
   theme: Theme
   onProgress: (listener: (...args: Events['progress']) => void) => void
   onOutput: (listener: (...args: Events['output']) => void) => void
+  onOptimization: (listener: (...args: Events['optimization']) => void) => void
 }
