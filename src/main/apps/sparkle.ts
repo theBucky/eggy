@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { promisify } from 'node:util'
 import { findItem, type Appcast } from './appcast'
 import type { Bundle } from './bundle'
-import { fetchFeed, type Feed, type Framework, type Update } from './framework'
+import { fetchFeed, verifySigner, type Feed, type Framework, type Update } from './framework'
 import { run } from './run'
 
 type Source = Appcast & {
@@ -15,7 +15,7 @@ type Source = Appcast & {
 const verifyAsync = promisify(verify)
 
 async function verifySignature(
-  archive: Buffer,
+  archive: string,
   signature: string | undefined,
   key: string
 ): Promise<void> {
@@ -28,9 +28,14 @@ async function verifySignature(
     format: 'jwk'
   })
 
-  if (!(await verifyAsync(null, archive, publicKey, Buffer.from(signature, 'base64')))) {
-    throw new Error("The update's signature doesn't match the app's key.")
-  }
+  const matches = await verifyAsync(
+    null,
+    await readFile(archive),
+    publicKey,
+    Buffer.from(signature, 'base64')
+  )
+
+  if (!matches) throw new Error("The update's signature doesn't match the app's key.")
 }
 
 async function check(bundle: Bundle, source: Source): Promise<Update | undefined> {
@@ -49,9 +54,11 @@ async function check(bundle: Bundle, source: Source): Promise<Update | undefined
 
   return {
     release: item.release,
-    verify: async (archive) => {
-      if (key !== undefined) await verifySignature(await readFile(archive), item.signature, key)
-    }
+    // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
+    verify: (archive, replacement) =>
+      key === undefined
+        ? verifySigner(bundle.path, replacement)
+        : verifySignature(archive, item.signature, key)
   }
 }
 
