@@ -15,6 +15,7 @@ import type {
   UpgradeOutcome
 } from '../../shared/api'
 import { readBundle, type Bundle } from './bundle'
+import { applyDelta } from './delta'
 import { electronUpdater } from './electron-updater'
 import type { Feed, Framework, Update } from './framework'
 import { knownApps } from './known-apps'
@@ -148,14 +149,22 @@ async function findBundle(dir: string, id: string): Promise<string> {
 }
 
 // ditto keeps the symlinks, extended attributes, and code signatures that an app bundle relies on.
-async function unpack(archive: string, work: string, id: string): Promise<string> {
+async function unpack(archive: string, work: string, bundle: Bundle): Promise<string> {
   const contents = join(work, 'contents')
   const type = extname(archive).toLowerCase()
 
   if (type === '.zip') {
     await run('ditto', ['-x', '-k', archive, contents])
 
-    return findBundle(contents, id)
+    return findBundle(contents, bundle.id)
+  }
+
+  if (type === '.delta') {
+    const replacement = join(contents, basename(bundle.path))
+
+    await applyDelta(bundle.path, archive, replacement)
+
+    return replacement
   }
 
   if (type === '.dmg') {
@@ -178,7 +187,7 @@ async function unpack(archive: string, work: string, id: string): Promise<string
     )
 
     try {
-      const source = await findBundle(mount, id)
+      const source = await findBundle(mount, bundle.id)
       const copy = join(contents, basename(source))
 
       await run('ditto', [source, copy])
@@ -200,7 +209,7 @@ async function unpack(archive: string, work: string, id: string): Promise<string
 
     if (image === undefined) throw new Error('The download holds no disk image.')
 
-    return unpack(join(wrapped, image), work, id)
+    return unpack(join(wrapped, image), work, bundle)
   }
 
   throw new Error(`Upgrades packaged as ${type || 'files without an extension'} aren't supported.`)
@@ -262,7 +271,7 @@ async function prepare(
     await download(update.release, archive, report)
     report({ stage: 'install' })
 
-    const replacement = await unpack(archive, work, bundle.id)
+    const replacement = await unpack(archive, work, bundle)
 
     await update.verify(archive, replacement)
 

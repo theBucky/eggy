@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
-import { findItem, type Appcast } from './appcast'
+import { findItem, type Appcast, type Enclosure } from './appcast'
 import type { Bundle } from './bundle'
 import { fetchFeed, verifySigner, type Feed, type Framework, type Update } from './framework'
 import { run } from './run'
@@ -52,16 +52,16 @@ async function check(bundle: Bundle, source: Source): Promise<Update[]> {
 
   const key = bundle.info.get('SUPublicEDKey')
 
-  return [
-    {
-      release: item.release,
-      // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
-      verify: (archive, replacement) =>
-        key === undefined
-          ? verifySigner(bundle.path, replacement)
-          : verifySignature(archive, item.signature, key)
-    }
-  ]
+  const updateOf = (enclosure: Enclosure): Update => ({
+    release: { ...item.release, url: enclosure.url, size: enclosure.size },
+    // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
+    verify: (archive, replacement) =>
+      key === undefined
+        ? verifySigner(bundle.path, replacement)
+        : verifySignature(archive, enclosure.signature, key)
+  })
+
+  return (item.delta ? [item.delta, item.archive] : [item.archive]).map(updateOf)
 }
 
 export function sparkleFeed(bundle: Bundle, source: Source): Feed {

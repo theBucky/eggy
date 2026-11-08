@@ -7,9 +7,16 @@ export type Appcast = {
   channels: string[]
 }
 
-type Item = {
-  release: Release
+export type Enclosure = {
+  url: string
+  size: number | undefined
   signature: string | undefined
+}
+
+type Item = {
+  release: Omit<Release, 'url' | 'size'>
+  archive: Enclosure
+  delta: Enclosure | undefined
 }
 
 const formats = ['html', 'markdown', 'plain-text'] as const
@@ -61,12 +68,31 @@ function runsHere(item: Element, { channels }: Appcast, system: string): boolean
   )
 }
 
-function parseItem(item: Element, appcast: Appcast, system: string): Item | undefined {
+function enclosureOf(element: Element | undefined, base: string): Enclosure | undefined {
+  const url = element?.getAttribute('url')
+
+  if (!element || !url) return undefined
+
+  const size = Number(element.getAttribute('length'))
+
+  return {
+    url: new URL(url, base).href,
+    size: size > 0 ? size : undefined,
+    signature: element.getAttribute('sparkle:edSignature') || undefined
+  }
+}
+
+function parseItem(
+  item: Element,
+  appcast: Appcast,
+  system: string,
+  installed: string
+): Item | undefined {
   // Delta updates nest their own enclosures one level deeper.
   const enclosure = [...item.children].find((element) => element.tagName === 'enclosure')
-  const url = enclosure?.getAttribute('url')
+  const archive = enclosureOf(enclosure, appcast.url)
 
-  if (!enclosure || !url || !runsHere(item, appcast, system)) return undefined
+  if (!enclosure || !archive || !runsHere(item, appcast, system)) return undefined
 
   // Sparkle 2 moved these from the enclosure's attributes to elements of the item.
   const field = (name: string): string | undefined =>
@@ -77,18 +103,21 @@ function parseItem(item: Element, appcast: Appcast, system: string): Item | unde
   if (build === undefined) return undefined
 
   const date = Date.parse(item.getElementsByTagName('pubDate').item(0)?.textContent ?? '')
-  const size = Number(enclosure.getAttribute('length'))
+  const deltas = item.getElementsByTagName('sparkle:deltas').item(0)
+
+  const delta = [...(deltas?.children ?? [])].find(
+    (element) => element.getAttribute('sparkle:deltaFrom') === installed
+  )
 
   return {
     release: {
       version: field('shortVersionString') ?? build,
       build,
       date: Number.isNaN(date) ? undefined : date,
-      url: new URL(url, appcast.url).href,
-      size: size > 0 ? size : undefined,
       notes: notesOf(item, appcast.url)
     },
-    signature: enclosure.getAttribute('sparkle:edSignature') || undefined
+    archive,
+    delta: enclosureOf(delta, appcast.url)
   }
 }
 
@@ -98,7 +127,7 @@ export function findItem(xml: string, appcast: Appcast, installed: string): Item
   let newest: Item | undefined
 
   for (const item of document.getElementsByTagName('item')) {
-    const parsed = parseItem(item, appcast, system)
+    const parsed = parseItem(item, appcast, system, installed)
 
     if (parsed && (!newest || compare(parsed.release.build, newest.release.build) > 0)) {
       newest = parsed
