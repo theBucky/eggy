@@ -24,6 +24,7 @@
     type Workspace
   } from '$lib/repos/workspace.svelte'
   import { ago } from '$lib/time'
+  import { plural } from '$shared/plural'
 
   let {
     apps,
@@ -93,10 +94,6 @@
 
   function settled(task: { status: string } | undefined): boolean {
     return task !== undefined && task.status !== 'running'
-  }
-
-  function plural(n: number, one: string, many: string): string {
-    return `${n} ${n === 1 ? one : many}`
   }
 
   function check(): void {
