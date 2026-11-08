@@ -31,7 +31,7 @@
       {#if busy}
         <Spinner />
       {:else}
-        <Icon stroke={1.5} />
+        <Icon />
       {/if}
     </Button>
   {/snippet}

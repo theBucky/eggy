@@ -66,9 +66,9 @@
               {#snippet child({ props })}
                 <Sidebar.MenuButton {...props} size="sm">
                   {#if open}
-                    <IconFolderOpen stroke={1.5} />
+                    <IconFolderOpen />
                   {:else}
-                    <IconFolder stroke={1.5} />
+                    <IconFolder />
                   {/if}
                   <span class="flex-1 truncate-fade">{workspace.relative(dir)}</span>
                   {#if !open}

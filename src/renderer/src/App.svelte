@@ -65,7 +65,7 @@
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton size="sm" isActive={home} onclick={() => (view = { page: 'home' })}>
-            <IconHome stroke={1.5} />
+            <IconHome />
             <span class="flex-1 truncate-fade">Home</span>
             {#if pending > 0}
               <span class="font-mono text-xs text-info">{pending}</span>
@@ -78,7 +78,7 @@
             isActive={view.page === 'optimize'}
             onclick={() => (view = { page: 'optimize' })}
           >
-            <IconGauge stroke={1.5} />
+            <IconGauge />
             <span class="flex-1 truncate-fade">Optimize</span>
             {#if optimizer.running}
               <Spinner />
@@ -104,7 +104,7 @@
             isActive={view.page === 'settings'}
             onclick={() => (view = { page: 'settings' })}
           >
-            <IconSettings stroke={1.5} />
+            <IconSettings />
             <span class="flex-1 truncate-fade">Settings</span>
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>

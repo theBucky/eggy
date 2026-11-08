@@ -32,7 +32,6 @@
   >
     <span class="flex min-w-0 items-center gap-2">
       <IconChevronRight
-        stroke={1.5}
         class={cn(
           'size-3 shrink-0 transition-transform duration-collapsible ease-out-expo',
           open && 'rotate-90'
