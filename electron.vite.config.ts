@@ -4,7 +4,10 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  main: {},
+  main: {
+    // Electron's own module, which Node's built-in list leaves out.
+    build: { rolldownOptions: { external: ['original-fs'] } }
+  },
   preload: {},
   renderer: {
     resolve: {

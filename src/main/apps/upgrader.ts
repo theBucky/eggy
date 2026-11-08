@@ -1,9 +1,9 @@
-import { rmSync } from 'node:fs'
-import { mkdir, mkdtemp, open, readdir, rename, rm, stat } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, extname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { nativeImage, net, shell } from 'electron'
+// Electron's fs reads an app's asar archive as a folder, so it can't remove an app that holds one.
+import { promises as fs, rmSync } from 'original-fs'
 import * as z from 'zod'
 import type {
   App,
@@ -79,7 +79,7 @@ async function readApp(path: string): Promise<App | undefined> {
 export async function listApps(): Promise<App[]> {
   const listed = await Promise.all(
     folders.map(async (folder) =>
-      (await readdir(folder).catch(() => [])).flatMap((name) =>
+      (await fs.readdir(folder).catch(() => [])).flatMap((name) =>
         name.endsWith('.app') ? [join(folder, name)] : []
       )
     )
@@ -112,7 +112,7 @@ async function download(
   }
 
   const total = Number(response.headers.get('content-length')) || release.size
-  const handle = await open(file, 'w')
+  const handle = await fs.open(file, 'w')
   let received = 0
   let reported = 0
 
@@ -138,7 +138,7 @@ async function download(
 }
 
 async function findBundle(dir: string, id: string): Promise<string> {
-  for (const name of await readdir(dir)) {
+  for (const name of await fs.readdir(dir)) {
     const path = join(dir, name)
 
     if (name.endsWith('.app') && (await readBundle(path)).id === id) return path
@@ -193,10 +193,10 @@ async function unpack(archive: string, work: string, id: string): Promise<string
   if (type === '.crx3') {
     const wrapped = join(work, 'wrapped')
 
-    await mkdir(wrapped)
+    await fs.mkdir(wrapped)
     await run('tar', ['-xf', archive, '-C', wrapped])
 
-    const image = (await readdir(wrapped)).find((name) => extname(name) === '.dmg')
+    const image = (await fs.readdir(wrapped)).find((name) => extname(name) === '.dmg')
 
     if (image === undefined) throw new Error('The download holds no disk image.')
 
@@ -244,9 +244,9 @@ async function forceQuit(bundle: Bundle): Promise<boolean> {
 // Renaming the replacement into place only works within a volume, so it stages on the app's.
 async function makeWork(path: string): Promise<string> {
   const folder = dirname(path)
-  const [app, temporary] = await Promise.all([stat(folder), stat(tmpdir())])
+  const [app, temporary] = await Promise.all([fs.stat(folder), fs.stat(tmpdir())])
 
-  return mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.eggy-'))
+  return fs.mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.eggy-'))
 }
 
 async function stage(path: string, report: (progress: Progress) => void): Promise<Staged> {
@@ -269,7 +269,7 @@ async function stage(path: string, report: (progress: Progress) => void): Promis
 
     return { work, replacement, bundle }
   } catch (cause) {
-    await rm(work, { recursive: true, force: true })
+    await fs.rm(work, { recursive: true, force: true })
     throw cause
   }
 }
@@ -282,7 +282,7 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
 
     // moving a whole bundle avoids the app management access needed to delete files inside.
     await shell.trashItem(path)
-    await rename(replacement, path)
+    await fs.rename(replacement, path)
 
     const { version, build } = await readBundle(path)
 
@@ -293,7 +293,7 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   } catch (cause) {
     return failure(cause)
   } finally {
-    await rm(work, { recursive: true, force: true })
+    await fs.rm(work, { recursive: true, force: true })
   }
 }
 
@@ -329,7 +329,7 @@ export function forceUpgrade(path: string): Promise<InstallOutcome> {
 }
 
 export async function discardUpgrade(path: string): Promise<void> {
-  await rm(takeWaiting(path).work, { recursive: true, force: true })
+  await fs.rm(takeWaiting(path).work, { recursive: true, force: true })
 }
 
 export function discardWaiting(): void {
