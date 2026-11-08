@@ -56,7 +56,7 @@ async function feedOf(bundle: Bundle): Promise<Feed | undefined> {
   return undefined
 }
 
-async function fetchUpdate(bundle: Bundle): Promise<Update | undefined> {
+async function fetchUpdates(bundle: Bundle): Promise<Update[]> {
   const feed = await feedOf(bundle)
 
   if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
@@ -92,9 +92,9 @@ export async function listApps(): Promise<App[]> {
 
 export async function check(path: string): Promise<CheckOutcome> {
   try {
-    const update = await fetchUpdate(await readBundle(path))
+    const updates = await fetchUpdates(await readBundle(path))
 
-    return { status: 'checked', release: update?.release }
+    return { status: 'checked', release: updates.at(0)?.release }
   } catch (cause) {
     return failure(cause)
   }
@@ -249,15 +249,14 @@ async function makeWork(path: string): Promise<string> {
   return fs.mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.eggy-'))
 }
 
-async function stage(path: string, report: (progress: Progress) => void): Promise<Staged> {
-  const work = await makeWork(path)
+async function prepare(
+  bundle: Bundle,
+  update: Update,
+  report: (progress: Progress) => void
+): Promise<Staged> {
+  const work = await makeWork(bundle.path)
 
   try {
-    const bundle = await readBundle(path)
-    const update = await fetchUpdate(bundle)
-
-    if (update === undefined) throw new Error(`${bundle.name} is already up to date.`)
-
     const archive = join(work, basename(new URL(update.release.url).pathname))
 
     await download(update.release, archive, report)
@@ -272,6 +271,21 @@ async function stage(path: string, report: (progress: Progress) => void): Promis
     await fs.rm(work, { recursive: true, force: true })
     throw cause
   }
+}
+
+async function stage(path: string, report: (progress: Progress) => void): Promise<Staged> {
+  const bundle = await readBundle(path)
+  const updates = await fetchUpdates(bundle)
+
+  for (const [index, update] of updates.entries()) {
+    try {
+      return await prepare(bundle, update, report)
+    } catch (cause) {
+      if (index === updates.length - 1) throw cause
+    }
+  }
+
+  throw new Error(`${bundle.name} is already up to date.`)
 }
 
 async function install({ work, replacement, bundle }: Staged): Promise<InstallOutcome> {

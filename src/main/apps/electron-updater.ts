@@ -73,26 +73,28 @@ function pickArchive(files: File[]): File {
   return zip
 }
 
-function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update | undefined {
-  if (!gt(info.version, bundle.version)) return undefined
+function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update[] {
+  if (!gt(info.version, bundle.version)) return []
 
   const file = pickArchive(info.files)
   const date = Date.parse(info.releaseDate ?? '')
 
-  return {
-    release: {
-      version: info.version,
-      build: info.version,
-      date: Number.isNaN(date) ? undefined : date,
-      url: new URL(file.url, base).href,
-      size: file.size,
-      notes
-    },
-    verify: async (archive, replacement) => {
-      await verifyChecksum(archive, 'sha512', 'base64', file.sha512)
-      await verifySigner(bundle.path, replacement)
+  return [
+    {
+      release: {
+        version: info.version,
+        build: info.version,
+        date: Number.isNaN(date) ? undefined : date,
+        url: new URL(file.url, base).href,
+        size: file.size,
+        notes
+      },
+      verify: async (archive, replacement) => {
+        await verifyChecksum(archive, 'sha512', 'base64', file.sha512)
+        await verifySigner(bundle.path, replacement)
+      }
     }
-  }
+  ]
 }
 
 function generic(bundle: Bundle, { url, channel = 'latest' }: Generic): Feed {

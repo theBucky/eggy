@@ -12,7 +12,7 @@ export type Update = {
 
 export type Feed = {
   url: string
-  check: () => Promise<Update | undefined>
+  check: () => Promise<Update[]>
 }
 
 export type Framework = (bundle: Bundle) => Promise<Feed | undefined>

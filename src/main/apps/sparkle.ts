@@ -38,7 +38,7 @@ async function verifySignature(
   if (!matches) throw new Error("The update's signature doesn't match the app's key.")
 }
 
-async function check(bundle: Bundle, source: Source): Promise<Update | undefined> {
+async function check(bundle: Bundle, source: Source): Promise<Update[]> {
   const url = new URL(source.url)
 
   for (const [parameter, key] of Object.entries(source.preferences ?? {})) {
@@ -48,18 +48,20 @@ async function check(bundle: Bundle, source: Source): Promise<Update | undefined
   const response = await fetchFeed(url.href)
   const item = findItem(await response.text(), source, bundle.build)
 
-  if (item === undefined) return undefined
+  if (item === undefined) return []
 
   const key = bundle.info.get('SUPublicEDKey')
 
-  return {
-    release: item.release,
-    // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
-    verify: (archive, replacement) =>
-      key === undefined
-        ? verifySigner(bundle.path, replacement)
-        : verifySignature(archive, item.signature, key)
-  }
+  return [
+    {
+      release: item.release,
+      // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
+      verify: (archive, replacement) =>
+        key === undefined
+          ? verifySigner(bundle.path, replacement)
+          : verifySignature(archive, item.signature, key)
+    }
+  ]
 }
 
 export function sparkleFeed(bundle: Bundle, source: Source): Feed {

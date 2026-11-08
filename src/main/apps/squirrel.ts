@@ -10,27 +10,29 @@ type Source = {
   changelog: string
 }
 
-async function check(bundle: Bundle, source: Source): Promise<Update | undefined> {
+async function check(bundle: Bundle, source: Source): Promise<Update[]> {
   const response = await fetchFeed(source.url)
 
-  if (response.status === 204) return undefined
+  if (response.status === 204) return []
 
   const offer = Offer.parse(JSON.parse(await response.text()))
 
   // Some feeds, like Figma's, answer with their latest release even when that one is installed.
-  if (compare(offer.name, bundle.version) <= 0) return undefined
+  if (compare(offer.name, bundle.version) <= 0) return []
 
-  return {
-    release: {
-      version: offer.name,
-      build: offer.name,
-      date: undefined,
-      url: new URL(offer.url, source.url).href,
-      size: undefined,
-      notes: { format: 'link', url: source.changelog }
-    },
-    verify: (_, replacement) => verifySigner(bundle.path, replacement)
-  }
+  return [
+    {
+      release: {
+        version: offer.name,
+        build: offer.name,
+        date: undefined,
+        url: new URL(offer.url, source.url).href,
+        size: undefined,
+        notes: { format: 'link', url: source.changelog }
+      },
+      verify: (_, replacement) => verifySigner(bundle.path, replacement)
+    }
+  ]
 }
 
 export function squirrelFeed(bundle: Bundle, source: Source): Feed {

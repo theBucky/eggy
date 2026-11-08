@@ -20,7 +20,7 @@ const Offer = z.object({
 
 const server = 'https://update.googleapis.com/service/update2/json'
 
-async function check(bundle: Bundle): Promise<Update | undefined> {
+async function check(bundle: Bundle): Promise<Update[]> {
   const response = await fetchFeed(server, {
     method: 'POST',
     headers: { accept: 'application/json', 'content-type': 'application/json' },
@@ -53,7 +53,7 @@ async function check(bundle: Bundle): Promise<Update | undefined> {
 
   const { status } = Answer.parse(app.updatecheck)
 
-  if (status === 'noupdate') return undefined
+  if (status === 'noupdate') return []
 
   if (status !== 'ok') throw new Error(`The update server answered ${status}.`)
 
@@ -63,20 +63,22 @@ async function check(bundle: Bundle): Promise<Update | undefined> {
 
   if (url === undefined) throw new Error('The update offers no secure download.')
 
-  return {
-    release: {
-      version: nextversion,
-      build: nextversion,
-      date: undefined,
-      url,
-      size: download.size,
-      notes: undefined
-    },
-    verify: async (archive, replacement) => {
-      await verifyChecksum(archive, 'sha256', 'hex', download.out.sha256)
-      await verifySigner(bundle.path, replacement)
+  return [
+    {
+      release: {
+        version: nextversion,
+        build: nextversion,
+        date: undefined,
+        url,
+        size: download.size,
+        notes: undefined
+      },
+      verify: async (archive, replacement) => {
+        await verifyChecksum(archive, 'sha256', 'hex', download.out.sha256)
+        await verifySigner(bundle.path, replacement)
+      }
     }
-  }
+  ]
 }
 
 export function googleUpdaterFeed(bundle: Bundle): Feed {
