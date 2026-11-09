@@ -125,7 +125,7 @@
     0.995 80%,
     1
   );
-  --transition-duration-collapsible: 260ms;
+  --transition-duration-collapsible: 300ms;
 }
 
 @utility no-scrollbar {
@@ -187,8 +187,6 @@
    goes stale once a nested folder opens. Padding here would hold collapsed content open, so the
    rows inside carry it. */
 [data-slot='collapsible-content'] {
-  --feather-height: calc(var(--spacing) * 4);
-  --feather: linear-gradient(to top, transparent, #000 var(--feather-height));
   interpolate-size: allow-keywords;
   overflow: clip;
   overflow-clip-margin: 2px;
@@ -206,32 +204,10 @@
 
   /* bits-ui zeroes the duration inline while measuring closing content, which would snap shut. */
   &[data-ending-style] {
-    transition-duration: var(--transition-duration-collapsible), 200ms !important;
+    transition-duration: var(--transition-duration-collapsible) !important;
   }
 
-  /* bits-ui flags only the first opening frame, so an animation must hold the feather after. */
   @media (prefers-reduced-motion: no-preference) {
     transition-property: height, opacity;
-
-    &[data-state='open'] {
-      animation: collapsible-feather var(--transition-duration-collapsible) ease-in;
-    }
-
-    &[data-ending-style] {
-      mask-image: var(--feather);
-    }
-  }
-}
-
-/* Growing the mask past the bottom slides the feather out as the rows settle, so the last row
-   never snaps back to full strength. */
-@keyframes collapsible-feather {
-  from {
-    mask-image: var(--feather);
-    mask-size: 100% 100%;
-  }
-  to {
-    mask-image: var(--feather);
-    mask-size: 100% calc(100% + var(--feather-height));
   }
 }
