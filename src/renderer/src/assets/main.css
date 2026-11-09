@@ -28,7 +28,8 @@
   --secondary: light-dark(#1c1c1c14, #f0f0f014);
   --secondary-foreground: light-dark(#1c1c1c, #f0f0f0);
   --muted: light-dark(#1c1c1c0f, #f0f0f00f);
-  --muted-foreground: light-dark(#1c1c1c99, #f0f0f099);
+  /* Opaque so the strokes where an icon's paths cross don't composite twice. */
+  --muted-foreground: color-mix(in srgb, var(--foreground) 60%, var(--background));
   --accent: light-dark(#1c1c1c14, #f0f0f014);
   --accent-foreground: light-dark(#1c1c1c, #f0f0f0);
   --destructive: light-dark(#cd2834, #e34671);
