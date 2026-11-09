@@ -1,12 +1,12 @@
 <script lang="ts">
-	import IconLoader2 from '@tabler/icons-svelte/icons/loader-2';
-	import { cn } from "$lib/utils.js";
-	import type { ComponentProps } from "svelte";
+	import type { SVGAttributes } from "svelte/elements";
+	import "./spinner.css";
 
-	let { class: className, ...restProps }: ComponentProps<IconLoader2> = $props();
+	let props: SVGAttributes<SVGSVGElement> = $props();
 </script>
 
-<!-- Chromium can't composite an animation on an <svg>, so the wrapper spins instead. -->
-<span class={cn("inline-flex size-4 shrink-0 animate-[spin_1s_cubic-bezier(0.5,0.15,0.5,0.85)_infinite]", className)}>
-	<IconLoader2 role="status" aria-label="Loading" class="size-full" {...restProps} />
+<span data-slot="spinner" class="inline-flex shrink-0">
+	<svg role="status" aria-label="Loading" width="16" height="16" viewBox="0 0 24 24" fill="none" {...props}>
+		<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+	</svg>
 </span>

@@ -1,0 +1,38 @@
+/* loading-dev's snake, with dash lengths scaled by 0.9 to fit tabler's r=9 ring. */
+@layer components {
+  [data-slot='spinner'] {
+    & circle {
+      stroke-dasharray: 16.2 90;
+    }
+
+    /* Chromium can't composite an animation on an <svg>, so the wrapper spins instead. */
+    @media (prefers-reduced-motion: no-preference) {
+      animation: spinner-turn 1.4s linear infinite;
+
+      & circle {
+        animation: spinner-stretch 1.4s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+@keyframes spinner-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinner-stretch {
+  0% {
+    stroke-dasharray: 0.9 90;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 40.5 90;
+    stroke-dashoffset: -15.3;
+  }
+  100% {
+    stroke-dasharray: 40.5 90;
+    stroke-dashoffset: -55.8;
+  }
+}
