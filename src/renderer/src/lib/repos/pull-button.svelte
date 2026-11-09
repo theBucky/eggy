@@ -26,7 +26,7 @@
   {size}
   variant={look.variant}
   disabled={workspace.busy}
-  onclick={() => workspace.pull(entry, command)}
+  onclick={() => workspace.pull([entry], command)}
 >
   {runningPull(entry) === command ? look.running : look.idle}
 </Button>

@@ -19,8 +19,9 @@ export class Packages {
   installed = $state(false)
   entries = $state<Entry[]>([])
   scanning = $state(false)
+  #refreshing = $state(false)
   check = $state<Check>()
-  checking = $derived(this.scanning || this.check?.status === 'running')
+  checking = $derived(this.scanning || this.#refreshing)
   upgrading = $derived(this.entries.some(({ task }) => task?.status === 'running'))
   busy = $derived(this.checking || this.upgrading)
   outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
@@ -56,16 +57,19 @@ export class Packages {
   }
 
   async refresh(): Promise<void> {
+    this.#refreshing = true
     await this.scan()
 
-    if (!this.installed) return
+    if (this.installed) {
+      this.check = { status: 'running' }
 
-    this.check = { status: 'running' }
+      const list = await window.api.checkPackages()
 
-    const list = await window.api.checkPackages()
+      this.check = list.status === 'failed' ? list : { status: 'checked' }
+      this.apply(list)
+    }
 
-    this.check = list.status === 'failed' ? list : { status: 'checked' }
-    this.apply(list)
+    this.#refreshing = false
   }
 
   // brew locks the kegs it installs, so upgrades that share dependencies would collide.

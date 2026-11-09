@@ -53,7 +53,7 @@
       icon={IconCloudDownload}
       busy={workspace.pulling}
       disabled={workspace.busy || workspace.outdated.length === 0}
-      onclick={() => workspace.pullAll()}
+      onclick={() => workspace.pull(workspace.outdated, 'pull')}
     />
   {/snippet}
   <Sidebar.Menu>

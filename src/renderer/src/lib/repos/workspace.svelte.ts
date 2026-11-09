@@ -53,11 +53,9 @@ export class Workspace {
   root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
   entries = $state<Entry[]>([])
   scanning = $state(false)
-  checking = $derived(
-    this.scanning ||
-      this.entries.some(({ task }) => task?.status === 'running' && task.command === 'fetch')
-  )
-  pulling = $derived(this.entries.some(runningPull))
+  #refreshing = $state(false)
+  pulling = $state(false)
+  checking = $derived(this.scanning || this.#refreshing)
   busy = $derived(this.checking || this.pulling)
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
@@ -79,6 +77,7 @@ export class Workspace {
   }
 
   async refresh(): Promise<void> {
+    this.#refreshing = true
     await this.scan()
     await each(this.entries, async (entry) => {
       entry.task = { command: 'fetch', status: 'running' }
@@ -88,6 +87,7 @@ export class Workspace {
       Object.assign(entry.repo, tracking)
       entry.task = { command: 'fetch', ...outcome }
     })
+    this.#refreshing = false
   }
 
   async chooseRoot(): Promise<void> {
@@ -100,16 +100,16 @@ export class Workspace {
     await this.scan()
   }
 
-  async pull(entry: Entry, command: PullCommand): Promise<void> {
-    entry.task = { command, status: 'running' }
+  async pull(entries: Entry[], command: PullCommand): Promise<void> {
+    this.pulling = true
+    await each(entries, async (entry) => {
+      entry.task = { command, status: 'running' }
 
-    const { outcome, ...tracking } = await window.api.pull(entry.repo.path, command)
+      const { outcome, ...tracking } = await window.api.pull(entry.repo.path, command)
 
-    Object.assign(entry.repo, tracking)
-    entry.task = { command, ...outcome }
-  }
-
-  async pullAll(): Promise<void> {
-    await each(this.outdated, (entry) => this.pull(entry, 'pull'))
+      Object.assign(entry.repo, tracking)
+      entry.task = { command, ...outcome }
+    })
+    this.pulling = false
   }
 }

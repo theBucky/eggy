@@ -105,7 +105,7 @@
   function upgradeAll(): void {
     apps.upgrade(apps.outdated)
     packages.upgrade(packages.outdated)
-    workspace.pullAll()
+    workspace.pull(workspace.outdated, 'pull')
   }
 </script>
 
@@ -256,7 +256,7 @@
                   variant="ghost"
                   size="sm"
                   disabled={workspace.busy}
-                  onclick={() => workspace.pullAll()}
+                  onclick={() => workspace.pull(workspace.outdated, 'pull')}
                 >
                   Pull all {workspace.outdated.length}
                 </Button>

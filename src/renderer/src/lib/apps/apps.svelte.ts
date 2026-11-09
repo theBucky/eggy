@@ -48,11 +48,9 @@ export function statusOf({ task }: Entry): Status {
 export class Apps {
   entries = $state<Entry[]>([])
   scanning = $state(false)
+  #refreshing = $state(false)
   prompt = $state<Prompt>({ open: false, quitting: [] })
-  checking = $derived(
-    this.scanning ||
-      this.entries.some(({ task }) => task?.status === 'running' && task.command === 'check')
-  )
+  checking = $derived(this.scanning || this.#refreshing)
   upgrading = $derived(
     this.entries.some(({ task }) => task?.status === 'running' && task.command === 'upgrade')
   )
@@ -78,6 +76,7 @@ export class Apps {
   }
 
   async refresh(): Promise<void> {
+    this.#refreshing = true
     await this.scan()
     await Promise.all(
       this.entries.map(async (entry) => {
@@ -86,6 +85,7 @@ export class Apps {
         entry.task = { command: 'check', ...(await window.api.check(entry.app.path)) }
       })
     )
+    this.#refreshing = false
   }
 
   async upgrade(entries: Entry[]): Promise<void> {
