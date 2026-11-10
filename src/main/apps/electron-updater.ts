@@ -5,7 +5,7 @@ import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
 import { gt, prerelease, valid } from 'semver'
 import { parse } from 'yaml'
 import * as z from 'zod'
-import type { Notes } from '../../shared/api'
+import type { Notes } from '$shared/api'
 import type { Bundle } from './bundle'
 import {
   fetchFeed,

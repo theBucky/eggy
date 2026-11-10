@@ -1,7 +1,7 @@
 import { createHash, type BinaryToTextEncoding } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { net } from 'electron'
-import type { Release } from '../../shared/api'
+import type { Release } from '$shared/api'
 import type { Bundle } from './bundle'
 import { run } from './run'
 

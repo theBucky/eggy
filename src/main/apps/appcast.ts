@@ -1,5 +1,5 @@
 import { DOMParser, onErrorStopParsing, type Element, type NodeList } from '@xmldom/xmldom'
-import type { Notes, Release } from '../../shared/api'
+import type { Notes, Release } from '$shared/api'
 import { compare } from './version'
 
 export type Appcast = {

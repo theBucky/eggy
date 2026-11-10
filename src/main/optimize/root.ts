@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process'
-import type { OptimizeOutcome } from '../../shared/api'
+import type { OptimizeOutcome } from '$shared/api'
 import { exec } from './support'
 
 export type Exit = { code: number; output: string }

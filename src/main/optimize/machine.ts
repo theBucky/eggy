@@ -1,6 +1,6 @@
 import { statfs } from 'node:fs/promises'
 import { totalmem, uptime } from 'node:os'
-import type { Machine } from '../../shared/api'
+import type { Machine } from '$shared/api'
 import { output } from './support'
 
 // Counts memory the way Activity Monitor's "Memory Used" does: app memory, wired, and compressed.

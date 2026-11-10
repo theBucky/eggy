@@ -10,7 +10,7 @@ import {
 } from 'electron'
 import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
-import type { Events, Ipc } from '../shared/api'
+import type { Events, Ipc } from '$shared/api'
 import * as apps from './apps/upgrader'
 import * as brew from './brew'
 import * as git from './git'

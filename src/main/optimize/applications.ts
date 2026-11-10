@@ -2,8 +2,8 @@ import { lstat, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
 import { shell } from 'electron'
-import type { OptimizeOutcome } from '../../shared/api'
-import { plural } from '../../shared/plural'
+import type { OptimizeOutcome } from '$shared/api'
+import { plural } from '$shared/plural'
 import { FULL_DISK_ACCESS, access, broken, entries, exec, exists, output, sqlite } from './support'
 
 const home = homedir()

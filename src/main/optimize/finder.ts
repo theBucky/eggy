@@ -2,8 +2,8 @@ import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { shell } from 'electron'
-import type { OptimizeOutcome } from '../../shared/api'
-import { plural } from '../../shared/plural'
+import type { OptimizeOutcome } from '$shared/api'
+import { plural } from '$shared/plural'
 import { FULL_DISK_ACCESS, broken, errorCode, exec, output } from './support'
 
 export async function quickLook(): Promise<OptimizeOutcome> {

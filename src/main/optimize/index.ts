@@ -8,7 +8,7 @@ import {
   type OptimizeState,
   type Privileged,
   type Review
-} from '../../shared/api'
+} from '$shared/api'
 import { appDatabases, launchAgents, loginItems, preferences, savedStates } from './applications'
 import { networkVolumes, quickLook, sharedFileLists } from './finder'
 import { dnsCache, networkStack } from './network'

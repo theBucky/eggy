@@ -3,7 +3,7 @@ import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
 import * as z from 'zod'
-import type { Failure, Package, PackageKind, PackageList, PackageUpgrade } from '../shared/api'
+import type { Failure, Package, PackageKind, PackageList, PackageUpgrade } from '$shared/api'
 import { loginEnv } from './login-env'
 
 // Checks refresh brew's index on their own, so upgrades skip its automatic one. Env hints and emoji

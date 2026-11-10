@@ -13,7 +13,7 @@ import type {
   Progress,
   Release,
   UpgradeOutcome
-} from '../../shared/api'
+} from '$shared/api'
 import { readBundle, type Bundle } from './bundle'
 import { applyDelta } from './delta'
 import { electronUpdater } from './electron-updater'

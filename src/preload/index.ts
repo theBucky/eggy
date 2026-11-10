@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { homedir } from 'node:os'
-import type { Api, Events, Ipc, Theme } from '../shared/api'
+import type { Api, Events, Ipc, Theme } from '$shared/api'
 
 function invoke<Channel extends keyof Ipc>(channel: Channel) {
   return (...args: Parameters<Ipc[Channel]>) =>

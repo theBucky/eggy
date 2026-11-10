@@ -1,4 +1,4 @@
-import type { OptimizeOutcome } from '../../shared/api'
+import type { OptimizeOutcome } from '$shared/api'
 import { command, guarded, quote, stoppedBy, type Guard, type Plan } from './root'
 import { exec, output } from './support'
 

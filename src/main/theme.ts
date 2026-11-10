@@ -2,7 +2,7 @@ import { app, nativeTheme } from 'electron'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import * as z from 'zod'
-import { THEMES, type Theme } from '../shared/api'
+import { THEMES, type Theme } from '$shared/api'
 
 const SavedTheme = z.enum(THEMES)
 

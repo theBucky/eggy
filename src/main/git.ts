@@ -13,7 +13,7 @@ import type {
   Repo,
   Sync,
   Tracking
-} from '../shared/api'
+} from '$shared/api'
 import { loginEnv } from './login-env'
 
 type GitResult = {
