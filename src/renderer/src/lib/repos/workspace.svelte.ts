@@ -70,7 +70,7 @@ export class Workspace {
   async scan(): Promise<void> {
     this.scanning = true
 
-    const repos = await window.api.scan(this.root)
+    const repos = await window.api.scanRepos(this.root)
 
     this.entries = repos.map((repo) => ({ repo }))
     this.scanning = false
@@ -82,7 +82,7 @@ export class Workspace {
     await each(this.entries, async (entry) => {
       entry.task = { command: 'fetch', status: 'running' }
 
-      const { outcome, ...tracking } = await window.api.fetch(entry.repo.path)
+      const { outcome, ...tracking } = await window.api.fetchRepo(entry.repo.path)
 
       Object.assign(entry.repo, tracking)
       entry.task = { command: 'fetch', ...outcome }
@@ -105,7 +105,7 @@ export class Workspace {
     await each(entries, async (entry) => {
       entry.task = { command, status: 'running' }
 
-      const { outcome, ...tracking } = await window.api.pull(entry.repo.path, command)
+      const { outcome, ...tracking } = await window.api.pullRepo(entry.repo.path, command)
 
       Object.assign(entry.repo, tracking)
       entry.task = { command, ...outcome }

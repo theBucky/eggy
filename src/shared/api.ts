@@ -151,18 +151,18 @@ export type Theme = (typeof THEMES)[number]
 
 export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
-  scan: (root: string) => Promise<Repo[]>
-  fetch: (path: string) => Promise<FetchResult>
-  pull: (path: string, command: PullCommand) => Promise<PullResult>
-  show: (path: string, hash: string) => Promise<CommitDetail>
-  expandWindow: (width: number) => Promise<number>
-  collapseWindow: () => Promise<number>
+  scanRepos: (root: string) => Promise<Repo[]>
+  fetchRepo: (path: string) => Promise<FetchResult>
+  pullRepo: (path: string, command: PullCommand) => Promise<PullResult>
+  showCommit: (path: string, hash: string) => Promise<CommitDetail>
+  planWindowExpansion: (width: number) => Promise<number>
+  planWindowCollapse: () => Promise<number>
   moveWindow: () => Promise<void>
   listApps: () => Promise<App[]>
-  check: (path: string) => Promise<CheckOutcome>
-  upgrade: (path: string) => Promise<UpgradeOutcome>
-  forceUpgrade: (path: string) => Promise<InstallOutcome>
-  discardUpgrade: (path: string) => Promise<void>
+  checkApp: (path: string) => Promise<CheckOutcome>
+  upgradeApp: (path: string) => Promise<UpgradeOutcome>
+  forceAppUpgrade: (path: string) => Promise<InstallOutcome>
+  discardAppUpgrade: (path: string) => Promise<void>
   listPackages: () => Promise<PackageList>
   checkPackages: () => Promise<PackageList>
   upgradePackage: (kind: PackageKind, fullName: string) => Promise<PackageUpgrade>
@@ -173,15 +173,15 @@ export type Ipc = {
 }
 
 export type Events = {
-  progress: [path: string, progress: Progress]
-  output: [kind: PackageKind, fullName: string, text: string]
+  appProgress: [path: string, progress: Progress]
+  packageOutput: [kind: PackageKind, fullName: string, text: string]
   optimization: [optimization: Optimization, state: OptimizeState]
 }
 
 export type Api = Ipc & {
   home: string
   theme: Theme
-  onProgress: (listener: (...args: Events['progress']) => void) => void
-  onOutput: (listener: (...args: Events['output']) => void) => void
+  onAppProgress: (listener: (...args: Events['appProgress']) => void) => void
+  onPackageOutput: (listener: (...args: Events['packageOutput']) => void) => void
   onOptimization: (listener: (...args: Events['optimization']) => void) => void
 }

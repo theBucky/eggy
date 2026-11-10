@@ -5,8 +5,8 @@ import { screen, systemPreferences, type BrowserWindow, type Rectangle } from 'e
 systemPreferences.registerDefaults({ NSWindowResizeTime: 0.1 })
 
 type Resizer = {
-  expand: (width: number) => number
-  collapse: () => number
+  planExpansion: (width: number) => number
+  planCollapse: () => number
   move: () => void
 }
 
@@ -23,7 +23,7 @@ export function resizer(window: BrowserWindow): Resizer {
     return (to.width - window.getBounds().width) / window.webContents.getZoomFactor()
   }
 
-  function expand(width: number): number {
+  function planExpansion(width: number): number {
     const bounds = planned ?? window.getBounds()
 
     if (expansion !== undefined) {
@@ -46,7 +46,7 @@ export function resizer(window: BrowserWindow): Resizer {
     return plan({ ...bounds, x: bounds.x - shift, width: bounds.width + grown })
   }
 
-  function collapse(): number {
+  function planCollapse(): number {
     const bounds = planned ?? window.getBounds()
 
     if (expansion === undefined) return 0
@@ -82,9 +82,9 @@ export function resizer(window: BrowserWindow): Resizer {
   window.on('leave-full-screen', () => {
     if (!expansion?.deferred) return
 
-    collapse()
+    planCollapse()
     move()
   })
 
-  return { expand, collapse, move }
+  return { planExpansion, planCollapse, move }
 }

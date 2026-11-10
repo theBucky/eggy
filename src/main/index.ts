@@ -22,7 +22,7 @@ type Handlers = {
   [Channel in keyof Ipc]: (
     event: IpcMainInvokeEvent,
     ...args: Parameters<Ipc[Channel]>
-  ) => ReturnType<Ipc[Channel]>
+  ) => ReturnType<Ipc[Channel]> | Awaited<ReturnType<Ipc[Channel]>>
 }
 
 function send<Channel extends keyof Events>(
@@ -102,24 +102,26 @@ app.whenReady().then(() => {
 
       return canceled ? undefined : filePaths[0]
     },
-    scan: (_, root) => git.scan(root),
-    fetch: (_, path) => git.fetch(path),
-    pull: (_, path, command) => git.pull(path, command),
-    show: (_, path, hash) => git.show(path, hash),
-    expandWindow: async (_, width) => pane.expand(width),
-    collapseWindow: async () => pane.collapse(),
-    moveWindow: async () => pane.move(),
+    scanRepos: (_, root) => git.scan(root),
+    fetchRepo: (_, path) => git.fetch(path),
+    pullRepo: (_, path, command) => git.pull(path, command),
+    showCommit: (_, path, hash) => git.show(path, hash),
+    planWindowExpansion: (_, width) => pane.planExpansion(width),
+    planWindowCollapse: () => pane.planCollapse(),
+    moveWindow: () => pane.move(),
     listApps: () => apps.listApps(),
-    check: (_, path) => apps.check(path),
-    upgrade: (event, path) =>
-      apps.upgrade(path, (progress) => send(event.sender, 'progress', path, progress)),
-    forceUpgrade: (_, path) => apps.forceUpgrade(path),
-    discardUpgrade: (_, path) => apps.discardUpgrade(path),
+    checkApp: (_, path) => apps.check(path),
+    upgradeApp: (event, path) =>
+      apps.upgrade(path, (progress) => send(event.sender, 'appProgress', path, progress)),
+    forceAppUpgrade: (_, path) => apps.forceUpgrade(path),
+    discardAppUpgrade: (_, path) => apps.discardUpgrade(path),
     listPackages: () => brew.listPackages(),
     checkPackages: () => brew.check(),
     upgradePackage: (event, kind, fullName) =>
-      brew.upgrade(kind, fullName, (text) => send(event.sender, 'output', kind, fullName, text)),
-    setTheme: async (_, theme) => setTheme(theme),
+      brew.upgrade(kind, fullName, (text) =>
+        send(event.sender, 'packageOutput', kind, fullName, text)
+      ),
+    setTheme: (_, theme) => setTheme(theme),
     inspectMachine: () => optimize.inspectMachine(),
     optimize: (event, optimizations) =>
       optimize.run(optimizations, (optimization, state) =>

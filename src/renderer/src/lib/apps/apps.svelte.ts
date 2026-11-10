@@ -62,7 +62,7 @@ export class Apps {
   outdated = $derived(this.entries.filter(releaseOf))
 
   constructor() {
-    window.api.onProgress((path, progress) => {
+    window.api.onAppProgress((path, progress) => {
       const task = this.entries.find((entry) => entry.app.path === path)?.task
 
       if (task?.command === 'upgrade' && task.status === 'running') task.progress = progress
@@ -82,7 +82,7 @@ export class Apps {
       this.entries.map(async (entry) => {
         entry.task = { command: 'check', status: 'running' }
 
-        entry.task = { command: 'check', ...(await window.api.check(entry.app.path)) }
+        entry.task = { command: 'check', ...(await window.api.checkApp(entry.app.path)) }
       })
     )
     this.#refreshing = false
@@ -102,7 +102,7 @@ export class Apps {
           progress: { stage: 'download', percent: 0 }
         }
 
-        const outcome = await window.api.upgrade(entry.app.path)
+        const outcome = await window.api.upgradeApp(entry.app.path)
 
         if (outcome.status !== 'waiting') this.settle(entry, release, outcome)
         else if (this.prompt.open) this.prompt.quitting.push({ entry, release })
@@ -116,7 +116,7 @@ export class Apps {
 
     await Promise.all(
       this.prompt.quitting.map(async ({ entry, release }) => {
-        this.settle(entry, release, await window.api.forceUpgrade(entry.app.path))
+        this.settle(entry, release, await window.api.forceAppUpgrade(entry.app.path))
       })
     )
   }
@@ -126,7 +126,7 @@ export class Apps {
 
     await Promise.all(
       this.prompt.quitting.map(async ({ entry, release }) => {
-        await window.api.discardUpgrade(entry.app.path)
+        await window.api.discardAppUpgrade(entry.app.path)
         entry.task = { command: 'check', status: 'checked', release }
       })
     )

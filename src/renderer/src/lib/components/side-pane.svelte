@@ -44,7 +44,7 @@
 
   $effect(() => () => {
     destroyed = true
-    window.api.collapseWindow().then(() => window.api.moveWindow())
+    window.api.planWindowCollapse().then(() => window.api.moveWindow())
   })
 
   async function slide(open: boolean): Promise<void> {
@@ -53,8 +53,8 @@
     sliding = { width: `${from}px`, content: open ? PANE_WIDTH : from }
 
     const grown = open
-      ? await window.api.expandWindow(PANE_WIDTH - COLUMN_SHARE)
-      : await window.api.collapseWindow()
+      ? await window.api.planWindowExpansion(PANE_WIDTH - COLUMN_SHARE)
+      : await window.api.planWindowCollapse()
 
     if (destroyed) return
 

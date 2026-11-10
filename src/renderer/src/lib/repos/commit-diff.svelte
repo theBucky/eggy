@@ -175,7 +175,7 @@
     const current = commit
     let live = true
 
-    window.api.show(path, current.hash).then(({ body, patch }) => {
+    window.api.showCommit(path, current.hash).then(({ body, patch }) => {
       if (!live) return
 
       const files = parsePatchFiles(patch, { cacheKeyPrefix: `${path}:${current.hash}` }).flatMap(

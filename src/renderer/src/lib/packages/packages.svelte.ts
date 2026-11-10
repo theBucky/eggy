@@ -27,7 +27,7 @@ export class Packages {
   outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
 
   constructor() {
-    window.api.onOutput((kind, fullName, text) => {
+    window.api.onPackageOutput((kind, fullName, text) => {
       const task = this.entries.find(
         ({ package: pkg }) => pkg.kind === kind && pkg.fullName === fullName
       )?.task
