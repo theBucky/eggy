@@ -1,11 +1,11 @@
 import { statfs } from 'node:fs/promises'
 import { totalmem, uptime } from 'node:os'
 import type { Machine } from '$shared/api'
-import { output } from './support'
+import { output } from '../exec'
 
 // Counts memory the way Activity Monitor's "Memory Used" does: app memory, wired, and compressed.
 async function memoryUsed(): Promise<number> {
-  const stats = await output('/usr/bin/vm_stat', [], 5000)
+  const stats = await output('/usr/bin/vm_stat', [], { timeout: 5000 })
 
   function read(pattern: RegExp, label: string): number {
     const match = pattern.exec(stats)

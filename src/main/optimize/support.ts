@@ -1,34 +1,7 @@
-import { execFile } from 'node:child_process'
 import { open, readdir, stat } from 'node:fs/promises'
-import * as z from 'zod'
-
-type Ran = { code: number | undefined; timedOut: boolean; stdout: string; stderr: string }
-
-const Status = z.object({ code: z.number() })
-
-export function exec(file: string, args: string[], timeout: number): Promise<Ran> {
-  return new Promise((resolve) => {
-    execFile(file, args, { timeout, maxBuffer: Infinity }, (error, stdout, stderr) => {
-      const code = error === null ? 0 : Status.safeParse(error).data?.code
-
-      resolve({ code, timedOut: error?.killed === true, stdout, stderr })
-    })
-  })
-}
-
-function checked(file: string, timeout: number, ran: Ran): string {
-  if (ran.timedOut) throw new Error(`${file} took longer than ${timeout / 1000} seconds.`)
-
-  if (ran.code !== 0) throw new Error(ran.stderr.trim() || `${file} failed.`)
-
-  return ran.stdout
-}
-
-export async function output(file: string, args: string[], timeout: number): Promise<string> {
-  return checked(file, timeout, await exec(file, args, timeout))
-}
-
-const SQLITE = '/usr/bin/sqlite3'
+import type { OptimizeOutcome } from '$shared/api'
+import { errorCode } from '../errors'
+import { checked, exec } from '../exec'
 
 // Resolves to `undefined` when another process holds the database for longer than sqlite waits.
 // sqlite stops at the first failing statement, after the ones before it have committed. An empty
@@ -39,20 +12,14 @@ export async function sqlite(
   timeout: number
 ): Promise<string | undefined> {
   const ran = await exec(
-    SQLITE,
+    '/usr/bin/sqlite3',
     ['-init', '/dev/null', database, '.timeout 5000', ...statements],
-    timeout
+    { timeout }
   )
 
   if (/database is (locked|busy)/.test(ran.stderr)) return undefined
 
-  return checked(SQLITE, timeout, ran).trim()
-}
-
-const Code = z.object({ code: z.enum(['ENOENT', 'EPERM', 'EACCES']) })
-
-export function errorCode(cause: unknown): 'ENOENT' | 'EPERM' | 'EACCES' | undefined {
-  return Code.safeParse(cause).data?.code
+  return checked(ran).trim()
 }
 
 // Privacy protections refuse to open files under some folders with EPERM until the app has Full Disk
@@ -67,13 +34,20 @@ export async function access(
   } catch (cause) {
     const code = errorCode(cause)
 
-    if (code === undefined) throw cause
+    if (code === 'ENOENT') return 'missing'
 
-    return ({ ENOENT: 'missing', EPERM: 'denied', EACCES: 'unreadable' } as const)[code]
+    if (code === 'EPERM') return 'denied'
+
+    if (code === 'EACCES') return 'unreadable'
+
+    throw cause
   }
 }
 
-export const FULL_DISK_ACCESS = 'Needs Full Disk Access in System Settings.'
+export const NEEDS_FULL_DISK_ACCESS = {
+  status: 'skipped',
+  message: 'Needs Full Disk Access in System Settings.'
+} as const satisfies OptimizeOutcome
 
 export async function entries(folder: string): Promise<string[]> {
   try {
@@ -98,15 +72,13 @@ export async function exists(path: string): Promise<boolean> {
   }
 }
 
-const PLUTIL = '/usr/bin/plutil'
-
 // plutil exits with 1 when a file doesn't parse, and passes a batch only when every file in it does.
 async function parses(paths: string[]): Promise<boolean> {
-  const ran = await exec(PLUTIL, ['-lint', '-s', ...paths], 30_000)
+  const ran = await exec('/usr/bin/plutil', ['-lint', '-s', ...paths], { timeout: 30_000 })
 
-  if (ran.code === 1) return false
+  if (ran.exit === 1) return false
 
-  checked(PLUTIL, 30_000, ran)
+  checked(ran)
 
   return true
 }

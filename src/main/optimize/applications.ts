@@ -2,9 +2,10 @@ import { lstat, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
 import { shell } from 'electron'
-import type { OptimizeOutcome } from '$shared/api'
+import type { OptimizeOutcome, Review } from '$shared/api'
 import { plural } from '$shared/plural'
-import { FULL_DISK_ACCESS, access, broken, entries, exec, exists, output, sqlite } from './support'
+import { exec, output } from '../exec'
+import { NEEDS_FULL_DISK_ACCESS, access, broken, entries, exists, sqlite } from './support'
 
 const home = homedir()
 const list = new Intl.ListFormat('en')
@@ -76,12 +77,12 @@ const DATABASES = [
 ]
 
 async function running(app: string): Promise<boolean> {
-  const ran = await exec('/usr/bin/pgrep', ['-x', app], 5000)
+  const ran = await exec('/usr/bin/pgrep', ['-x', app], { timeout: 5000 })
 
   // pgrep exits with 1 when no process matches.
-  if (ran.code === 1) return false
+  if (ran.exit === 1) return false
 
-  if (ran.code !== 0) throw new Error(ran.stderr.trim() || "Couldn't list running apps.")
+  if (ran.exit !== 0) throw new Error(ran.stderr.trim() || "Couldn't list running apps.")
 
   return true
 }
@@ -142,7 +143,7 @@ export async function appDatabases(): Promise<OptimizeOutcome> {
     }
   }
 
-  if (tally('denied') > 0) return { status: 'skipped', message: FULL_DISK_ACCESS }
+  if (tally('denied') > 0) return NEEDS_FULL_DISK_ACCESS
 
   if (tally('busy') > 0) {
     return {
@@ -175,14 +176,16 @@ return listing`
 async function findable(name: string): Promise<boolean> {
   if (name.includes("'") || name.includes('\\')) return true
 
-  const found = await output('/usr/bin/mdfind', [`kMDItemFSName == '${name}.app'`], 5000)
+  const found = await output('/usr/bin/mdfind', [`kMDItemFSName == '${name}.app'`], {
+    timeout: 5000
+  })
 
   return found.trim() !== ''
 }
 
 export async function loginItems(): Promise<OptimizeOutcome> {
   // The first run waits on the user to answer macOS's prompt to let eggy control System Events.
-  const ran = await exec('/usr/bin/osascript', ['-e', LOGIN_ITEMS], 120_000)
+  const ran = await exec('/usr/bin/osascript', ['-e', LOGIN_ITEMS], { timeout: 120_000 })
 
   // -1743 is AppleScript's "Not authorized to send Apple events".
   if (ran.stderr.includes('(-1743)')) {
@@ -192,9 +195,10 @@ export async function loginItems(): Promise<OptimizeOutcome> {
     }
   }
 
-  if (ran.timedOut) throw new Error("System Events didn't list login items within two minutes.")
+  if (ran.exit === 'timeout')
+    throw new Error("System Events didn't list login items within two minutes.")
 
-  if (ran.code !== 0) throw new Error(ran.stderr.trim() || "Couldn't list login items.")
+  if (ran.exit !== 0) throw new Error(ran.stderr.trim() || "Couldn't list login items.")
 
   const items = ran.stdout.split('\n').flatMap((line) => {
     const [name, path] = line.split('\t')
@@ -227,11 +231,15 @@ export async function loginItems(): Promise<OptimizeOutcome> {
   }
 }
 
+const LAUNCH_AGENTS = join(home, 'Library/LaunchAgents')
+
 async function programOf(plist: string): Promise<string | undefined> {
   for (const key of ['Program', 'ProgramArguments.0']) {
-    const ran = await exec('/usr/bin/plutil', ['-extract', key, 'raw', '-o', '-', plist], 5000)
+    const ran = await exec('/usr/bin/plutil', ['-extract', key, 'raw', '-o', '-', plist], {
+      timeout: 5000
+    })
 
-    if (ran.code === 0 && ran.stdout.trim() !== '') return ran.stdout.trim()
+    if (ran.exit === 0 && ran.stdout.trim() !== '') return ran.stdout.trim()
   }
 
   return undefined
@@ -247,15 +255,14 @@ async function missing(program: string): Promise<boolean> {
 }
 
 export async function launchAgents(): Promise<OptimizeOutcome> {
-  const folder = join(home, 'Library/LaunchAgents')
-  const plists = (await entries(folder)).filter((name) => name.endsWith('.plist'))
+  const plists = (await entries(LAUNCH_AGENTS)).filter((name) => name.endsWith('.plist'))
 
   if (plists.length === 0) return { status: 'unchanged', message: 'No launch agents.' }
 
   const gone: string[] = []
 
   for (const name of plists) {
-    const program = await programOf(join(folder, name))
+    const program = await programOf(join(LAUNCH_AGENTS, name))
 
     // A bare name runs whatever the PATH finds, so only an absolute path can be shown to be gone.
     if (program?.startsWith('/') && (await missing(program))) {
@@ -274,5 +281,13 @@ export async function launchAgents(): Promise<OptimizeOutcome> {
         ? `${gone[0]} runs a program that is gone.`
         : `${plural(gone.length, 'launch agent runs', 'launch agents run')} programs that are gone.`,
     review: 'launchAgents'
+  }
+}
+
+export async function review(target: Review): Promise<void> {
+  if (target === 'loginItems') {
+    await shell.openExternal('x-apple.systempreferences:com.apple.LoginItems-Settings.extension')
+  } else {
+    await shell.openPath(LAUNCH_AGENTS)
   }
 }

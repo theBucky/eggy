@@ -4,18 +4,19 @@ import { join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import type { OptimizeOutcome } from '$shared/api'
 import { plural } from '$shared/plural'
-import { command, guarded, stoppedBy, type Guard, type Plan } from './root'
-import { FULL_DISK_ACCESS, access, exec, output, sqlite } from './support'
+import { exec, output } from '../exec'
+import { command, guarded, type Guard, type Prepared } from './root'
+import { NEEDS_FULL_DISK_ACCESS, access, sqlite } from './support'
 
 const home = homedir()
 
 async function slow(): Promise<boolean> {
   const started = performance.now()
-  const ran = await exec('/usr/bin/mdfind', ["kMDItemFSName == 'Applications'"], 5000)
+  const ran = await exec('/usr/bin/mdfind', ["kMDItemFSName == 'Applications'"], { timeout: 5000 })
 
-  if (ran.timedOut) return true
+  if (ran.exit === 'timeout') return true
 
-  if (ran.code !== 0) throw new Error(ran.stderr.trim() || "Spotlight couldn't search.")
+  if (ran.exit !== 0) throw new Error(ran.stderr.trim() || "Spotlight couldn't search.")
 
   return performance.now() - started > 3000
 }
@@ -26,31 +27,29 @@ const AC_POWER: Guard = {
 }
 
 // A rebuild reindexes the whole disk for hours, so it only starts when two searches in a row stall.
-export async function spotlight(): Promise<OptimizeOutcome | Plan> {
-  const status = await output('/usr/bin/mdutil', ['-s', '/'], 3000)
+export async function spotlight(): Promise<Prepared> {
+  const status = await output('/usr/bin/mdutil', ['-s', '/'], { timeout: 3000 })
 
   if (!/Indexing enabled/.test(status)) {
     return { status: 'skipped', message: 'Spotlight indexing is off.' }
   }
 
-  const stopped = await stoppedBy(AC_POWER)
+  return guarded(AC_POWER, async () => {
+    const unchanged = { status: 'unchanged', message: 'Search responds normally.' } as const
 
-  if (stopped !== undefined) return stopped
+    if (!(await slow())) return unchanged
 
-  const unchanged = { status: 'unchanged', message: 'Search responds normally.' } as const
+    await sleep(1000)
 
-  if (!(await slow())) return unchanged
+    if (!(await slow())) return unchanged
 
-  await sleep(1000)
-
-  if (!(await slow())) return unchanged
-
-  return guarded(AC_POWER, {
-    script: command('/usr/bin/mdutil', '-E', '/'),
-    interpret: ({ code, output }) =>
-      code === 0
-        ? { status: 'applied', message: 'Rebuilding the index, which takes a few hours.' }
-        : { status: 'failed', message: output || "Couldn't rebuild the Spotlight index." }
+    return {
+      script: command('/usr/bin/mdutil', '-E', '/'),
+      interpret: ({ code, printed }) =>
+        code === 0
+          ? { status: 'applied', message: 'Rebuilding the index, which takes a few hours.' }
+          : { status: 'failed', message: printed || "Couldn't rebuild the Spotlight index." }
+    }
   })
 }
 
@@ -65,7 +64,7 @@ export async function notifications(): Promise<OptimizeOutcome> {
     return { status: 'unavailable', message: 'Notification Center keeps no database.' }
   }
 
-  if (readable === 'denied') return { status: 'skipped', message: FULL_DISK_ACCESS }
+  if (readable === 'denied') return NEEDS_FULL_DISK_ACCESS
 
   if ((await stat(database)).size < 50 * 2 ** 20) {
     return { status: 'unchanged', message: 'The database is under 50 MB.' }
@@ -86,7 +85,7 @@ export async function notifications(): Promise<OptimizeOutcome> {
   await exec(
     '/bin/launchctl',
     ['kill', 'SIGTERM', `gui/${userInfo().uid}/com.apple.notificationcenterui.agent`],
-    5000
+    { timeout: 5000 }
   )
 
   return {
@@ -104,7 +103,7 @@ export async function quarantine(): Promise<OptimizeOutcome> {
 
   if (readable === 'missing') return { status: 'unchanged', message: 'No download history.' }
 
-  if (readable === 'denied') return { status: 'skipped', message: FULL_DISK_ACCESS }
+  if (readable === 'denied') return NEEDS_FULL_DISK_ACCESS
 
   // secure_delete zeroes the records instead of leaving them readable in free pages, and prints its
   // new value before the count.

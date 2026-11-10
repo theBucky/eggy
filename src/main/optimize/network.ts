@@ -1,6 +1,5 @@
-import type { OptimizeOutcome } from '$shared/api'
-import { command, guarded, quote, stoppedBy, type Guard, type Plan } from './root'
-import { exec, output } from './support'
+import { exec, output } from '../exec'
+import { EXIT, command, guarded, quote, type Guard, type Prepared } from './root'
 
 // Refreshing network state makes a connected VPN drop and reconnect. A VPN shows up either as a
 // connected network service or, for tunnels such as wg-quick that bypass network services, as a
@@ -23,50 +22,47 @@ const LABELS = ['com.apple.mDNSResponder', 'com.apple.mDNSResponder.reloaded']
 // macOS 27 refuses `launchctl kill` on mDNSResponder even for root. Its own service account may still
 // signal the processes it owns, and `-u` keeps a same-named process of another user out of reach.
 const NOT_PRIVILEGED = 'Not privileged to signal service'
-const REFUSED = 75
 
-export async function dnsCache(): Promise<OptimizeOutcome | Plan> {
-  const stopped = await stoppedBy(NO_VPN)
+export function dnsCache(): Promise<Prepared> {
+  return guarded(NO_VPN, async () => {
+    const label = (
+      await output(
+        '/usr/bin/plutil',
+        [
+          '-extract',
+          'Label',
+          'raw',
+          '-o',
+          '-',
+          '/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist'
+        ],
+        { timeout: 5000 }
+      )
+    ).trim()
 
-  if (stopped !== undefined) return stopped
+    if (!LABELS.includes(label)) {
+      throw new Error(`mDNSResponder runs under an unexpected label, ${label}.`)
+    }
 
-  const label = (
-    await output(
-      '/usr/bin/plutil',
-      [
-        '-extract',
-        'Label',
-        'raw',
-        '-o',
-        '-',
-        '/System/Library/LaunchDaemons/com.apple.mDNSResponder.plist'
-      ],
-      5000
-    )
-  ).trim()
-
-  if (!LABELS.includes(label)) {
-    throw new Error(`mDNSResponder runs under an unexpected label, ${label}.`)
-  }
-
-  const script = `${command('/usr/bin/dscacheutil', '-flushcache')} || exit
+    const script = `${command('/usr/bin/dscacheutil', '-flushcache')} || exit
 refusal=$(${command('/bin/launchctl', 'kill', 'SIGHUP', `system/${label}`)} 2>&1) && exit 0
 case $refusal in
   *${quote(NOT_PRIVILEGED)}*)
-    ${command('/usr/bin/sudo', '-u', '_mdnsresponder', '/usr/bin/killall', '-u', '_mdnsresponder', '-HUP', 'mDNSResponder')} || exit ${REFUSED} ;;
+    ${command('/usr/bin/sudo', '-u', '_mdnsresponder', '/usr/bin/killall', '-u', '_mdnsresponder', '-HUP', 'mDNSResponder')} || exit ${EXIT.refused} ;;
   *) printf '%s\\n' "$refusal"; exit 1 ;;
 esac`
 
-  return guarded(NO_VPN, {
-    script,
-    interpret: ({ code, output }) => {
-      if (code === 0) return { status: 'applied', message: 'Refreshed the DNS cache.' }
+    return {
+      script,
+      interpret: ({ code, printed }) => {
+        if (code === 0) return { status: 'applied', message: 'Refreshed the DNS cache.' }
 
-      if (code === REFUSED) {
-        return { status: 'skipped', message: "macOS doesn't allow refreshing mDNSResponder." }
+        if (code === EXIT.refused) {
+          return { status: 'skipped', message: "macOS doesn't allow refreshing mDNSResponder." }
+        }
+
+        return { status: 'failed', message: printed || "Couldn't refresh the DNS cache." }
       }
-
-      return { status: 'failed', message: output || "Couldn't refresh the DNS cache." }
     }
   })
 }
@@ -76,12 +72,12 @@ esac`
 // when it finds no route.
 async function healthy(): Promise<boolean> {
   const probes = await Promise.all([
-    exec('/sbin/route', ['-n', 'get', '-inet', 'default'], 3000),
-    exec('/sbin/route', ['-n', 'get', '-inet6', 'default'], 3000),
-    exec('/usr/bin/dscacheutil', ['-q', 'host', '-a', 'name', 'example.com'], 3000)
+    exec('/sbin/route', ['-n', 'get', '-inet', 'default'], { timeout: 3000 }),
+    exec('/sbin/route', ['-n', 'get', '-inet6', 'default'], { timeout: 3000 }),
+    exec('/usr/bin/dscacheutil', ['-q', 'host', '-a', 'name', 'example.com'], { timeout: 3000 })
   ])
 
-  if (probes.some(({ timedOut }) => timedOut)) {
+  if (probes.some(({ exit }) => exit === 'timeout')) {
     throw new Error('The network took too long to answer.')
   }
 
@@ -93,18 +89,16 @@ async function healthy(): Promise<boolean> {
   )
 }
 
-export async function networkStack(): Promise<OptimizeOutcome | Plan> {
-  const stopped = await stoppedBy(NO_VPN)
+export function networkStack(): Promise<Prepared> {
+  return guarded(NO_VPN, async () => {
+    if (await healthy()) return { status: 'unchanged', message: 'The network is healthy.' }
 
-  if (stopped !== undefined) return stopped
-
-  if (await healthy()) return { status: 'unchanged', message: 'The network is healthy.' }
-
-  return guarded(NO_VPN, {
-    script: `${command('/sbin/route', '-n', 'flush')} >/dev/null && ${command('/usr/sbin/arp', '-a', '-d')} >/dev/null`,
-    interpret: ({ code, output }) =>
-      code === 0
-        ? { status: 'applied', message: 'Flushed the routing table and ARP cache.' }
-        : { status: 'failed', message: output || "Couldn't flush the routing table." }
+    return {
+      script: `${command('/sbin/route', '-n', 'flush')} >/dev/null && ${command('/usr/sbin/arp', '-a', '-d')} >/dev/null`,
+      interpret: ({ code, printed }) =>
+        code === 0
+          ? { status: 'applied', message: 'Flushed the routing table and ARP cache.' }
+          : { status: 'failed', message: printed || "Couldn't flush the routing table." }
+    }
   })
 }

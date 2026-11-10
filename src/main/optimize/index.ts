@@ -1,19 +1,19 @@
-import { homedir } from 'node:os'
-import { join } from 'node:path'
-import { shell } from 'electron'
 import {
   isPrivileged,
+  type Failure,
   type Optimization,
   type OptimizeOutcome,
   type OptimizeState,
-  type Privileged,
-  type Review
+  type Privileged
 } from '$shared/api'
+import { failure } from '../errors'
 import { appDatabases, launchAgents, loginItems, preferences, savedStates } from './applications'
 import { networkVolumes, quickLook, sharedFileLists } from './finder'
 import { dnsCache, networkStack } from './network'
-import { runAsRoot, type Exit, type Plan } from './root'
+import { runAsRoot, type Exit, type Plan, type Prepared } from './root'
 import { notifications, quarantine, spotlight } from './system'
+
+export { review } from './applications'
 
 export { inspectMachine } from './machine'
 
@@ -32,17 +32,13 @@ const TASKS: Record<Exclude<Optimization, Privileged>, () => Promise<OptimizeOut
   quarantine
 }
 
-const ROOT_TASKS: Record<Privileged, () => Promise<OptimizeOutcome | Plan>> = {
+const ROOT_TASKS: Record<Privileged, () => Promise<Prepared>> = {
   dnsCache,
   networkStack,
   spotlight
 }
 
-function failure(cause: unknown): OptimizeOutcome {
-  return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
-}
-
-async function settle<T>(task: () => Promise<T>): Promise<T | OptimizeOutcome> {
+async function settle<T>(task: () => Promise<T>): Promise<T | Failure> {
   try {
     return await task()
   } catch (cause) {
@@ -91,22 +87,12 @@ async function runPrivileged(optimizations: Privileged[], report: Report): Promi
 
 // Asking for the password first keeps the prompt next to the click that caused it.
 export async function run(optimizations: Optimization[], report: Report): Promise<void> {
-  const privileged = optimizations.filter(isPrivileged)
-
-  if (privileged.length > 0) await runPrivileged(privileged, report)
+  await runPrivileged(optimizations.filter(isPrivileged), report)
 
   for (const optimization of optimizations) {
     if (isPrivileged(optimization)) continue
 
     report(optimization, { status: 'running' })
     report(optimization, await settle(TASKS[optimization]))
-  }
-}
-
-export async function review(target: Review): Promise<void> {
-  if (target === 'loginItems') {
-    await shell.openExternal('x-apple.systempreferences:com.apple.LoginItems-Settings.extension')
-  } else {
-    await shell.openPath(join(homedir(), 'Library/LaunchAgents'))
   }
 }

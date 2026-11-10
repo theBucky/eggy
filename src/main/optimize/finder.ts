@@ -4,11 +4,13 @@ import { join } from 'node:path'
 import { shell } from 'electron'
 import type { OptimizeOutcome } from '$shared/api'
 import { plural } from '$shared/plural'
-import { FULL_DISK_ACCESS, broken, errorCode, exec, output } from './support'
+import { errorCode } from '../errors'
+import { exec, output } from '../exec'
+import { NEEDS_FULL_DISK_ACCESS, broken } from './support'
 
 export async function quickLook(): Promise<OptimizeOutcome> {
-  await output('/usr/bin/qlmanage', ['-r', 'cache'], 15_000)
-  await output('/usr/bin/qlmanage', ['-r'], 15_000)
+  await output('/usr/bin/qlmanage', ['-r', 'cache'], { timeout: 15_000 })
+  await output('/usr/bin/qlmanage', ['-r'], { timeout: 15_000 })
 
   return { status: 'applied', message: 'Reset QuickLook thumbnails and previews.' }
 }
@@ -26,7 +28,7 @@ export async function sharedFileLists(): Promise<OptimizeOutcome> {
 
     if (code === 'ENOENT') return { status: 'unchanged', message: 'No favorites or recents.' }
 
-    if (code === 'EPERM') return { status: 'skipped', message: FULL_DISK_ACCESS }
+    if (code === 'EPERM') return NEEDS_FULL_DISK_ACCESS
 
     throw cause
   }
@@ -54,14 +56,16 @@ export async function networkVolumes(): Promise<OptimizeOutcome> {
   let changed = 0
 
   for (const key of VOLUMES) {
-    const read = await exec('/usr/bin/defaults', ['read', 'com.apple.desktopservices', key], 5000)
+    const read = await exec('/usr/bin/defaults', ['read', 'com.apple.desktopservices', key], {
+      timeout: 5000
+    })
 
-    if (read.code === 0 && read.stdout.trim() === '1') continue
+    if (read.exit === 0 && read.stdout.trim() === '1') continue
 
     await output(
       '/usr/bin/defaults',
       ['write', 'com.apple.desktopservices', key, '-bool', 'true'],
-      5000
+      { timeout: 5000 }
     )
     changed++
   }
