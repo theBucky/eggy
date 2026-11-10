@@ -1,4 +1,3 @@
-import { execFile } from 'node:child_process'
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -14,6 +13,7 @@ import type {
   Sync,
   Tracking
 } from '$shared/api'
+import { exec } from './exec'
 import { loginEnv } from './login-env'
 
 type GitResult = {
@@ -26,15 +26,9 @@ type GitResult = {
 const env = loginEnv.then((env) => ({ ...env, GIT_TERMINAL_PROMPT: '0' }))
 
 async function git(cwd: string, args: string[]): Promise<GitResult> {
-  // A large pull prints a diffstat line per file, and hitting the default 1 MB cap kills git
-  // midway through updating the working tree.
-  const options = { cwd, env: await env, maxBuffer: Infinity }
+  const { exit, stdout, stderr } = await exec('git', args, { cwd, env: await env })
 
-  return new Promise((resolve) => {
-    execFile('git', args, options, (error, stdout, stderr) => {
-      resolve({ ok: error === null, stdout, stderr })
-    })
-  })
+  return { ok: exit === 0, stdout, stderr: exit instanceof Error ? exit.message : stderr }
 }
 
 function failure({ stdout, stderr }: GitResult): Failure {
@@ -124,7 +118,7 @@ async function readTracking(path: string): Promise<Tracking> {
 }
 
 async function readRepo(path: string): Promise<Repo | undefined> {
-  // upstream config survives a missing local ref, where `@{upstream}` fails.
+  // Upstream config survives a missing local ref, where `@{upstream}` fails.
   const [commonDir, heads] = await Promise.all([
     git(path, ['rev-parse', '--path-format=absolute', '--git-common-dir']),
     git(path, [

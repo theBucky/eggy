@@ -1,9 +1,11 @@
-import { execFile, spawn } from 'node:child_process'
+import { spawn } from 'node:child_process'
 import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
 import * as z from 'zod'
-import type { Failure, Package, PackageKind, PackageList, PackageUpgrade } from '$shared/api'
+import type { Package, PackageKind, PackageList, PackageUpgrade } from '$shared/api'
+import { errorCode, failure } from './errors'
+import { checked, exec } from './exec'
 import { loginEnv } from './login-env'
 
 // Checks refresh brew's index on their own, so upgrades skip its automatic one. Env hints and emoji
@@ -14,8 +16,6 @@ const env = loginEnv.then((env) => ({
   HOMEBREW_NO_ENV_HINTS: '1',
   HOMEBREW_NO_EMOJI: '1'
 }))
-
-const Missing = z.object({ code: z.literal('ENOENT') })
 
 const Formula = z.object({
   name: z.string(),
@@ -54,25 +54,13 @@ function messageOf(stderr: string): string {
   return (start === -1 ? stderr : stderr.slice(start + 'Error: '.length)).trim()
 }
 
-function failure(cause: unknown): Failure {
-  if (cause instanceof z.ZodError) {
-    return { status: 'failed', message: 'brew described its packages in an unexpected shape.' }
-  }
-
-  return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
-}
-
 async function brew(args: string[]): Promise<string> {
-  const options = { env: await env, maxBuffer: Infinity }
+  const ran = await exec('brew', args, { env: await env })
+  const message = messageOf(ran.stderr)
 
-  return new Promise((resolve, reject) => {
-    execFile('brew', args, options, (error, stdout, stderr) => {
-      const message = messageOf(stderr)
+  if (ran.exit !== 0 && message !== '') throw new Error(message)
 
-      if (error === null) resolve(stdout)
-      else reject(message === '' ? error : new Error(message))
-    })
-  })
+  return checked(ran)
 }
 
 // brew skips pinned packages when upgrading, so a pinned package never counts as outdated.
@@ -116,14 +104,20 @@ function fromCask(cask: z.infer<typeof Cask>): Package {
   }
 }
 
-export async function listPackages(): Promise<PackageList> {
+export async function list(): Promise<PackageList> {
   try {
     const info = Info.parse(JSON.parse(await brew(['info', '--json=v2', '--installed'])))
     const packages = [...info.formulae.map(fromFormula), ...info.casks.map(fromCask)]
 
     return { status: 'listed', packages: packages.toSorted((a, b) => a.name.localeCompare(b.name)) }
   } catch (cause) {
-    return Missing.safeParse(cause).success ? { status: 'missing' } : failure(cause)
+    if (errorCode(cause) === 'ENOENT') return { status: 'missing' }
+
+    if (cause instanceof z.ZodError) {
+      return { status: 'failed', message: 'brew described its packages in an unexpected shape.' }
+    }
+
+    return failure(cause)
   }
 }
 
@@ -134,7 +128,7 @@ export async function check(): Promise<PackageList> {
     return failure(cause)
   }
 
-  return listPackages()
+  return list()
 }
 
 // sudo has no terminal to prompt in, so casks that run an installer ask for the password in a dialog.
