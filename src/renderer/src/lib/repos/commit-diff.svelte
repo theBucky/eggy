@@ -10,7 +10,7 @@
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import { DIFF_THEMES, highlighter } from '$lib/repos/highlighter'
   import FileHeader, { HEADER_HEIGHT } from '$lib/repos/file-header.svelte'
-  import { ago } from '$lib/time'
+  import { ago } from '$lib/format'
   import type { Commit } from '$shared/api'
 
   type Detail = { commit: Commit; body: string; items: CodeViewDiffItem[] }
@@ -236,7 +236,7 @@
         </span>
       {/if}
     </div>
-    <div class="flex items-center gap-1 [-webkit-app-region:no-drag]">
+    <div class="flex items-center gap-1">
       <Toolbar>
         {#if detail?.items.length}
           {@const items = detail.items}

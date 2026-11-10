@@ -1,4 +1,5 @@
-import type { Status } from '$lib/components/status-dot.svelte'
+import type { Status } from '$lib/status'
+import type { Source } from '$lib/sources.svelte'
 import type { Failure, Package, PackageList, PackageUpgrade } from '$shared/api'
 
 type Check = { status: 'running' | 'checked' } | Failure
@@ -15,7 +16,7 @@ export function idOf({ kind, fullName }: Package): string {
   return `${kind}:${fullName}`
 }
 
-export class Packages {
+export class Packages implements Source {
   installed = $state(false)
   entries = $state<Entry[]>([])
   scanning = $state(false)
@@ -24,6 +25,8 @@ export class Packages {
   checking = $derived(this.scanning || this.#refreshing)
   upgrading = $derived(this.entries.some(({ task }) => task?.status === 'running'))
   busy = $derived(this.checking || this.upgrading)
+  checked = $derived(this.check !== undefined && this.check.status !== 'running')
+  checkFailed = $derived(this.check?.status === 'failed')
   outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
 
   constructor() {
@@ -52,7 +55,7 @@ export class Packages {
     const list = await window.api.listPackages()
 
     this.check = list.status === 'failed' ? list : undefined
-    this.apply(list)
+    this.#apply(list)
     this.scanning = false
   }
 
@@ -66,7 +69,7 @@ export class Packages {
       const list = await window.api.checkPackages()
 
       this.check = list.status === 'failed' ? list : { status: 'checked' }
-      this.apply(list)
+      this.#apply(list)
     }
 
     this.#refreshing = false
@@ -85,11 +88,15 @@ export class Packages {
 
       entry.task = { output: entry.task.output, ...outcome }
 
-      if (list.status === 'listed') this.merge(list.packages)
+      if (list.status === 'listed') this.#merge(list.packages)
     }
   }
 
-  private apply(list: PackageList): void {
+  upgradeOutdated(): Promise<void> {
+    return this.upgrade(this.outdated)
+  }
+
+  #apply(list: PackageList): void {
     this.installed = list.status !== 'missing'
 
     if (list.status === 'listed') this.entries = list.packages.map((pkg) => ({ package: pkg }))
@@ -97,7 +104,7 @@ export class Packages {
   }
 
   // Keeps each surviving entry, so its task and any upgrade still waiting on it carry over.
-  private merge(packages: Package[]): void {
+  #merge(packages: Package[]): void {
     const entries = new Map(this.entries.map((entry) => [idOf(entry.package), entry]))
 
     this.entries = packages.map((pkg) => {

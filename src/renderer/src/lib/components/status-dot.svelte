@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  export type Status = 'unknown' | 'running' | 'failed' | 'attention' | 'outdated' | 'current'
+  import type { Status } from '$lib/status'
 
   const dots = {
     unknown: 'bg-muted-foreground/30',

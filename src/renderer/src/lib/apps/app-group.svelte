@@ -1,9 +1,6 @@
 <script lang="ts">
-  import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
-  import IconRefresh from '@tabler/icons-svelte/icons/refresh'
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
-  import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import { statusOf, type Apps } from '$lib/apps/apps.svelte'
 
@@ -14,23 +11,12 @@
   }: { apps: Apps; selected: string | undefined; onselect: (path: string) => void } = $props()
 </script>
 
-<SidebarSection label="Applications">
-  {#snippet toolbar()}
-    <ToolbarButton
-      label="Check for upgrades"
-      icon={IconRefresh}
-      busy={apps.checking}
-      disabled={apps.busy}
-      onclick={() => apps.refresh()}
-    />
-    <ToolbarButton
-      label="Upgrade {apps.outdated.length} outdated"
-      icon={IconCloudDownload}
-      busy={apps.upgrading}
-      disabled={apps.busy || apps.outdated.length === 0}
-      onclick={() => apps.upgrade(apps.outdated)}
-    />
-  {/snippet}
+<SidebarSection
+  label="Applications"
+  source={apps}
+  checkLabel="Check for upgrades"
+  upgradeVerb="Upgrade"
+>
   <Sidebar.Menu>
     {#each apps.entries as entry (entry.app.path)}
       {@const { app } = entry}

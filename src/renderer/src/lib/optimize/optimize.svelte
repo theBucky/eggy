@@ -80,11 +80,12 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import IconLock from '@tabler/icons-svelte/icons/lock'
+  import Page from '$lib/components/page.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import { Button } from '$lib/components/ui/button'
   import * as Table from '$lib/components/ui/table'
   import type { Optimizer } from '$lib/optimize/optimizer.svelte'
-  import { duration } from '$lib/time'
+  import { duration, list } from '$lib/format'
   import { OPTIMIZATIONS, PRIVILEGED, isPrivileged } from '$shared/api'
   import { plural } from '$shared/plural'
 
@@ -96,7 +97,6 @@
 
   const groups = Map.groupBy(OPTIMIZATIONS, (optimization) => CATALOG[optimization].group)
 
-  const list = new Intl.ListFormat('en')
   const gibibytes = new Intl.NumberFormat('en', { maximumFractionDigits: 1 })
   const gigabytes = new Intl.NumberFormat('en', { maximumFractionDigits: 0 })
 
@@ -120,7 +120,7 @@
       : 'Nothing applied'
   })
 
-  const subtitle = $derived.by(() => {
+  const summary = $derived.by(() => {
     if (optimizer.running) {
       const done = optimizer.batch.filter(
         (optimization) => optimizer.outcomeOf(optimization) !== undefined
@@ -147,29 +147,27 @@
   })
 </script>
 
-<div class="scroll-fade-y absolute inset-0 my-2 overflow-y-auto px-8 py-6">
-  <div class="flex items-start justify-between gap-4">
-    <div class="flex min-w-0 flex-col gap-1">
-      <h1 class="truncate text-xl font-semibold tracking-tight">{headline}</h1>
-      <p class="truncate text-muted-foreground">{subtitle}</p>
-    </div>
-    <div class="[-webkit-app-region:no-drag]">
-      <Button
-        size="pill"
-        variant={outcomes.length > 0 ? 'secondary' : 'default'}
-        disabled={optimizer.running}
-        onclick={() => optimizer.optimize([...OPTIMIZATIONS])}
-      >
-        {#if optimizer.running}
-          Optimizing
-        {:else if outcomes.length > 0}
-          Optimize again
-        {:else}
-          Optimize
-        {/if}
-      </Button>
-    </div>
-  </div>
+<Page title={headline}>
+  {#snippet subtitle()}
+    <p class="truncate text-muted-foreground">{summary}</p>
+  {/snippet}
+
+  {#snippet actions()}
+    <Button
+      size="pill"
+      variant={outcomes.length > 0 ? 'secondary' : 'default'}
+      disabled={optimizer.running}
+      onclick={() => optimizer.optimize([...OPTIMIZATIONS])}
+    >
+      {#if optimizer.running}
+        Optimizing
+      {:else if outcomes.length > 0}
+        Optimize again
+      {:else}
+        Optimize
+      {/if}
+    </Button>
+  {/snippet}
 
   {#if optimizer.machine}
     {@const { memory, disk } = optimizer.machine}
@@ -210,23 +208,21 @@
       </Table.Root>
     </section>
   {/each}
-</div>
+</Page>
 
-<!-- Auto table layout widens a column to fit its content, so long text truncates inside a block
-     that is zero wide until it stretches to the cell. -->
 {#snippet row(optimization: Optimization)}
   {@const { name, description } = CATALOG[optimization]}
   {@const outcome = optimizer.outcomeOf(optimization)}
-  {@const running = optimizer.states[optimization]?.status === 'running'}
+  {@const status = optimizer.statusOf(optimization)}
   {@const pinned = outcome?.status === 'skipped' || outcome?.status === 'failed'}
   <Table.Row class="group">
     <Table.Cell>
       <div class="flex w-6 justify-center">
-        <StatusDot status={optimizer.statusOf(optimization)} />
+        <StatusDot {status} />
       </div>
     </Table.Cell>
     <Table.Cell>
-      <div class="flex w-0 min-w-full items-center gap-1.5">
+      <div class="flex fill-cell items-center gap-1.5">
         <span class="truncate text-base">{name}</span>
         {#if isPrivileged(optimization)}
           <IconLock
@@ -238,9 +234,9 @@
     </Table.Cell>
     <Table.Cell>
       {#if outcome}
-        <div class={['w-0 min-w-full truncate', TONES[outcome.status]]}>{outcome.message}</div>
+        <div class={['fill-cell truncate', TONES[outcome.status]]}>{outcome.message}</div>
       {:else}
-        <div class="w-0 min-w-full truncate text-muted-foreground">{description}</div>
+        <div class="fill-cell truncate text-muted-foreground">{description}</div>
       {/if}
     </Table.Cell>
     <Table.Cell>
@@ -250,7 +246,7 @@
         <div
           class={[
             !pinned && 'opacity-0',
-            !running && 'group-hover:opacity-100 has-focus-visible:opacity-100'
+            status !== 'running' && 'group-hover:opacity-100 has-focus-visible:opacity-100'
           ]}
         >
           <Button

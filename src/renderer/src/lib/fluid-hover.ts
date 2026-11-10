@@ -4,7 +4,7 @@ import './fluid-hover.css'
 
 type Point = { x: number; y: number }
 
-// reach must exceed half the gap between rows to keep the highlight on while crossing.
+// Reach must exceed half the gap between rows to keep the highlight on while crossing.
 const REACH = 12
 
 function distance(point: Point, box: DOMRect): number {

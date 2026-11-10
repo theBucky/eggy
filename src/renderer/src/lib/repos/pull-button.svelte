@@ -10,14 +10,14 @@
 
 <script lang="ts">
   import { Button, type ButtonSize } from '$lib/components/ui/button'
-  import { runningPull, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
+  import { runningPull, type Entry, type Repos } from '$lib/repos/repos.svelte'
 
   let {
-    workspace,
+    repos,
     entry,
     command,
     size
-  }: { workspace: Workspace; entry: Entry; command: PullCommand; size: ButtonSize } = $props()
+  }: { repos: Repos; entry: Entry; command: PullCommand; size: ButtonSize } = $props()
 
   const look = $derived(looks[command])
 </script>
@@ -25,8 +25,8 @@
 <Button
   {size}
   variant={look.variant}
-  disabled={workspace.busy}
-  onclick={() => workspace.pull([entry], command)}
+  disabled={repos.busy}
+  onclick={() => repos.pull([entry], command)}
 >
   {runningPull(entry) === command ? look.running : look.idle}
 </Button>

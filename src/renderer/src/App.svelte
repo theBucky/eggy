@@ -16,44 +16,34 @@
   import { idOf, Packages } from '$lib/packages/packages.svelte'
   import RepoDetail from '$lib/repos/repo-detail.svelte'
   import RepoGroup from '$lib/repos/repo-group.svelte'
-  import { Workspace } from '$lib/repos/workspace.svelte'
+  import { Repos } from '$lib/repos/repos.svelte'
   import { Preferences } from '$lib/settings/preferences.svelte'
   import Settings from '$lib/settings/settings.svelte'
+  import { Sources } from '$lib/sources.svelte'
 
   type View = { page: 'home' | 'optimize' | 'settings' } | { page: 'detail'; id: string }
 
-  const workspace = new Workspace()
+  const repos = new Repos()
   const apps = new Apps()
   const packages = new Packages()
+  const sources = new Sources([apps, packages, repos])
   const optimizer = new Optimizer()
   const preferences = new Preferences()
 
   let view = $state<View>({ page: 'home' })
 
   const selected = $derived(view.page === 'detail' ? view.id : undefined)
-  const repo = $derived(workspace.entries.find((entry) => entry.repo.path === selected))
+  const repo = $derived(repos.entries.find((entry) => entry.repo.path === selected))
   const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
   const pkg = $derived(packages.entries.find((entry) => idOf(entry.package) === selected))
 
-  // A detail whose entry is gone falls back to home.
   const home = $derived(
     view.page === 'home' ||
       (view.page === 'detail' && repo === undefined && app === undefined && pkg === undefined)
   )
 
-  const pending = $derived(
-    apps.outdated.length + packages.outdated.length + workspace.outdated.length
-  )
-
-  if (preferences.checkOnLaunch) {
-    workspace.refresh()
-    apps.refresh()
-    packages.refresh()
-  } else {
-    workspace.scan()
-    apps.scan()
-    packages.scan()
-  }
+  if (preferences.checkOnLaunch) sources.refresh()
+  else sources.scan()
 </script>
 
 <!-- Listed first so the no-drag controls below carve themselves out of it. -->
@@ -67,8 +57,8 @@
           <Sidebar.MenuButton size="sm" isActive={home} onclick={() => (view = { page: 'home' })}>
             <IconHome />
             <span class="flex-1 truncate-fade">Home</span>
-            {#if pending > 0}
-              <span class="font-mono text-xs text-info">{pending}</span>
+            {#if sources.outdated.length > 0}
+              <span class="font-mono text-xs text-info">{sources.outdated.length}</span>
             {/if}
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>
@@ -93,7 +83,7 @@
       {#if packages.installed}
         <PackageGroup {packages} {selected} onselect={(id) => (view = { page: 'detail', id })} />
       {/if}
-      <RepoGroup {workspace} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+      <RepoGroup {repos} {selected} onselect={(id) => (view = { page: 'detail', id })} />
     </Sidebar.Content>
 
     <div class="px-1 py-2">
@@ -114,12 +104,12 @@
 
   <Sidebar.Inset>
     {#if view.page === 'settings'}
-      <Settings {workspace} {preferences} />
+      <Settings {repos} {preferences} />
     {:else if view.page === 'optimize'}
       <Optimize {optimizer} />
     {:else if repo}
       {#key repo.repo.path}
-        <RepoDetail {workspace} entry={repo} />
+        <RepoDetail {repos} entry={repo} />
       {/key}
     {:else if app}
       {#key app.app.path}
@@ -130,7 +120,7 @@
         <PackageDetail {packages} entry={pkg} />
       {/key}
     {:else}
-      <Home {apps} {packages} {workspace} {pending} />
+      <Home {apps} {packages} {repos} {sources} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>

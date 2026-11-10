@@ -1,4 +1,5 @@
-import type { Status } from '$lib/components/status-dot.svelte'
+import type { Status } from '$lib/status'
+import type { Source } from '$lib/sources.svelte'
 import type { App, CheckOutcome, Failure, InstallOutcome, Progress, Release } from '$shared/api'
 
 type Task =
@@ -27,16 +28,6 @@ export function labelOf({ version, build }: App | Release): string {
   return version === build ? version : `${version} (${build})`
 }
 
-const megabyte = new Intl.NumberFormat('en', {
-  style: 'unit',
-  unit: 'megabyte',
-  maximumFractionDigits: 1
-})
-
-export function megabytes(bytes: number): string {
-  return megabyte.format(bytes / 1e6)
-}
-
 export function statusOf({ task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
@@ -45,7 +36,7 @@ export function statusOf({ task }: Entry): Status {
   return task.status === 'upgraded' ? 'current' : task.status
 }
 
-export class Apps {
+export class Apps implements Source {
   entries = $state<Entry[]>([])
   scanning = $state(false)
   #refreshing = $state(false)
@@ -55,6 +46,9 @@ export class Apps {
     this.entries.some(({ task }) => task?.status === 'running' && task.command === 'upgrade')
   )
   busy = $derived(this.checking || this.upgrading)
+  checked = $derived(
+    this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
+  )
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'check')
   )
@@ -104,11 +98,15 @@ export class Apps {
 
         const outcome = await window.api.upgradeApp(entry.app.path)
 
-        if (outcome.status !== 'waiting') this.settle(entry, release, outcome)
+        if (outcome.status !== 'waiting') this.#settle(entry, release, outcome)
         else if (this.prompt.open) this.prompt.quitting.push({ entry, release })
         else this.prompt = { open: true, quitting: [{ entry, release }] }
       })
     )
+  }
+
+  upgradeOutdated(): Promise<void> {
+    return this.upgrade(this.outdated)
   }
 
   async confirm(): Promise<void> {
@@ -116,7 +114,7 @@ export class Apps {
 
     await Promise.all(
       this.prompt.quitting.map(async ({ entry, release }) => {
-        this.settle(entry, release, await window.api.forceAppUpgrade(entry.app.path))
+        this.#settle(entry, release, await window.api.forceAppUpgrade(entry.app.path))
       })
     )
   }
@@ -132,7 +130,7 @@ export class Apps {
     )
   }
 
-  private settle(entry: Entry, release: Release, outcome: InstallOutcome): void {
+  #settle(entry: Entry, release: Release, outcome: InstallOutcome): void {
     if (outcome.status === 'upgraded') {
       entry.app.version = outcome.version
       entry.app.build = outcome.build

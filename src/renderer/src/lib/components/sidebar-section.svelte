@@ -1,18 +1,26 @@
 <script lang="ts">
   import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
+  import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
+  import IconRefresh from '@tabler/icons-svelte/icons/refresh'
   import type { Snippet } from 'svelte'
+  import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import Toolbar from '$lib/components/toolbar.svelte'
   import * as Collapsible from '$lib/components/ui/collapsible'
   import * as Sidebar from '$lib/components/ui/sidebar'
+  import type { Source } from '$lib/sources.svelte'
   import { cn } from '$lib/utils'
 
   let {
     label,
-    toolbar,
+    source,
+    checkLabel,
+    upgradeVerb,
     children
   }: {
     label: string
-    toolbar: Snippet
+    source: Source
+    checkLabel: string
+    upgradeVerb: string
     children: Snippet
   } = $props()
 
@@ -37,7 +45,20 @@
           {/snippet}
         </Sidebar.GroupLabel>
         <Toolbar>
-          {@render toolbar()}
+          <ToolbarButton
+            label={checkLabel}
+            icon={IconRefresh}
+            busy={source.checking}
+            disabled={source.busy}
+            onclick={() => source.refresh()}
+          />
+          <ToolbarButton
+            label="{upgradeVerb} {source.outdated.length} outdated"
+            icon={IconCloudDownload}
+            busy={source.upgrading}
+            disabled={source.busy || source.outdated.length === 0}
+            onclick={() => source.upgradeOutdated()}
+          />
         </Toolbar>
       </div>
       <Collapsible.Content hiddenUntilFound>

@@ -88,7 +88,7 @@
 </script>
 
 <div bind:this={layout} class="absolute inset-0 flex">
-  <div class="flex flex-1 flex-col" style:min-width="{COLUMN_MIN_WIDTH}px">
+  <div class="relative flex-1" style:min-width="{COLUMN_MIN_WIDTH}px">
     {@render children()}
   </div>
 

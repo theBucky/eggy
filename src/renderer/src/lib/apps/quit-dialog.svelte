@@ -1,10 +1,9 @@
 <script lang="ts">
   import * as AlertDialog from '$lib/components/ui/alert-dialog'
   import type { Apps } from '$lib/apps/apps.svelte'
+  import { list } from '$lib/format'
 
   let { apps }: { apps: Apps } = $props()
-
-  const list = new Intl.ListFormat('en')
 
   const names = $derived(list.format(apps.prompt.quitting.map(({ entry }) => entry.app.name)))
 </script>

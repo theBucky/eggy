@@ -1,6 +1,7 @@
 <script lang="ts">
   import { on } from 'svelte/events'
   import FailureAlert from '$lib/components/failure-alert.svelte'
+  import Page from '$lib/components/page.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import type { Entry, Packages } from '$lib/packages/packages.svelte'
@@ -48,20 +49,15 @@
   }
 </script>
 
-<div class="scroll-fade-y absolute inset-0 my-2 flex flex-col overflow-y-auto px-8 py-6">
-  <div class="flex items-start justify-between gap-4">
-    <div class="flex min-w-0 flex-col gap-1">
-      <h1 class="truncate text-xl font-semibold tracking-tight">{pkg.name}</h1>
-      {#if pkg.description}
-        <p class="truncate text-muted-foreground">{pkg.description}</p>
-      {/if}
-    </div>
-    {#if pkg.state === 'outdated' || task?.status === 'running'}
-      <div class="[-webkit-app-region:no-drag]">
-        <UpgradeButton {packages} {entry} size="pill" />
-      </div>
+<Page
+  title={pkg.name}
+  actions={pkg.state === 'outdated' || task?.status === 'running' ? upgrade : undefined}
+>
+  {#snippet subtitle()}
+    {#if pkg.description}
+      <p class="truncate text-muted-foreground">{pkg.description}</p>
     {/if}
-  </div>
+  {/snippet}
 
   <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
     <dt class="text-muted-foreground">Installed</dt>
@@ -96,10 +92,7 @@
   {#if task}
     <section class="mt-8 flex min-h-0 max-w-160 flex-col">
       <h2 class="text-muted-foreground">Output</h2>
-      <div
-        class="scroll-fade-y -mx-scrollbar my-2 overflow-y-auto px-scrollbar py-1"
-        {@attach follow}
-      >
+      <div class="scroll-section" {@attach follow}>
         <div
           class="font-mono text-xs/[18px] wrap-anywhere whitespace-pre-wrap text-foreground/74 select-text"
         >
@@ -119,4 +112,8 @@
       </div>
     </section>
   {/if}
-</div>
+</Page>
+
+{#snippet upgrade()}
+  <UpgradeButton {packages} {entry} size="pill" />
+{/snippet}

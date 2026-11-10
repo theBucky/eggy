@@ -1,12 +1,13 @@
 <script lang="ts">
   import FailureAlert from '$lib/components/failure-alert.svelte'
+  import Page from '$lib/components/page.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
-  import { labelOf, megabytes, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
+  import { labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
   import UpgradeButton from '$lib/apps/upgrade-button.svelte'
+  import { ago, megabytes } from '$lib/format'
   import { nameOf, tilde } from '$lib/paths'
-  import { ago } from '$lib/time'
 
   type StatusBadge = { label: string; variant: BadgeVariant }
 
@@ -40,23 +41,10 @@
   })
 </script>
 
-<div class="scroll-fade-y absolute inset-0 my-2 flex flex-col overflow-y-auto px-8 py-6">
-  <div class="flex items-start justify-between gap-4">
-    <div class="flex min-w-0 items-center gap-3">
-      <img src={app.icon} alt="" class="size-12 shrink-0" />
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="truncate text-xl font-semibold tracking-tight">{app.name}</h1>
-        <p class="truncate font-mono text-xs text-muted-foreground select-text">
-          {tilde(app.path)}
-        </p>
-      </div>
-    </div>
-    {#if release}
-      <div class="[-webkit-app-region:no-drag]">
-        <UpgradeButton {apps} {entry} size="pill" />
-      </div>
-    {/if}
-  </div>
+<Page title={app.name} icon={app.icon} actions={release ? upgrade : undefined}>
+  {#snippet subtitle()}
+    <p class="truncate font-mono text-xs text-muted-foreground select-text">{tilde(app.path)}</p>
+  {/snippet}
 
   <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
     <dt class="text-muted-foreground">Installed</dt>
@@ -102,9 +90,13 @@
   {#if release?.notes}
     <section class="mt-8 flex min-h-0 max-w-160 flex-col">
       <h2 class="text-muted-foreground">Release notes</h2>
-      <div class="scroll-fade-y -mx-scrollbar my-2 overflow-y-auto px-scrollbar py-1">
+      <div class="scroll-section">
         <ReleaseNotes notes={release.notes} />
       </div>
     </section>
   {/if}
-</div>
+</Page>
+
+{#snippet upgrade()}
+  <UpgradeButton {apps} {entry} size="pill" />
+{/snippet}

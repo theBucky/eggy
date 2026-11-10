@@ -1,5 +1,7 @@
 import { createSubscriber } from 'svelte/reactivity'
 
+export const list = new Intl.ListFormat('en')
+
 const relative = new Intl.RelativeTimeFormat('en')
 
 const units = [
@@ -37,4 +39,14 @@ export function duration(span: number): string {
   const format = new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'long' })
 
   return format.format(Math.floor(span / size))
+}
+
+const megabyte = new Intl.NumberFormat('en', {
+  style: 'unit',
+  unit: 'megabyte',
+  maximumFractionDigits: 1
+})
+
+export function megabytes(bytes: number): string {
+  return megabyte.format(bytes / 1e6)
 }

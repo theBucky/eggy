@@ -1,9 +1,6 @@
 <script lang="ts">
-  import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
-  import IconRefresh from '@tabler/icons-svelte/icons/refresh'
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
-  import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import { idOf, type Packages } from '$lib/packages/packages.svelte'
 
@@ -20,23 +17,12 @@
   )
 </script>
 
-<SidebarSection label="Packages">
-  {#snippet toolbar()}
-    <ToolbarButton
-      label="Check for upgrades"
-      icon={IconRefresh}
-      busy={packages.checking}
-      disabled={packages.busy}
-      onclick={() => packages.refresh()}
-    />
-    <ToolbarButton
-      label="Upgrade {packages.outdated.length} outdated"
-      icon={IconCloudDownload}
-      busy={packages.upgrading}
-      disabled={packages.busy || packages.outdated.length === 0}
-      onclick={() => packages.upgrade(packages.outdated)}
-    />
-  {/snippet}
+<SidebarSection
+  label="Packages"
+  source={packages}
+  checkLabel="Check for upgrades"
+  upgradeVerb="Upgrade"
+>
   <Sidebar.Menu>
     {#each shown as entry (idOf(entry.package))}
       {@const id = idOf(entry.package)}

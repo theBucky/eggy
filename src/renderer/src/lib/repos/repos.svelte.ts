@@ -1,5 +1,6 @@
-import type { Status } from '$lib/components/status-dot.svelte'
+import type { Status } from '$lib/status'
 import { tilde } from '$lib/paths'
+import type { Source } from '$lib/sources.svelte'
 import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '$shared/api'
 
 type Task =
@@ -49,14 +50,17 @@ async function each(entries: Entry[], run: (entry: Entry) => Promise<void>): Pro
   )
 }
 
-export class Workspace {
+export class Repos implements Source {
   root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
   entries = $state<Entry[]>([])
   scanning = $state(false)
   #refreshing = $state(false)
-  pulling = $state(false)
+  upgrading = $state(false)
   checking = $derived(this.scanning || this.#refreshing)
-  busy = $derived(this.checking || this.pulling)
+  busy = $derived(this.checking || this.upgrading)
+  checked = $derived(
+    this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
+  )
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
   )
@@ -69,10 +73,7 @@ export class Workspace {
 
   async scan(): Promise<void> {
     this.scanning = true
-
-    const repos = await window.api.scanRepos(this.root)
-
-    this.entries = repos.map((repo) => ({ repo }))
+    this.entries = (await window.api.scanRepos(this.root)).map((repo) => ({ repo }))
     this.scanning = false
   }
 
@@ -101,7 +102,7 @@ export class Workspace {
   }
 
   async pull(entries: Entry[], command: PullCommand): Promise<void> {
-    this.pulling = true
+    this.upgrading = true
     await each(entries, async (entry) => {
       entry.task = { command, status: 'running' }
 
@@ -110,6 +111,10 @@ export class Workspace {
       Object.assign(entry.repo, tracking)
       entry.task = { command, ...outcome }
     })
-    this.pulling = false
+    this.upgrading = false
+  }
+
+  upgradeOutdated(): Promise<void> {
+    return this.pull(this.outdated, 'pull')
   }
 }

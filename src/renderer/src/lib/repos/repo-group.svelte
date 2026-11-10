@@ -1,23 +1,20 @@
 <script lang="ts">
-  import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
   import IconFolder from '@tabler/icons-svelte/icons/folder'
   import IconFolderOpen from '@tabler/icons-svelte/icons/folder-open'
-  import IconRefresh from '@tabler/icons-svelte/icons/refresh'
   import { SvelteSet } from 'svelte/reactivity'
   import * as Collapsible from '$lib/components/ui/collapsible'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
-  import ToolbarButton from '$lib/components/toolbar-button.svelte'
   import { dirOf, nameOf } from '$lib/paths'
-  import { behind, statusOf, type Workspace } from '$lib/repos/workspace.svelte'
+  import { behind, statusOf, type Repos } from '$lib/repos/repos.svelte'
 
   let {
-    workspace,
+    repos,
     selected,
     onselect
   }: {
-    workspace: Workspace
+    repos: Repos
     selected: string | undefined
     onselect: (path: string) => void
   } = $props()
@@ -27,7 +24,7 @@
   const folders = $derived(
     [
       ...Map.groupBy(
-        workspace.entries.toSorted((a, b) => a.repo.path.localeCompare(b.repo.path)),
+        repos.entries.toSorted((a, b) => a.repo.path.localeCompare(b.repo.path)),
         (entry) => dirOf(entry.repo.path)
       )
     ].toSorted(([a], [b]) => a.localeCompare(b))
@@ -39,23 +36,7 @@
   }
 </script>
 
-<SidebarSection label="Repositories">
-  {#snippet toolbar()}
-    <ToolbarButton
-      label="Refresh"
-      icon={IconRefresh}
-      busy={workspace.checking}
-      disabled={workspace.busy}
-      onclick={() => workspace.refresh()}
-    />
-    <ToolbarButton
-      label="Pull {workspace.outdated.length} outdated"
-      icon={IconCloudDownload}
-      busy={workspace.pulling}
-      disabled={workspace.busy || workspace.outdated.length === 0}
-      onclick={() => workspace.pull(workspace.outdated, 'pull')}
-    />
-  {/snippet}
+<SidebarSection label="Repositories" source={repos} checkLabel="Refresh" upgradeVerb="Pull">
   <Sidebar.Menu>
     {#each folders as [dir, entries] (dir)}
       {@const open = expanded.has(dir)}
@@ -70,7 +51,7 @@
                   {:else}
                     <IconFolder />
                   {/if}
-                  <span class="flex-1 truncate-fade">{workspace.relative(dir)}</span>
+                  <span class="flex-1 truncate-fade">{repos.relative(dir)}</span>
                   {#if !open}
                     {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}

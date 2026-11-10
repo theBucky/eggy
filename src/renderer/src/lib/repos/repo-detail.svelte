@@ -2,20 +2,21 @@
   import IconChevronDown from '@tabler/icons-svelte/icons/chevron-down'
   import IconChevronUp from '@tabler/icons-svelte/icons/chevron-up'
   import FailureAlert from '$lib/components/failure-alert.svelte'
+  import Page from '$lib/components/page.svelte'
   import SidePane from '$lib/components/side-pane.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
   import { nameOf, tilde } from '$lib/paths'
-  import { ago } from '$lib/time'
+  import { ago } from '$lib/format'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
   import PullButton from '$lib/repos/pull-button.svelte'
-  import { diverged, type Entry, type Workspace } from '$lib/repos/workspace.svelte'
+  import { diverged, type Entry, type Repos } from '$lib/repos/repos.svelte'
   import type { Commit } from '$shared/api'
 
   type SyncBadge = { label: string; variant: BadgeVariant }
 
-  let { workspace, entry }: { workspace: Workspace; entry: Entry } = $props()
+  let { repos, entry }: { repos: Repos; entry: Entry } = $props()
 
   const { repo, task } = $derived(entry)
   const { unpushed, pushed } = $derived(repo.history)
@@ -48,21 +49,17 @@
 </script>
 
 <SidePane item={selected}>
-  <div class="scroll-fade-y my-2 flex flex-1 flex-col overflow-y-auto px-8 py-6">
-    <div class="flex items-start justify-between gap-4">
-      <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="truncate text-xl font-semibold tracking-tight">{nameOf(repo.path)}</h1>
-        <p class="truncate font-mono text-xs text-muted-foreground select-text">
-          {tilde(repo.path)}
-        </p>
-      </div>
-      <div class="flex gap-2 [-webkit-app-region:no-drag]">
-        {#if diverged(entry)}
-          <PullButton {workspace} {entry} command="rebase" size="pill" />
-        {/if}
-        <PullButton {workspace} {entry} command="pull" size="pill" />
-      </div>
-    </div>
+  <Page title={nameOf(repo.path)}>
+    {#snippet subtitle()}
+      <p class="truncate font-mono text-xs text-muted-foreground select-text">{tilde(repo.path)}</p>
+    {/snippet}
+
+    {#snippet actions()}
+      {#if diverged(entry)}
+        <PullButton {repos} {entry} command="rebase" size="pill" />
+      {/if}
+      <PullButton {repos} {entry} command="pull" size="pill" />
+    {/snippet}
 
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Branch</dt>
@@ -105,7 +102,7 @@
             </Button>
           {/if}
         </div>
-        <div class="scroll-fade-y -mx-scrollbar my-2 overflow-y-auto px-scrollbar py-1">
+        <div class="scroll-section">
           <Item.Group>
             {#if showUnpushed}
               {#each unpushed as commit (commit.hash)}
@@ -119,7 +116,7 @@
         </div>
       </section>
     {/if}
-  </div>
+  </Page>
 
   {#snippet pane(commit, revealed)}
     <CommitDiff path={repo.path} {commit} {revealed} onclose={() => (selected = undefined)} />
