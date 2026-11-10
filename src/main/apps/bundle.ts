@@ -1,6 +1,6 @@
 import { basename, join } from 'node:path'
-import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
-import { run } from './run'
+import { output } from '../exec'
+import { parseXml } from './xml'
 
 export type Bundle = {
   path: string
@@ -12,9 +12,9 @@ export type Bundle = {
   info: Map<string, string>
 }
 
-// xml preserves property list dates and data that json cannot represent.
+// XML preserves property list dates and data that JSON cannot represent.
 async function readInfo(path: string): Promise<Map<string, string>> {
-  const xml = await run('plutil', [
+  const xml = await output('/usr/bin/plutil', [
     '-convert',
     'xml1',
     '-o',
@@ -23,10 +23,7 @@ async function readInfo(path: string): Promise<Map<string, string>> {
     join(path, 'Contents/Info.plist')
   ])
 
-  const dict = new DOMParser({ onError: onErrorStopParsing })
-    .parseFromString(xml, 'text/xml')
-    .getElementsByTagName('dict')
-    .item(0)
+  const dict = parseXml(xml).getElementsByTagName('dict').item(0)
 
   // Each key element comes right before the element that holds its value.
   const fields = [...(dict?.children ?? [])]

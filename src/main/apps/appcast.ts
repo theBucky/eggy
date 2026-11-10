@@ -1,6 +1,7 @@
-import { DOMParser, onErrorStopParsing, type Element, type NodeList } from '@xmldom/xmldom'
+import type { Element, NodeList } from '@xmldom/xmldom'
 import type { Notes, Release } from '$shared/api'
 import { compare } from './version'
+import { parseXml } from './xml'
 
 export type Appcast = {
   url: string
@@ -122,11 +123,10 @@ function parseItem(
 }
 
 export function findItem(xml: string, appcast: Appcast, installed: string): Item | undefined {
-  const document = new DOMParser({ onError: onErrorStopParsing }).parseFromString(xml, 'text/xml')
   const system = process.getSystemVersion()
   let newest: Item | undefined
 
-  for (const item of document.getElementsByTagName('item')) {
+  for (const item of parseXml(xml).getElementsByTagName('item')) {
     const parsed = parseItem(item, appcast, system, installed)
 
     if (parsed && (!newest || compare(parsed.release.build, newest.release.build) > 0)) {

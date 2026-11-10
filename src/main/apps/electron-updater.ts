@@ -1,7 +1,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { DOMParser, onErrorStopParsing } from '@xmldom/xmldom'
 import { gt, prerelease, valid } from 'semver'
 import { parse } from 'yaml'
 import * as z from 'zod'
@@ -15,6 +14,7 @@ import {
   type Framework,
   type Update
 } from './framework'
+import { parseXml } from './xml'
 
 const Generic = z.object({
   provider: z.literal('generic'),
@@ -147,11 +147,7 @@ function github(bundle: Bundle, config: GitHub): Feed {
     check: async () => {
       const atom = await (await fetchFeed(`${releases}.atom`)).text()
 
-      const entries = [
-        ...new DOMParser({ onError: onErrorStopParsing })
-          .parseFromString(atom, 'text/xml')
-          .getElementsByTagName('entry')
-      ].map((entry): Entry => ({
+      const entries = [...parseXml(atom).getElementsByTagName('entry')].map((entry): Entry => ({
         tag: tagLink.exec(
           entry.getElementsByTagName('link').item(0)?.getAttribute('href') ?? ''
         )?.[1],

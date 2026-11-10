@@ -11,7 +11,7 @@ import {
 import { join } from 'node:path'
 import { optimizer, is } from '@electron-toolkit/utils'
 import type { Events, Ipc } from '$shared/api'
-import * as apps from './apps/upgrader'
+import * as apps from './apps'
 import * as brew from './brew'
 import * as git from './git'
 import * as optimize from './optimize'
@@ -109,7 +109,7 @@ app.whenReady().then(() => {
     planWindowExpansion: (_, width) => pane.planExpansion(width),
     planWindowCollapse: () => pane.planCollapse(),
     moveWindow: () => pane.move(),
-    listApps: () => apps.listApps(),
+    listApps: () => apps.list(),
     checkApp: (_, path) => apps.check(path),
     upgradeApp: (event, path) =>
       apps.upgrade(path, (progress) => send(event.sender, 'appProgress', path, progress)),

@@ -3,11 +3,11 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
 import * as z from 'zod'
+import { output } from '../exec'
 import type { Bundle } from './bundle'
-import type { Feed, Framework } from './framework'
+import { fetchFeed, type Feed, type Framework } from './framework'
 import { googleUpdaterFeed } from './google-updater'
-import { run } from './run'
-import { sparkleFeed } from './sparkle'
+import { readAppcast, sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
 
 const CursorSettings = z.object({
@@ -37,21 +37,32 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
       })
   ],
   // CleanShot X, whose Info.plist feed ends at version 3 since later releases go to licensed copies.
+  // The activation key joins the address only to fetch the feed, so neither the feed the app shows
+  // nor a link the feed resolves carries it.
   [
     'pl.maketheweb.cleanshotx',
-    async (bundle) =>
-      sparkleFeed(bundle, {
-        url: 'https://legit.maketheweb.io/api/v1/appcast',
-        channels: [],
-        preferences: { key: 'activationKey' }
-      })
+    async (bundle) => {
+      const appcast = { url: 'https://legit.maketheweb.io/api/v1/appcast', channels: [] }
+
+      return {
+        url: appcast.url,
+        check: async () => {
+          const licensed = new URL(appcast.url)
+          const key = await output('/usr/bin/defaults', ['read', bundle.id, 'activationKey'])
+
+          licensed.searchParams.set('key', key.trim())
+
+          return readAppcast(bundle, await (await fetchFeed(licensed.href)).text(), appcast)
+        }
+      }
+    }
   ],
   // Ghostty, which picks a feed by the update channel its config resolves to. Ghostty's own loader
   // finds the config files and falls back to the channel of the installed build.
   [
     'com.mitchellh.ghostty',
     async (bundle) => {
-      const config = await run(bundle.executable, ['+show-config'])
+      const config = await output(bundle.executable, ['+show-config'])
       const channel = /^auto-update-channel = tip$/m.test(config) ? 'tip' : 'release'
 
       return sparkleFeed(bundle, {

@@ -6,7 +6,7 @@ import type { Readable } from 'node:stream'
 import { crc32 } from 'node:zlib'
 // Electron's fs reads an asar archive as a folder, which would hash and patch an app wrongly.
 import { constants, createReadStream, promises as fs, type Stats } from 'original-fs'
-import { run } from './run'
+import { output } from '../exec'
 
 type Item = {
   path: string
@@ -324,13 +324,9 @@ async function extract(reader: Reader, { mode, length }: Item, path: string): Pr
   } else if (type === constants.S_IFREG) {
     await remove(path)
 
-    const file = await fs.open(path, 'wx')
+    await using file = await fs.open(path, 'wx')
 
-    try {
-      for await (const piece of reader.take(length)) await file.write(piece)
-    } finally {
-      await file.close()
-    }
+    for await (const piece of reader.take(length)) await file.write(piece)
 
     await fs.chmod(path, mode & permissionBits)
   }
@@ -384,7 +380,7 @@ async function patch(reader: Reader, installed: string, destination: string): Pr
     throw new Error("The delta doesn't patch the installed build.")
   }
 
-  await run('ditto', [installed, destination])
+  await output('/usr/bin/ditto', [installed, destination])
 
   for (const item of await readItems(reader)) {
     await applyItem(reader, item, installed, destination)
@@ -397,32 +393,27 @@ async function patch(reader: Reader, installed: string, destination: string): Pr
 
 // The decoder reads the delta past its header from the file offset it shares with this process.
 async function decode(delta: string): Promise<ChildProcess> {
-  const file = await fs.open(delta)
+  await using file = await fs.open(delta)
+  const header = Buffer.alloc(6)
 
-  try {
-    const header = Buffer.alloc(6)
+  await file.read(header, 0, header.length, null)
 
-    await file.read(header, 0, header.length, null)
-
-    // Older deltas are xar archives.
-    if (header.toString('latin1', 0, 4) !== 'spk!') {
-      throw new Error("The delta's format isn't supported.")
-    }
-
-    const algorithm = algorithms.get(header[4])
-
-    if (algorithm === undefined) throw new Error("The delta's compression isn't supported.")
-
-    const decoder = spawn('compression_tool', ['-decode', '-a', algorithm], {
-      stdio: [file.fd, 'pipe', 'ignore']
-    })
-
-    await once(decoder, 'spawn')
-
-    return decoder
-  } finally {
-    await file.close()
+  // Older deltas are xar archives.
+  if (header.toString('latin1', 0, 4) !== 'spk!') {
+    throw new Error("The delta's format isn't supported.")
   }
+
+  const algorithm = algorithms.get(header[4])
+
+  if (algorithm === undefined) throw new Error("The delta's compression isn't supported.")
+
+  const decoder = spawn('/usr/bin/compression_tool', ['-decode', '-a', algorithm], {
+    stdio: [file.fd, 'pipe', 'ignore']
+  })
+
+  await once(decoder, 'spawn')
+
+  return decoder
 }
 
 export async function applyDelta(

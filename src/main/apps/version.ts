@@ -16,7 +16,7 @@ function separates(kind: Kind): boolean {
   return kind === 'period' || kind === 'separator'
 }
 
-// a dash ends the version so a trailing commit hash never counts.
+// A dash ends the version so a trailing commit hash never counts.
 function split(version: string): string[] {
   const parts: string[] = []
 
@@ -45,7 +45,7 @@ function pad(shorter: string[], longer: string[]): void {
   }
 }
 
-// follows sparkle's SUStandardVersionComparator rather than semver.
+// Follows Sparkle's SUStandardVersionComparator rather than semver.
 export function compare(a: string, b: string): number {
   const partsA = split(a)
   const partsB = split(b)

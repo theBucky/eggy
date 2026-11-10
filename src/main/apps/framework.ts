@@ -2,8 +2,8 @@ import { createHash, type BinaryToTextEncoding } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { net } from 'electron'
 import type { Release } from '$shared/api'
+import { output } from '../exec'
 import type { Bundle } from './bundle'
-import { run } from './run'
 
 export type Update = {
   release: Release
@@ -43,7 +43,7 @@ export async function verifyChecksum(
 // Like Squirrel, this trusts a replacement only when its code signature meets the installed app's
 // designated requirement.
 export async function verifySigner(installed: string, replacement: string): Promise<void> {
-  const requirement = (await run('codesign', ['-d', '-r-', installed])).replace(
+  const requirement = (await output('/usr/bin/codesign', ['-d', '-r-', installed])).replace(
     /^designated => /,
     ''
   )
@@ -51,7 +51,7 @@ export async function verifySigner(installed: string, replacement: string): Prom
   // Chrome ships Finder info on its files, which sits outside the signature, so the sideband check
   // stays off.
   try {
-    await run('codesign', [
+    await output('/usr/bin/codesign', [
       '--verify',
       '--deep',
       '--strict=symlinks',

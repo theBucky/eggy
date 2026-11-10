@@ -1,5 +1,5 @@
 import { homedir, tmpdir } from 'node:os'
-import { basename, dirname, extname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { nativeImage, net, shell } from 'electron'
 // Electron's fs reads an app's asar archive as a folder, so it can't remove an app that holds one.
@@ -8,18 +8,18 @@ import * as z from 'zod'
 import type {
   App,
   CheckOutcome,
-  Failure,
   InstallOutcome,
   Progress,
   Release,
   UpgradeOutcome
 } from '$shared/api'
+import { errorCode, failure } from '../errors'
+import { output } from '../exec'
+import { unpack } from './archive'
 import { readBundle, type Bundle } from './bundle'
-import { applyDelta } from './delta'
 import { electronUpdater } from './electron-updater'
 import type { Feed, Framework, Update } from './framework'
 import { knownApps } from './known-apps'
-import { run } from './run'
 import { sparkle } from './sparkle'
 
 type Staged = {
@@ -37,16 +37,6 @@ const waiting = new Map<string, Staged>()
 
 const iconSize = { width: 96, height: 96 }
 
-const NoSuchProcess = z.object({ code: z.literal('ESRCH') })
-
-function failure(cause: unknown): Failure {
-  if (cause instanceof z.ZodError) {
-    return { status: 'failed', message: 'The update feed is malformed.' }
-  }
-
-  return { status: 'failed', message: cause instanceof Error ? cause.message : String(cause) }
-}
-
 async function feedOf(bundle: Bundle): Promise<Feed | undefined> {
   for (const framework of frameworks) {
     const feed = await framework(bundle)
@@ -62,7 +52,11 @@ async function fetchUpdates(bundle: Bundle): Promise<Update[]> {
 
   if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
 
-  return feed.check()
+  try {
+    return await feed.check()
+  } catch (cause) {
+    throw cause instanceof z.ZodError ? new Error('The update feed is malformed.') : cause
+  }
 }
 
 async function readApp(path: string): Promise<App | undefined> {
@@ -77,7 +71,7 @@ async function readApp(path: string): Promise<App | undefined> {
   return { path, name, version, build, feed: feed.url, icon: icon.toDataURL() }
 }
 
-export async function listApps(): Promise<App[]> {
+export async function list(): Promise<App[]> {
   const listed = await Promise.all(
     folders.map(async (folder) =>
       (await fs.readdir(folder).catch(() => [])).flatMap((name) =>
@@ -113,111 +107,30 @@ async function download(
   }
 
   const total = Number(response.headers.get('content-length')) || release.size
-  const handle = await fs.open(file, 'w')
+  await using handle = await fs.open(file, 'w')
   let received = 0
   let reported = 0
 
   report({ stage: 'download', percent: total === undefined ? undefined : 0 })
 
-  try {
-    for await (const chunk of response.body) {
-      await handle.write(chunk)
-      received += chunk.length
+  for await (const chunk of response.body) {
+    await handle.write(chunk)
+    received += chunk.length
 
-      if (total === undefined) continue
+    if (total === undefined) continue
 
-      const percent = Math.min(Math.floor((received / total) * 100), 100)
+    const percent = Math.min(Math.floor((received / total) * 100), 100)
 
-      if (percent > reported) {
-        reported = percent
-        report({ stage: 'download', percent })
-      }
-    }
-  } finally {
-    await handle.close()
-  }
-}
-
-async function findBundle(dir: string, id: string): Promise<string> {
-  for (const name of await fs.readdir(dir)) {
-    const path = join(dir, name)
-
-    if (name.endsWith('.app') && (await readBundle(path)).id === id) return path
-  }
-
-  throw new Error(`The download holds no app with the identifier ${id}.`)
-}
-
-// ditto keeps the symlinks, extended attributes, and code signatures that an app bundle relies on.
-async function unpack(archive: string, work: string, bundle: Bundle): Promise<string> {
-  const contents = join(work, 'contents')
-  const type = extname(archive).toLowerCase()
-
-  if (type === '.zip') {
-    await run('ditto', ['-x', '-k', archive, contents])
-
-    return findBundle(contents, bundle.id)
-  }
-
-  if (type === '.delta') {
-    const replacement = join(contents, basename(bundle.path))
-
-    await applyDelta(bundle.path, archive, replacement)
-
-    return replacement
-  }
-
-  if (type === '.dmg') {
-    const mount = join(work, 'mount')
-
-    // Like Sparkle, this accepts any license agreement the disk image asks about on stdin.
-    await run(
-      'hdiutil',
-      [
-        'attach',
-        archive,
-        '-mountpoint',
-        mount,
-        '-readonly',
-        '-noverify',
-        '-nobrowse',
-        '-noautoopen'
-      ],
-      'yes\n'
-    )
-
-    try {
-      const source = await findBundle(mount, bundle.id)
-      const copy = join(contents, basename(source))
-
-      await run('ditto', [source, copy])
-
-      return copy
-    } finally {
-      await run('hdiutil', ['detach', mount, '-force'])
+    if (percent > reported) {
+      reported = percent
+      report({ stage: 'download', percent })
     }
   }
-
-  // Google's updater wraps a disk image in a crx3, a zip behind a signed header that tar skips.
-  if (type === '.crx3') {
-    const wrapped = join(work, 'wrapped')
-
-    await fs.mkdir(wrapped)
-    await run('tar', ['-xf', archive, '-C', wrapped])
-
-    const image = (await fs.readdir(wrapped)).find((name) => extname(name) === '.dmg')
-
-    if (image === undefined) throw new Error('The download holds no disk image.')
-
-    return unpack(join(wrapped, image), work, bundle)
-  }
-
-  throw new Error(`Upgrades packaged as ${type || 'files without an extension'} aren't supported.`)
 }
 
-// bundles can also ship cli tools whose processes must stay running.
+// Bundles can also ship CLI tools whose processes must stay running.
 async function pidsOf({ executable }: Bundle): Promise<number[]> {
-  const lines = (await run('ps', ['-axo', 'pid=,comm='])).split('\n')
+  const lines = (await output('/bin/ps', ['-axo', 'pid=,comm='])).split('\n')
 
   return lines.flatMap((line) => {
     const [, pid, command] = /^\s*(\d+) (.+)$/.exec(line) ?? []
@@ -231,7 +144,7 @@ function kill(pid: number): void {
   try {
     process.kill(pid, 'SIGKILL')
   } catch (cause) {
-    if (!NoSuchProcess.safeParse(cause).success) throw cause
+    if (errorCode(cause) !== 'ESRCH') throw cause
   }
 }
 
@@ -303,14 +216,14 @@ async function install({ work, replacement, bundle }: Staged): Promise<InstallOu
   try {
     const running = await forceQuit(bundle)
 
-    // moving a whole bundle avoids the app management access needed to delete files inside.
+    // Moving a whole bundle avoids the app management access needed to delete files inside.
     await shell.trashItem(path)
     await fs.rename(replacement, path)
 
     const { version, build } = await readBundle(path)
 
     // The upgrade has landed, so an app that fails to reopen stays closed instead of failing it.
-    if (running) await run('open', ['-g', path]).catch(() => undefined)
+    if (running) await output('/usr/bin/open', ['-g', path]).catch(() => undefined)
 
     return { status: 'upgraded', version, build }
   } catch (cause) {

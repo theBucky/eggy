@@ -6,11 +6,6 @@ import { promisify } from 'node:util'
 import { findItem, type Appcast, type Enclosure } from './appcast'
 import type { Bundle } from './bundle'
 import { fetchFeed, verifySigner, type Feed, type Framework, type Update } from './framework'
-import { run } from './run'
-
-type Source = Appcast & {
-  preferences?: Record<string, string>
-}
 
 const verifyAsync = promisify(verify)
 
@@ -38,15 +33,8 @@ async function verifySignature(
   if (!matches) throw new Error("The update's signature doesn't match the app's key.")
 }
 
-async function check(bundle: Bundle, source: Source): Promise<Update[]> {
-  const url = new URL(source.url)
-
-  for (const [parameter, key] of Object.entries(source.preferences ?? {})) {
-    url.searchParams.set(parameter, (await run('defaults', ['read', bundle.id, key])).trim())
-  }
-
-  const response = await fetchFeed(url.href)
-  const item = findItem(await response.text(), source, bundle.build)
+export function readAppcast(bundle: Bundle, xml: string, appcast: Appcast): Update[] {
+  const item = findItem(xml, appcast, bundle.build)
 
   if (item === undefined) return []
 
@@ -64,8 +52,11 @@ async function check(bundle: Bundle, source: Source): Promise<Update[]> {
   return (item.delta ? [item.delta, item.archive] : [item.archive]).map(updateOf)
 }
 
-export function sparkleFeed(bundle: Bundle, source: Source): Feed {
-  return { url: source.url, check: () => check(bundle, source) }
+export function sparkleFeed(bundle: Bundle, appcast: Appcast): Feed {
+  return {
+    url: appcast.url,
+    check: async () => readAppcast(bundle, await (await fetchFeed(appcast.url)).text(), appcast)
+  }
 }
 
 export const sparkle: Framework = async (bundle) => {
