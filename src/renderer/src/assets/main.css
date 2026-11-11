@@ -23,6 +23,8 @@
   --card-foreground: var(--foreground);
   --popover: light-dark(#ffffff, #121211);
   --popover-foreground: var(--foreground);
+  /* Opaque so a select's trigger and menu can flow into one shape. */
+  --surface: color-mix(in srgb, var(--foreground) 2.4%, var(--background));
   --primary: var(--foreground);
   --primary-foreground: var(--background);
   --secondary: light-dark(#1c1c1c14, #f0f0f014);
@@ -93,6 +95,7 @@
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+  --color-surface: var(--surface);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
