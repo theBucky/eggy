@@ -21,7 +21,6 @@ export type Sync = {
   behind: number
 }
 
-// What a repo knows about its upstream, which every scan, fetch, and pull reads afresh.
 export type Tracking = {
   remote: string
   sync: Sync | undefined

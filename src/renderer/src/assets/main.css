@@ -185,7 +185,6 @@
   body {
     @apply bg-background text-base text-foreground antialiased select-none;
   }
-  /* Interface controls keep the arrow, as the system's do. */
   a {
     cursor: default;
   }

@@ -16,7 +16,6 @@ type Palette = {
 
 export const DIFF_THEMES = { light: 'app-light', dark: 'app-dark' }
 
-// The design system's editor palettes, which no bundled theme matches.
 function register(type: keyof typeof DIFF_THEMES, palette: Palette): void {
   const name = DIFF_THEMES[type]
 

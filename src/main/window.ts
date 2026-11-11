@@ -20,7 +20,6 @@ export function savedBounds(): Rectangle | undefined {
   try {
     return SavedBounds.parse(JSON.parse(readFileSync(path, 'utf8')))
   } catch {
-    // Without saved bounds, the window opens centered at its default size.
     return undefined
   }
 }

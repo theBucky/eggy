@@ -71,7 +71,6 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
       })
     }
   ],
-  // Cursor, which asks for the release track picked in its settings.
   [
     'com.todesktop.230313mzl4w4u92',
     async (bundle) => {

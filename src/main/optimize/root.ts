@@ -12,7 +12,6 @@ export type Prepared = OptimizeOutcome | Plan
 // printing why it can't tell.
 export type Guard = { check: string; stopped: OptimizeOutcome }
 
-// Exit statuses the scripts choose for themselves, which must stay distinct.
 export const EXIT = { refused: 75, stopped: 76, unsure: 77 } as const
 
 export async function guarded(guard: Guard, task: () => Promise<Prepared>): Promise<Prepared> {

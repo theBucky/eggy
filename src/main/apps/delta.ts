@@ -127,7 +127,6 @@ async function* walk(root: string, relative = ''): AsyncGenerator<[string, Stats
   }
 }
 
-// Version 4 sums the tree with crc32 where earlier versions use sha1.
 async function hashTree(root: string, version: number): Promise<Buffer> {
   const sum = (): Sum => (version >= 4 ? crcSum() : createHash('sha1'))
   const tree = sum()

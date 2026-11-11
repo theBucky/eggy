@@ -28,7 +28,6 @@
       : undefined
   })
 
-  // Keeps new output in view until the reader scrolls back up.
   function follow(node: HTMLElement): () => void {
     let following = true
 
