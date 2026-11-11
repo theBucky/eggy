@@ -49,7 +49,8 @@ function createWindow(): BrowserWindow {
     backgroundColor: sidebarColor(),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.mjs'),
-      sandbox: false
+      sandbox: false,
+      spellcheck: false
     }
   })
 

@@ -78,7 +78,7 @@
 	{onCheckedChange}
 	data-slot="switch"
 	class={cn(
-		"data-checked:bg-info data-unchecked:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background relative shrink-0 cursor-pointer touch-none rounded-full transition-colors duration-80 outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-2 data-disabled:cursor-not-allowed data-disabled:opacity-50",
+		"data-checked:bg-info data-unchecked:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background relative shrink-0 touch-none rounded-full transition-colors duration-80 outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-2 data-disabled:opacity-50",
 		className
 	)}
 	style="width: {TRACK_WIDTH}px; height: {TRACK_HEIGHT}px"

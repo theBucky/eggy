@@ -28,7 +28,7 @@
       @apply text-foreground;
     }
     & a {
-      @apply text-info underline-offset-4 hover:underline;
+      @apply cursor-pointer text-info underline-offset-4 hover:underline;
     }
     & code {
       @apply text-xs;
