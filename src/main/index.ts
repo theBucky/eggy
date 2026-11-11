@@ -9,12 +9,13 @@ import {
   type WebContents
 } from 'electron'
 import { join } from 'node:path'
-import { optimizer, is } from '@electron-toolkit/utils'
+import { is } from '@electron-toolkit/utils'
 import type { Events, Ipc } from '$shared/api'
 import * as apps from './apps'
 import * as brew from './brew'
 import * as git from './git'
 import * as optimize from './optimize'
+import { installContextMenu, installMenu } from './menu'
 import { restoreTheme, setTheme, sidebarColor } from './theme'
 import { resizer, savedBounds } from './window'
 
@@ -43,7 +44,6 @@ function createWindow(): BrowserWindow {
     minWidth: 1150,
     minHeight: 760,
     show: false,
-    autoHideMenuBar: true,
     titleBarStyle: 'hidden',
     trafficLightPosition: { x: 17, y: 17 },
     backgroundColor: sidebarColor(),
@@ -53,7 +53,7 @@ function createWindow(): BrowserWindow {
     }
   })
 
-  optimizer.watchWindowShortcuts(mainWindow)
+  installContextMenu(mainWindow)
 
   nativeTheme.on('updated', () => mainWindow.setBackgroundColor(sidebarColor()))
 
@@ -93,6 +93,11 @@ app.whenReady().then(() => {
 
   const window = createWindow()
   const pane = resizer(window)
+
+  installMenu((command) => {
+    window.show()
+    send(window.webContents, 'menuCommand', command)
+  })
 
   const handlers: Handlers = {
     chooseRoot: async (_, current) => {

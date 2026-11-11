@@ -41,7 +41,8 @@ const api: Api = {
   review: invoke('review'),
   onAppProgress: on('appProgress'),
   onPackageOutput: on('packageOutput'),
-  onOptimization: on('optimization')
+  onOptimization: on('optimization'),
+  onMenuCommand: on('menuCommand')
 }
 
 contextBridge.exposeInMainWorld('api', api)

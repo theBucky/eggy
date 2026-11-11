@@ -149,6 +149,8 @@ export const THEMES = ['system', 'light', 'dark'] as const
 
 export type Theme = (typeof THEMES)[number]
 
+export type MenuCommand = 'settings' | 'refresh'
+
 export type Ipc = {
   chooseRoot: (current: string) => Promise<string | undefined>
   scanRepos: (root: string) => Promise<Repo[]>
@@ -176,6 +178,7 @@ export type Events = {
   appProgress: [path: string, progress: Progress]
   packageOutput: [kind: PackageKind, fullName: string, text: string]
   optimization: [optimization: Optimization, state: OptimizeState]
+  menuCommand: [command: MenuCommand]
 }
 
 export type Api = Ipc & {
@@ -184,4 +187,5 @@ export type Api = Ipc & {
   onAppProgress: (listener: (...args: Events['appProgress']) => void) => void
   onPackageOutput: (listener: (...args: Events['packageOutput']) => void) => void
   onOptimization: (listener: (...args: Events['optimization']) => void) => void
+  onMenuCommand: (listener: (...args: Events['menuCommand']) => void) => void
 }

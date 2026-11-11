@@ -44,6 +44,11 @@
 
   if (preferences.checkOnLaunch) sources.refresh()
   else sources.scan()
+
+  window.api.onMenuCommand((command) => {
+    if (command === 'settings') view = { page: 'settings' }
+    else if (!sources.busy) sources.refresh()
+  })
 </script>
 
 <!-- Listed first so the no-drag controls below carve themselves out of it. -->
