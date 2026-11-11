@@ -1,8 +1,29 @@
-import { screen, systemPreferences, type BrowserWindow, type Rectangle } from 'electron'
+import { app, screen, systemPreferences, type BrowserWindow, type Rectangle } from 'electron'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import * as z from 'zod'
 
 // Shortens the system's resize animation, which `move` plays, to about 200ms across a pane's width,
 // from a default that drags.
 systemPreferences.registerDefaults({ NSWindowResizeTime: 0.1 })
+
+const SavedBounds = z.object({
+  x: z.number(),
+  y: z.number(),
+  width: z.number(),
+  height: z.number()
+})
+
+const path = join(app.getPath('userData'), 'window')
+
+export function savedBounds(): Rectangle | undefined {
+  try {
+    return SavedBounds.parse(JSON.parse(readFileSync(path, 'utf8')))
+  } catch {
+    // Without saved bounds, the window opens centered at its default size.
+    return undefined
+  }
+}
 
 type Resizer = {
   planExpansion: (width: number) => number
@@ -46,6 +67,15 @@ export function resizer(window: BrowserWindow): Resizer {
     return plan({ ...bounds, x: bounds.x - shift, width: bounds.width + grown })
   }
 
+  function collapsed(bounds: Rectangle): Rectangle {
+    if (expansion === undefined) return bounds
+
+    const width = Math.min(expansion.width, bounds.width - window.getMinimumSize()[0])
+    const shift = Math.min(expansion.shift, width)
+
+    return { ...bounds, x: bounds.x + shift, width: bounds.width - width }
+  }
+
   function planCollapse(): number {
     const bounds = planned ?? window.getBounds()
 
@@ -58,14 +88,13 @@ export function resizer(window: BrowserWindow): Resizer {
       return 0
     }
 
-    const width = Math.min(expansion.width, bounds.width - window.getMinimumSize()[0])
-    const shift = Math.min(expansion.shift, width)
+    const to = collapsed(bounds)
 
     expansion = undefined
 
-    if (width === 0) return 0
+    if (to.width === bounds.width) return 0
 
-    return plan({ ...bounds, x: bounds.x + shift, width: bounds.width - width })
+    return plan(to)
   }
 
   // The system's own animation keeps pace with the display, where steps sent from the renderer drop
@@ -84,6 +113,11 @@ export function resizer(window: BrowserWindow): Resizer {
 
     planCollapse()
     move()
+  })
+
+  // The next launch opens without a side pane, so the bounds are saved without the room made for one.
+  window.on('close', () => {
+    writeFileSync(path, JSON.stringify(collapsed(window.getNormalBounds())))
   })
 
   return { planExpansion, planCollapse, move }

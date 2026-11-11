@@ -16,7 +16,7 @@ import * as brew from './brew'
 import * as git from './git'
 import * as optimize from './optimize'
 import { restoreTheme, setTheme, sidebarColor } from './theme'
-import { resizer } from './window'
+import { resizer, savedBounds } from './window'
 
 type Handlers = {
   [Channel in keyof Ipc]: (
@@ -39,6 +39,7 @@ function createWindow(): BrowserWindow {
   const mainWindow = new BrowserWindow({
     width: 1150,
     height: 760,
+    ...savedBounds(),
     minWidth: 1150,
     minHeight: 760,
     show: false,
