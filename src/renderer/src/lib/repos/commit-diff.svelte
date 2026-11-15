@@ -262,7 +262,7 @@
   <!-- The viewer moves the summary into the scroll content, above the first file. -->
   <div bind:this={root} class="mb-2 flex-1 overflow-y-auto select-text">
     <div bind:this={summary} class="flex flex-col gap-2 p-5 wrap-anywhere">
-      <h2 class="text-lg font-medium">{shown.subject}</h2>
+      <h2 class="text-xl font-semibold">{shown.subject}</h2>
       {#if detail?.body}
         <p class="whitespace-pre-wrap text-muted-foreground">{detail.body}</p>
       {/if}

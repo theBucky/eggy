@@ -23,7 +23,7 @@
         <img src={icon} alt="" class="size-12 shrink-0" />
       {/if}
       <div class="flex min-w-0 flex-col gap-1">
-        <h1 class="truncate text-xl font-medium">{title}</h1>
+        <h1 class="truncate text-2xl font-semibold">{title}</h1>
         {@render subtitle?.()}
       </div>
     </div>

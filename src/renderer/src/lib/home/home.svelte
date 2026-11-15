@@ -230,7 +230,7 @@
       </Table.Cell>
     {:else if release}
       <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-sm/[18px]">
+        <div class="flex fill-cell items-center gap-2 font-mono text-sm">
           <span class="truncate text-muted-foreground">{labelOf(app)}</span>
           <IconArrowRight class="size-3 shrink-0 text-tertiary-foreground" />
           <span class="truncate">{labelOf(release)}</span>
@@ -270,7 +270,7 @@
       </Table.Cell>
     {:else}
       <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-sm/[18px]">
+        <div class="flex fill-cell items-center gap-2 font-mono text-sm">
           <span class="truncate text-muted-foreground">{pkg.version}</span>
           <IconArrowRight class="size-3 shrink-0 text-tertiary-foreground" />
           <span class="truncate">{pkg.latest}</span>
@@ -314,13 +314,13 @@
       {#if task?.status === 'failed'}
         <div class="fill-cell truncate text-danger">{task.message}</div>
       {:else}
-        <div class="fill-cell truncate font-mono text-sm/[18px] text-muted-foreground">
+        <div class="fill-cell truncate font-mono text-sm text-muted-foreground">
           {repo.branch} ← {repo.upstream}
         </div>
       {/if}
     </Table.Cell>
     <Table.Cell>
-      <div class="text-right font-mono text-sm/[18px] text-info">
+      <div class="text-right font-mono text-sm text-info">
         {#if repo.sync?.ahead}↑{repo.sync.ahead}{/if}
         {#if repo.sync?.behind}↓{repo.sync.behind}{/if}
       </div>

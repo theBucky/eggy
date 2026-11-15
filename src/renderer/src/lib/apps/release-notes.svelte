@@ -1,7 +1,6 @@
 <script lang="ts" module>
   import DOMPurify from 'dompurify'
   import { marked } from 'marked'
-  import './release-notes.css'
 
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'A') node.setAttribute('target', '_blank')
@@ -50,9 +49,9 @@
     <IconExternalLink data-icon="inline-end" />
   </Button>
 {:else if notes.format === 'plain-text'}
-  <p class="release-notes whitespace-pre-wrap">{notes.text}</p>
+  <p class="typeset whitespace-pre-wrap select-text">{notes.text}</p>
 {:else}
-  <div class="release-notes">
+  <div class="typeset select-text">
     {@html render(notes.format, notes.text)}
   </div>
 {/if}

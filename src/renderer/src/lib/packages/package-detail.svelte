@@ -61,18 +61,18 @@
   <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
     <dt class="text-muted-foreground">Installed</dt>
     <dd class="flex min-w-0 items-center gap-2">
-      <span class="truncate font-mono text-sm/[18px] select-text">{pkg.version}</span>
+      <span class="truncate font-mono text-sm select-text">{pkg.version}</span>
       {#if badge}
         <Badge variant={badge.variant}>{badge.label}</Badge>
       {/if}
     </dd>
     {#if pkg.latest !== pkg.version}
       <dt class="text-muted-foreground">Latest</dt>
-      <dd class="truncate font-mono text-sm/[18px] select-text">{pkg.latest}</dd>
+      <dd class="truncate font-mono text-sm select-text">{pkg.latest}</dd>
     {/if}
     {#if pkg.tap}
       <dt class="text-muted-foreground">Tap</dt>
-      <dd class="truncate font-mono text-sm/[18px] select-text">{pkg.tap}</dd>
+      <dd class="truncate font-mono text-sm select-text">{pkg.tap}</dd>
     {/if}
     {#if pkg.homepage}
       <dt class="text-muted-foreground">Homepage</dt>
@@ -93,7 +93,7 @@
       <h2 class="text-muted-foreground">Output</h2>
       <div class="scroll-section" {@attach follow}>
         <div
-          class="font-mono text-sm/[18px] wrap-anywhere whitespace-pre-wrap text-muted-foreground select-text"
+          class="font-mono text-sm wrap-anywhere whitespace-pre-wrap text-muted-foreground select-text"
         >
           {#each lines as line, index (index)}
             <p class="min-h-lh">
