@@ -107,17 +107,17 @@
 								<feFuncA type="linear" slope="12" intercept="-5.5" />
 							</feComponentTransfer>
 							<feComposite in="SourceAlpha" operator="over" result="shape" />
-							<!-- Everything deeper than 1px, which leaves a border of even width. feMorphology
-							     erodes with a square and would thicken the corners. -->
+							<!-- Everything within 1px outside the shape, where other popups draw their ring.
+							     feMorphology dilates with a square and would thicken the corners. -->
 							<feGaussianBlur stdDeviation="1" />
-							<feComponentTransfer result="core">
-								<feFuncA type="linear" slope="12" intercept="-9.6" />
+							<feComponentTransfer result="outline">
+								<feFuncA type="linear" slope="24" intercept="-3.3" />
 							</feComponentTransfer>
 							<feFlood style="flood-color: var(--surface)" />
 							<feComposite in2="shape" operator="in" result="fill" />
 							<feFlood style="flood-color: var(--border)" />
-							<feComposite in2="shape" operator="in" />
-							<feComposite in2="core" operator="out" result="border" />
+							<feComposite in2="outline" operator="in" />
+							<feComposite in2="shape" operator="out" result="border" />
 							<feMerge>
 								<feMergeNode in="fill" />
 								<feMergeNode in="border" />
@@ -207,8 +207,11 @@
 				) +
 				16px
 		);
-		--docked: calc(var(--reach) + var(--anchor-top)) calc(var(--reach) + var(--anchor-right))
-			calc(var(--reach) + var(--anchor-bottom)) calc(var(--reach) + var(--anchor-left));
+		/* The trigger's box less its border, which the ring drawn outside the shape lands on. */
+		--docked: calc(var(--reach) + var(--anchor-top) + 1px)
+			calc(var(--reach) + var(--anchor-right) + 1px)
+			calc(var(--reach) + var(--anchor-bottom) + 1px)
+			calc(var(--reach) + var(--anchor-left) + 1px);
 		--hole-top: calc(var(--reach) + var(--anchor-top) + 4px);
 		--hole-right: calc(100% - var(--reach) - var(--anchor-right) - 4px);
 		--hole-bottom: calc(100% - var(--reach) - var(--anchor-bottom) - 4px);
@@ -266,7 +269,7 @@
 	.trigger,
 	.frame[data-docked] .menu {
 		inset: var(--docked);
-		border-radius: var(--radius);
+		border-radius: calc(var(--radius) - 1px);
 	}
 
 	[data-slot="select-content"] {
