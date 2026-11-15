@@ -82,7 +82,7 @@
       </Sidebar.Menu>
     </div>
 
-    <Sidebar.Content class="scroll-fade-y">
+    <Sidebar.Content class="overflow-fade-y">
       <AppGroup {apps} {selected} onselect={(id) => (view = { page: 'detail', id })} />
       {#if packages.installed}
         <PackageGroup {packages} {selected} onselect={(id) => (view = { page: 'detail', id })} />

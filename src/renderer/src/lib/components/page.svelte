@@ -16,7 +16,7 @@
   } = $props()
 </script>
 
-<div class="scroll-fade-y absolute inset-0 my-2 flex flex-col overflow-y-auto px-8 py-6">
+<div class="overflow-fade-y absolute inset-0 my-2 flex flex-col overflow-y-auto px-8 py-6">
   <div class="flex items-start justify-between gap-4">
     <div class="flex min-w-0 items-center gap-3">
       {#if icon}

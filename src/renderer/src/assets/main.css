@@ -156,44 +156,94 @@
 
 @utility no-scrollbar {
   scrollbar-width: none;
-  --scroll-fade-scrollbar: 0px;
+  --overflow-fade-scrollbar: 0px;
 }
 
-/* Stock leaves this gradient inheritable, so each frame of the scroll reveal would restyle everything
-   in the scroller. */
-@property --scroll-fade-block {
-  syntax: '*';
+/* 1 while the element overflows along its scroll timeline, else 0. A timeline with nothing to
+   scroll goes inactive, which drops a running animation but freezes a finished one, so the range
+   ends past the timeline to keep this one from ever finishing. */
+@property --overflowing {
+  syntax: '<number>';
   inherits: false;
+  initial-value: 0;
 }
 
-/* Sizes go on each edge because the shared --scroll-fade-size is inherited by the label fades
-   inside. The stock reveal grows each fade over 96px of scrolling, which leaves a list that
-   overflows by less hard-cut near either end. The mask also covers the scroller's own scrollbar,
-   so a second layer keeps the strip under it opaque. */
-@utility scroll-fade-y {
-  --scroll-fade-t-size: min(25%, calc(var(--spacing) * 12));
-  --scroll-fade-b-size: var(--scroll-fade-t-size);
-  --scroll-fade-reveal: calc(var(--spacing) * 6);
-  mask-image: var(--scroll-fade-block), linear-gradient(#000 0 0);
+@keyframes overflowing {
+  from,
+  to {
+    --overflowing: 1;
+  }
+}
+
+@property --overflow-fade-t {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --overflow-fade-b {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes overflow-fade-t {
+  to {
+    --overflow-fade-t: var(--overflow-fade-size);
+  }
+}
+
+@keyframes overflow-fade-b {
+  from {
+    --overflow-fade-b: var(--overflow-fade-size);
+  }
+}
+
+/* A reveal that finished while scrolling would hold its fade after the overflow goes away, hence
+   the --overflowing factor. The second mask layer keeps the strip under the scrollbar opaque. */
+@utility overflow-fade-y {
+  --overflow-fade-size: min(25%, calc(var(--spacing) * 12));
+  mask-image:
+    linear-gradient(
+      transparent,
+      #000 calc(var(--overflow-fade-t) * var(--overflowing)),
+      #000 calc(100% - var(--overflow-fade-b) * var(--overflowing)),
+      transparent
+    ),
+    linear-gradient(#000 0 0);
   mask-size:
     100% 100%,
-    var(--scroll-fade-scrollbar, var(--spacing-scrollbar)) 100%;
+    var(--overflow-fade-scrollbar, var(--spacing-scrollbar)) 100%;
   mask-position:
     0 0,
     100% 0;
-  -webkit-mask-composite: source-over;
-  mask-composite: add;
+  mask-repeat: no-repeat;
+  animation:
+    overflow-fade-t 1ms ease-in-out both,
+    overflow-fade-b 1ms ease-in-out both,
+    overflowing 1ms both;
+  animation-timeline: scroll(self y), scroll(self y), scroll(self y);
+  animation-range:
+    0 calc(var(--spacing) * 6),
+    calc(100% - var(--spacing) * 6) 100%,
+    0 calc(100% + 1px);
 }
 
 @utility truncate-fade {
-  @apply overflow-hidden whitespace-nowrap scroll-fade-e;
-  /* The text never scrolls, so the end fade applies in full as soon as it overflows. */
-  --scroll-fade-reveal: 0px;
+  @apply overflow-hidden whitespace-nowrap;
+  mask-image: linear-gradient(
+    to right,
+    #000 calc(100% - min(12%, calc(var(--spacing) * 10)) * var(--overflowing)),
+    transparent
+  );
+  animation: overflowing 1ms both;
+  animation-timeline: scroll(self x);
+  animation-range: 0 calc(100% + 1px);
 }
 
 /* The negative margin puts a section's scrollbar in the page's padding, clear of the content. */
 @utility scroll-section {
-  @apply -mx-scrollbar my-2 scroll-fade-y overflow-y-auto px-scrollbar py-1;
+  @apply -mx-scrollbar my-2 overflow-fade-y overflow-y-auto px-scrollbar py-1;
 }
 
 /* Auto table layout widens a column to fit its content, so long text truncates inside a block that
