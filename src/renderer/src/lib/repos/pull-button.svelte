@@ -17,7 +17,7 @@
     entry,
     command,
     size
-  }: { repos: Repos; entry: Entry; command: PullCommand; size: ButtonSize } = $props()
+  }: { repos: Repos; entry: Entry; command: PullCommand; size?: ButtonSize } = $props()
 
   const look = $derived(looks[command])
 </script>

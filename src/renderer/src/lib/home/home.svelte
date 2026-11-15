@@ -158,7 +158,7 @@
           {#if packages.check?.status === 'failed'}
             <Table.Row>
               <Table.Cell colspan={5}>
-                <div class="fill-cell truncate text-destructive">{packages.check.message}</div>
+                <div class="fill-cell truncate text-danger">{packages.check.message}</div>
               </Table.Cell>
             </Table.Row>
           {:else if packages.outdated.length === 0}
@@ -203,12 +203,7 @@
 {#snippet upgradeAll(source: Source, verb: string)}
   {#if source.outdated.length > 0}
     <div class="text-right">
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={source.busy}
-        onclick={() => source.upgradeOutdated()}
-      >
+      <Button variant="ghost" disabled={source.busy} onclick={() => source.upgradeOutdated()}>
         {verb} all {source.outdated.length}
       </Button>
     </div>
@@ -231,23 +226,23 @@
     <Table.Cell><div class="fill-cell truncate text-base">{app.name}</div></Table.Cell>
     {#if task?.status === 'failed'}
       <Table.Cell colspan={3}>
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
+        <div class="fill-cell truncate text-danger">{task.message}</div>
       </Table.Cell>
     {:else if release}
       <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-xs/[18px]">
+        <div class="flex fill-cell items-center gap-2 font-mono text-sm/[18px]">
           <span class="truncate text-muted-foreground">{labelOf(app)}</span>
-          <IconArrowRight class="size-3 shrink-0 text-muted-foreground" />
+          <IconArrowRight class="size-3 shrink-0 text-tertiary-foreground" />
           <span class="truncate">{labelOf(release)}</span>
         </div>
       </Table.Cell>
       <Table.Cell>
-        <div class="text-right text-muted-foreground">
+        <div class="text-right text-tertiary-foreground">
           {#if release.size !== undefined}{megabytes(release.size)}{/if}
         </div>
       </Table.Cell>
       <Table.Cell>
-        <div class="text-right text-muted-foreground">
+        <div class="text-right text-tertiary-foreground">
           {#if release.date !== undefined}{ago(release.date)}{/if}
         </div>
       </Table.Cell>
@@ -255,7 +250,7 @@
     <Table.Cell>
       {#if release}
         <div class="text-right">
-          <AppUpgradeButton {apps} {entry} size="sm" />
+          <AppUpgradeButton {apps} {entry} />
         </div>
       {/if}
     </Table.Cell>
@@ -271,13 +266,13 @@
     <Table.Cell><div class="fill-cell truncate text-base">{pkg.name}</div></Table.Cell>
     {#if task?.status === 'failed'}
       <Table.Cell colspan={2}>
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
+        <div class="fill-cell truncate text-danger">{task.message}</div>
       </Table.Cell>
     {:else}
       <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-xs/[18px]">
+        <div class="flex fill-cell items-center gap-2 font-mono text-sm/[18px]">
           <span class="truncate text-muted-foreground">{pkg.version}</span>
-          <IconArrowRight class="size-3 shrink-0 text-muted-foreground" />
+          <IconArrowRight class="size-3 shrink-0 text-tertiary-foreground" />
           <span class="truncate">{pkg.latest}</span>
         </div>
       </Table.Cell>
@@ -293,7 +288,7 @@
     {/if}
     <Table.Cell>
       <div class="text-right">
-        <PackageUpgradeButton {packages} {entry} size="sm" />
+        <PackageUpgradeButton {packages} {entry} />
       </div>
     </Table.Cell>
   </Table.Row>
@@ -311,21 +306,21 @@
       <div class="fill-cell truncate text-base">
         {nameOf(repo.path)}
         {#if dir !== repos.root}
-          <span class="text-xs text-muted-foreground">{repos.relative(dir)}</span>
+          <span class="text-sm text-tertiary-foreground">{repos.relative(dir)}</span>
         {/if}
       </div>
     </Table.Cell>
     <Table.Cell>
       {#if task?.status === 'failed'}
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
+        <div class="fill-cell truncate text-danger">{task.message}</div>
       {:else}
-        <div class="fill-cell truncate font-mono text-xs/[18px] text-muted-foreground">
+        <div class="fill-cell truncate font-mono text-sm/[18px] text-muted-foreground">
           {repo.branch} ← {repo.upstream}
         </div>
       {/if}
     </Table.Cell>
     <Table.Cell>
-      <div class="text-right font-mono text-xs/[18px] text-info">
+      <div class="text-right font-mono text-sm/[18px] text-info">
         {#if repo.sync?.ahead}↑{repo.sync.ahead}{/if}
         {#if repo.sync?.behind}↓{repo.sync.behind}{/if}
       </div>
@@ -333,12 +328,7 @@
     <Table.Cell>
       {#if behind(entry) || pull}
         <div class="text-right">
-          <PullButton
-            {repos}
-            {entry}
-            command={pull ?? (diverged(entry) ? 'rebase' : 'pull')}
-            size="sm"
-          />
+          <PullButton {repos} {entry} command={pull ?? (diverged(entry) ? 'rebase' : 'pull')} />
         </div>
       {/if}
     </Table.Cell>

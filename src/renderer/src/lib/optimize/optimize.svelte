@@ -72,8 +72,8 @@
     unchanged: 'text-muted-foreground',
     skipped: 'text-muted-foreground',
     unavailable: 'text-muted-foreground',
-    attention: 'text-warn',
-    failed: 'text-destructive'
+    attention: 'text-warning',
+    failed: 'text-danger'
   } satisfies Record<OptimizeOutcome['status'], string>
 </script>
 
@@ -249,16 +249,12 @@
             status !== 'running' && 'group-hover:opacity-100 has-focus-visible:opacity-100'
           ]}
         >
-          <Button
-            size="sm"
-            disabled={optimizer.running}
-            onclick={() => optimizer.optimize([optimization])}
-          >
+          <Button disabled={optimizer.running} onclick={() => optimizer.optimize([optimization])}>
             Run
           </Button>
         </div>
         {#if outcome?.status === 'attention'}
-          <Button size="sm" onclick={() => window.api.review(outcome.review)}>Review</Button>
+          <Button onclick={() => window.api.review(outcome.review)}>Review</Button>
         {/if}
       </div>
     </Table.Cell>

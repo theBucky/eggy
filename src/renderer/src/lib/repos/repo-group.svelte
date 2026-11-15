@@ -45,7 +45,7 @@
           <Sidebar.MenuItem {...props}>
             <Collapsible.Trigger>
               {#snippet child({ props })}
-                <Sidebar.MenuButton {...props} size="sm">
+                <Sidebar.MenuButton {...props}>
                   {#if open}
                     <IconFolderOpen />
                   {:else}
@@ -55,7 +55,7 @@
                   {#if !open}
                     {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}
-                      <span class="text-xs">{outdated} outdated</span>
+                      <span class="text-sm">{outdated} outdated</span>
                     {/if}
                   {/if}
                 </Sidebar.MenuButton>
@@ -67,20 +67,19 @@
                   {@const status = statusOf(entry)}
                   <Sidebar.MenuItem>
                     <Sidebar.MenuButton
-                      size="sm"
                       isActive={entry.repo.path === selected}
                       onclick={() => onselect(entry.repo.path)}
                     >
                       <StatusDot {status} />
                       <span class="flex-1 truncate-fade">{nameOf(entry.repo.path)}</span>
                       {#if status === 'failed'}
-                        <span class="text-xs text-destructive">failed</span>
+                        <span class="text-sm text-danger">failed</span>
                       {:else if status === 'outdated'}
-                        <span class="font-mono text-xs text-info">
+                        <span class="font-mono text-sm text-info">
                           ↓{entry.repo.sync?.behind}
                         </span>
                       {:else if entry.task?.status === 'updated'}
-                        <span class="font-mono text-xs text-success">
+                        <span class="font-mono text-sm text-success">
                           +{entry.task.count}
                         </span>
                       {/if}

@@ -43,13 +43,13 @@
 
 <Page title={app.name} icon={app.icon} actions={release ? upgrade : undefined}>
   {#snippet subtitle()}
-    <p class="truncate font-mono text-xs text-muted-foreground select-text">{tilde(app.path)}</p>
+    <p class="truncate font-mono text-sm text-muted-foreground select-text">{tilde(app.path)}</p>
   {/snippet}
 
   <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
     <dt class="text-muted-foreground">Installed</dt>
     <dd class="flex min-w-0 items-center gap-2">
-      <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(app)}</span>
+      <span class="truncate font-mono text-sm/[18px] select-text">{labelOf(app)}</span>
       {#if badge}
         <Badge variant={badge.variant}>{badge.label}</Badge>
       {/if}
@@ -57,24 +57,24 @@
     {#if release}
       <dt class="text-muted-foreground">Latest</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px] select-text">{labelOf(release)}</span>
+        <span class="truncate font-mono text-sm/[18px] select-text">{labelOf(release)}</span>
         {#if release.date !== undefined}
-          <span class="shrink-0 text-xs text-muted-foreground">{ago(release.date)}</span>
+          <span class="shrink-0 text-sm text-tertiary-foreground">{ago(release.date)}</span>
         {/if}
       </dd>
       <dt class="text-muted-foreground">Download</dt>
-      <dd class="flex min-w-0 gap-2 font-mono text-xs/[18px]">
+      <dd class="flex min-w-0 gap-2 font-mono text-sm/[18px]">
         <span class="truncate select-text"
           >{decodeURIComponent(nameOf(new URL(release.url).pathname))}</span
         >
         {#if release.size !== undefined}
-          <span class="shrink-0 text-muted-foreground">{megabytes(release.size)}</span>
+          <span class="shrink-0 text-tertiary-foreground">{megabytes(release.size)}</span>
         {/if}
       </dd>
     {/if}
     <dt class="text-muted-foreground">Feed</dt>
     <dd class="-my-1 -ml-2 flex font-mono">
-      <Button variant="link" size="sm" href={app.feed} target="_blank">{feedLabel}</Button>
+      <Button variant="link" href={app.feed} target="_blank">{feedLabel}</Button>
     </dd>
   </dl>
 

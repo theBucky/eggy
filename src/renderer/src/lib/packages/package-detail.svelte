@@ -61,23 +61,23 @@
   <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
     <dt class="text-muted-foreground">Installed</dt>
     <dd class="flex min-w-0 items-center gap-2">
-      <span class="truncate font-mono text-xs/[18px] select-text">{pkg.version}</span>
+      <span class="truncate font-mono text-sm/[18px] select-text">{pkg.version}</span>
       {#if badge}
         <Badge variant={badge.variant}>{badge.label}</Badge>
       {/if}
     </dd>
     {#if pkg.latest !== pkg.version}
       <dt class="text-muted-foreground">Latest</dt>
-      <dd class="truncate font-mono text-xs/[18px] select-text">{pkg.latest}</dd>
+      <dd class="truncate font-mono text-sm/[18px] select-text">{pkg.latest}</dd>
     {/if}
     {#if pkg.tap}
       <dt class="text-muted-foreground">Tap</dt>
-      <dd class="truncate font-mono text-xs/[18px] select-text">{pkg.tap}</dd>
+      <dd class="truncate font-mono text-sm/[18px] select-text">{pkg.tap}</dd>
     {/if}
     {#if pkg.homepage}
       <dt class="text-muted-foreground">Homepage</dt>
       <dd class="-my-1 -ml-2 flex font-mono">
-        <Button variant="link" size="sm" href={pkg.homepage} target="_blank">{pkg.homepage}</Button>
+        <Button variant="link" href={pkg.homepage} target="_blank">{pkg.homepage}</Button>
       </dd>
     {/if}
   </dl>
@@ -93,7 +93,7 @@
       <h2 class="text-muted-foreground">Output</h2>
       <div class="scroll-section" {@attach follow}>
         <div
-          class="font-mono text-xs/[18px] wrap-anywhere whitespace-pre-wrap text-foreground/74 select-text"
+          class="font-mono text-sm/[18px] wrap-anywhere whitespace-pre-wrap text-muted-foreground select-text"
         >
           {#each lines as line, index (index)}
             <p class="min-h-lh">
@@ -101,7 +101,7 @@
                 <span class="text-info">==&gt;</span>
                 <span class="text-foreground">{line.slice(4)}</span>
               {:else if line.startsWith('Error: ')}
-                <span class="text-destructive">{line}</span>
+                <span class="text-danger">{line}</span>
               {:else}
                 {line}
               {/if}

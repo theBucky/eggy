@@ -21,11 +21,7 @@
     {#each apps.entries as entry (entry.app.path)}
       {@const { app } = entry}
       <Sidebar.MenuItem>
-        <Sidebar.MenuButton
-          size="sm"
-          isActive={app.path === selected}
-          onclick={() => onselect(app.path)}
-        >
+        <Sidebar.MenuButton isActive={app.path === selected} onclick={() => onselect(app.path)}>
           <StatusDot status={statusOf(entry)} />
           <img src={app.icon} alt="" class="size-4 shrink-0" />
           <span class="flex-1 truncate-fade">{app.name}</span>

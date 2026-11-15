@@ -51,7 +51,7 @@
 <SidePane item={selected}>
   <Page title={nameOf(repo.path)}>
     {#snippet subtitle()}
-      <p class="truncate font-mono text-xs text-muted-foreground select-text">{tilde(repo.path)}</p>
+      <p class="truncate font-mono text-sm text-muted-foreground select-text">{tilde(repo.path)}</p>
     {/snippet}
 
     {#snippet actions()}
@@ -63,14 +63,14 @@
 
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
       <dt class="text-muted-foreground">Branch</dt>
-      <dd class="truncate font-mono text-xs/[18px] select-text">{repo.branch}</dd>
+      <dd class="truncate font-mono text-sm/[18px] select-text">{repo.branch}</dd>
       <dt class="text-muted-foreground">Upstream</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-xs/[18px] select-text">{repo.upstream}</span>
+        <span class="truncate font-mono text-sm/[18px] select-text">{repo.upstream}</span>
         <Badge variant={badge.variant}>{badge.label}</Badge>
       </dd>
       <dt class="text-muted-foreground">Remote</dt>
-      <dd class="truncate font-mono text-xs/[18px] select-text">{repo.remote}</dd>
+      <dd class="truncate font-mono text-sm/[18px] select-text">{repo.remote}</dd>
     </dl>
 
     {#if task?.status === 'failed'}
@@ -89,7 +89,6 @@
           {#if unpushed.length > 0}
             <Button
               variant="ghost"
-              size="sm"
               aria-expanded={showUnpushed}
               onclick={() => (showUnpushed = !showUnpushed)}
             >

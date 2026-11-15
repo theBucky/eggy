@@ -230,7 +230,7 @@
           {totals.files}
           {totals.files === 1 ? 'file' : 'files'}
         </span>
-        <span class="flex gap-2 font-mono text-xs">
+        <span class="flex gap-2 font-mono text-sm">
           <span class="text-added">+{totals.additions}</span>
           <span class="text-removed">-{totals.deletions}</span>
         </span>
@@ -262,13 +262,13 @@
   <!-- The viewer moves the summary into the scroll content, above the first file. -->
   <div bind:this={root} class="mb-2 flex-1 overflow-y-auto select-text">
     <div bind:this={summary} class="flex flex-col gap-2 p-5 wrap-anywhere">
-      <h2 class="text-lg font-semibold tracking-tight">{shown.subject}</h2>
+      <h2 class="text-lg font-medium">{shown.subject}</h2>
       {#if detail?.body}
-        <p class="whitespace-pre-wrap text-foreground/74">{detail.body}</p>
+        <p class="whitespace-pre-wrap text-muted-foreground">{detail.body}</p>
       {/if}
-      <p class="flex gap-2 pt-1 text-xs">
-        <span class="text-foreground/74">{shown.author}</span>
-        <span class="text-muted-foreground">committed {ago(shown.date)}</span>
+      <p class="flex gap-2 pt-1 text-sm">
+        <span class="text-muted-foreground">{shown.author}</span>
+        <span class="text-tertiary-foreground">committed {ago(shown.date)}</span>
       </p>
     </div>
   </div>

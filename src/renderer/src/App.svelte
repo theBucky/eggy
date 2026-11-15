@@ -59,17 +59,16 @@
     <div class="px-1 pt-12 pb-2">
       <Sidebar.Menu>
         <Sidebar.MenuItem>
-          <Sidebar.MenuButton size="sm" isActive={home} onclick={() => (view = { page: 'home' })}>
+          <Sidebar.MenuButton isActive={home} onclick={() => (view = { page: 'home' })}>
             <IconHome />
             <span class="flex-1 truncate-fade">Home</span>
             {#if sources.outdated.length > 0}
-              <span class="font-mono text-xs text-info">{sources.outdated.length}</span>
+              <span class="font-mono text-sm text-info">{sources.outdated.length}</span>
             {/if}
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton
-            size="sm"
             isActive={view.page === 'optimize'}
             onclick={() => (view = { page: 'optimize' })}
           >
@@ -95,7 +94,6 @@
       <Sidebar.Menu>
         <Sidebar.MenuItem>
           <Sidebar.MenuButton
-            size="sm"
             isActive={view.page === 'settings'}
             onclick={() => (view = { page: 'settings' })}
           >

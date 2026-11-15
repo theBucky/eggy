@@ -1,8 +1,8 @@
 <!-- Adapted from Fluid Functionalism's switch, MIT License, Copyright (c) 2026 Micka Touillaud. -->
 <script lang="ts" module>
-	const TRACK_WIDTH = 34;
-	const TRACK_HEIGHT = 18;
-	const THUMB = 14;
+	const TRACK_WIDTH = 32;
+	const TRACK_HEIGHT = 20;
+	const THUMB = 16;
 	const INSET = (TRACK_HEIGHT - THUMB) / 2;
 	const HOVER_EXTEND = 2;
 	const PRESS_EXTEND = 4;
@@ -78,7 +78,7 @@
 	{onCheckedChange}
 	data-slot="switch"
 	class={cn(
-		"data-checked:bg-info data-unchecked:bg-accent focus-visible:ring-ring focus-visible:ring-offset-background relative shrink-0 touch-none rounded-full transition-colors duration-80 outline-none select-none focus-visible:ring-1 focus-visible:ring-offset-2 data-disabled:opacity-50",
+		"data-checked:bg-success-fill data-unchecked:bg-secondary-hover ring-inset focus-visible:ring-ring relative shrink-0 touch-none rounded-full transition-colors duration-80 outline-none select-none focus-visible:ring-1 data-disabled:opacity-50",
 		className
 	)}
 	style="width: {TRACK_WIDTH}px; height: {TRACK_HEIGHT}px"
@@ -97,7 +97,7 @@
 	<SwitchPrimitive.Thumb
 		data-slot="switch-thumb"
 		class={cn(
-			"pointer-events-none absolute top-0 left-0 block rounded-full bg-white shadow-sm duration-160 ease-spring motion-reduce:transition-none",
+			"pointer-events-none absolute top-0 left-0 block rounded-full bg-white shadow-[0_1px_2px_rgb(0_0_0/3.6%)] duration-160 ease-spring motion-reduce:transition-none",
 			press?.x === undefined ? "transition-[translate,width,height]" : "transition-[width,height]"
 		)}
 		style="width: {width}px; height: {height}px; translate: {x}px {(TRACK_HEIGHT - height) / 2}px"

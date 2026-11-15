@@ -3,7 +3,7 @@
 /* Feed HTML leans on browser defaults that preflight resets, such as list markers. */
 @layer components {
   .release-notes {
-    @apply text-foreground/74 wrap-anywhere select-text;
+    @apply text-muted-foreground wrap-anywhere select-text;
 
     & > * + * {
       @apply mt-2;
@@ -22,7 +22,7 @@
       @apply mt-1;
     }
     & :is(h1, h2, h3, h4, h5, h6) {
-      @apply font-semibold;
+      @apply font-medium;
     }
     & :is(h1, h2, h3, h4, h5, h6, strong, b) {
       @apply text-foreground;
@@ -31,7 +31,7 @@
       @apply cursor-pointer text-info underline-offset-4 hover:underline;
     }
     & code {
-      @apply text-xs;
+      @apply text-sm;
     }
     & pre {
       @apply whitespace-pre-wrap;

@@ -67,7 +67,7 @@
 		{preventScroll}
 		data-slot="select-content"
 		class={cn(
-			"text-popover-foreground min-w-32 rounded-lg z-50 max-h-(--bits-select-content-available-height) relative **:data-[slot$=-item]:focus:bg-foreground/10 **:data-[slot$=-item]:data-highlighted:bg-foreground/10 **:data-[slot$=-separator]:bg-foreground/5 **:data-[slot$=-trigger]:focus:bg-foreground/10 **:data-[slot$=-trigger]:aria-expanded:bg-foreground/10! **:data-[variant=destructive]:focus:bg-foreground/10! **:data-[variant=destructive]:text-accent-foreground! **:data-[variant=destructive]:**:text-accent-foreground!",
+			"text-popover-foreground min-w-32 rounded-lg z-50 max-h-(--bits-select-content-available-height) relative",
 			className
 		)}
 		{...restProps}
@@ -85,13 +85,15 @@
 						<SelectScrollUpButton />
 						<SelectPrimitive.Viewport
 							class={cn(
-								"h-(--bits-select-anchor-height) w-full min-w-(--bits-select-anchor-width) p-1 scroll-py-1"
+								"h-(--bits-select-anchor-height) w-full min-w-(--bits-select-anchor-width) p-1.5 scroll-py-1.5"
 							)}
 						>
 							{@render children?.()}
 						</SelectPrimitive.Viewport>
 						<SelectScrollDownButton />
 					</div>
+					<!-- Kept off the liquid layer, so the trigger the menu flows out of casts no shadow. -->
+					<div class="lift shadow-popup" aria-hidden="true"></div>
 					<div class="liquid" style:filter="url(#{filterId})" aria-hidden="true">
 						<div class="blob trigger"></div>
 						<div class="blob menu"></div>
@@ -113,7 +115,7 @@
 							</feComponentTransfer>
 							<feFlood style="flood-color: var(--surface)" />
 							<feComposite in2="shape" operator="in" result="fill" />
-							<feFlood style="flood-color: var(--input)" />
+							<feFlood style="flood-color: var(--border)" />
 							<feComposite in2="shape" operator="in" />
 							<feComposite in2="core" operator="out" result="border" />
 							<feMerge>
@@ -130,6 +132,7 @@
 
 <style>
 	.frame {
+		--menu-radius: 14px;
 		/* Passes the resting value by 3% and settles back. */
 		--spring: linear(
 			0,
@@ -230,6 +233,22 @@
 		);
 	}
 
+	.lift {
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		pointer-events: none;
+		border-radius: var(--menu-radius);
+		transition: var(--menu-motion, 0s);
+		transition-property: inset, border-radius, opacity;
+	}
+
+	.frame[data-docked] .lift {
+		inset: var(--anchor-top) var(--anchor-right) var(--anchor-bottom) var(--anchor-left);
+		border-radius: var(--radius);
+		opacity: 0;
+	}
+
 	.blob {
 		position: absolute;
 		border-radius: var(--radius);
@@ -239,17 +258,20 @@
 	/* A box and not a clip, which would round the corners differently from every other frame. */
 	.menu {
 		inset: var(--reach);
-		transition: inset var(--menu-motion, 0s);
+		border-radius: var(--menu-radius);
+		transition: var(--menu-motion, 0s);
+		transition-property: inset, border-radius;
 	}
 
 	.trigger,
 	.frame[data-docked] .menu {
 		inset: var(--docked);
+		border-radius: var(--radius);
 	}
 
 	[data-slot="select-content"] {
 		--pour: 0 -16px;
-		clip-path: inset(0 round var(--radius));
+		clip-path: inset(0 round var(--menu-radius));
 		transition: clip-path var(--menu-motion, 0s);
 	}
 

@@ -2,14 +2,14 @@
 	import { tv, type VariantProps } from "tailwind-variants";
 
 	export const sidebarMenuButtonVariants = tv({
-		base: "text-muted-foreground ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-highlighted:text-sidebar-accent-foreground gap-2 rounded-xl p-2 text-left text-base transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! focus-visible:ring-2 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+		base: "text-muted-foreground ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-highlighted:text-sidebar-accent-foreground gap-2 rounded-xl px-2 py-1 text-left text-base transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! ring-inset focus-visible:ring-1 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
 		variants: {
 			variant: {
 				default: "",
 				outline: "bg-background hover:bg-muted hover:text-sidebar-accent-foreground shadow-[0_0_0_1px_var(--sidebar-border)] hover:shadow-[0_0_0_1px_var(--sidebar-accent)]",
 			},
 			size: {
-				default: "h-8",
+				default: "h-7.5",
 				sm: "h-7",
 				lg: "h-12 group-data-[collapsible=icon]:p-0!",
 			},

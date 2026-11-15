@@ -27,7 +27,7 @@
     {#each shown as entry (idOf(entry.package))}
       {@const id = idOf(entry.package)}
       <Sidebar.MenuItem>
-        <Sidebar.MenuButton size="sm" isActive={id === selected} onclick={() => onselect(id)}>
+        <Sidebar.MenuButton isActive={id === selected} onclick={() => onselect(id)}>
           <StatusDot status={packages.statusOf(entry)} />
           <span class="flex-1 truncate-fade">{entry.package.name}</span>
         </Sidebar.MenuButton>

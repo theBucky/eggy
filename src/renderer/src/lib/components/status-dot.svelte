@@ -4,7 +4,7 @@
   const dots = {
     unknown: 'bg-muted-foreground/30',
     failed: 'bg-destructive',
-    attention: 'bg-warn',
+    attention: 'bg-warning',
     outdated: 'bg-info',
     current: 'bg-success'
   } satisfies Record<Exclude<Status, 'running'>, string>

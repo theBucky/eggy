@@ -3,7 +3,7 @@
   import type { Apps, Entry } from '$lib/apps/apps.svelte'
   import './upgrade-button.css'
 
-  let { apps, entry, size }: { apps: Apps; entry: Entry; size: ButtonSize } = $props()
+  let { apps, entry, size }: { apps: Apps; entry: Entry; size?: ButtonSize } = $props()
 
   const progress = $derived(
     entry.task?.command === 'upgrade' && entry.task.status === 'running'
