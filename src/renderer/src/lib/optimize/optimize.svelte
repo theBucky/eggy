@@ -246,11 +246,7 @@
           Run
         </Button>
         {#if outcome?.status === 'attention'}
-          <Button
-            size="sm"
-            variant="ghost"
-            onclick={() => window.api.review(outcome.review)}
-          >
+          <Button size="sm" variant="ghost" onclick={() => window.api.review(outcome.review)}>
             Review
           </Button>
         {/if}
