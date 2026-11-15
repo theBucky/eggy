@@ -24,5 +24,5 @@ export function setTheme(theme: Theme): void {
 
 // Matches `--sidebar` in main.css, so a resize never flashes another color past the page.
 export function sidebarColor(): string {
-  return nativeTheme.shouldUseDarkColors ? '#141414' : '#f5f5f5'
+  return nativeTheme.shouldUseDarkColors ? '#101010' : '#f5f5f5'
 }

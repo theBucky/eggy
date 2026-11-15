@@ -74,7 +74,7 @@ function register(type: keyof typeof DIFF_THEMES, palette: Palette): void {
 }
 
 register('light', {
-  background: '#ffffff',
+  background: '#fcfcfc',
   foreground: '#141414eb',
   comment: '#141414ad',
   keyword: '#b3003f',
@@ -86,7 +86,7 @@ register('light', {
 })
 
 register('dark', {
-  background: '#181818',
+  background: '#141414',
   foreground: '#d6d6dd',
   comment: '#6e7781',
   keyword: '#82d2ce',

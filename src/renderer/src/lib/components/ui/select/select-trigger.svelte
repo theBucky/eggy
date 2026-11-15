@@ -15,7 +15,7 @@
 	} = $props();
 
 	const sizes = {
-		default: "h-7 rounded-lg border-border bg-surface py-1 pr-1.25 pl-1.75",
+		default: "h-7 rounded-lg border-border bg-popover py-1 pr-1.25 pl-1.75",
 		sm: "h-6 rounded-md border-transparent py-0.5 pr-1 pl-1.5 text-muted-foreground",
 	};
 

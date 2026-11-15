@@ -9,6 +9,7 @@
 				secondary: "bg-secondary text-foreground-secondary [a]:hover:bg-secondary-hover",
 				destructive: "bg-destructive/10 text-destructive [a]:hover:bg-destructive/16",
 				success: "bg-success/10 text-success",
+				warning: "bg-warning/10 text-warning",
 				info: "bg-info/10 text-info",
 				outline: "ring-1 ring-inset ring-input text-foreground-secondary [a]:hover:bg-muted",
 				ghost: "hover:bg-muted hover:text-foreground",

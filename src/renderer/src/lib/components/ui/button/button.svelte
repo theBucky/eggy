@@ -11,7 +11,7 @@
 				primary: "bg-primary text-primary-foreground hover:bg-primary/90",
 				secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary-hover",
 				ghost: "text-foreground-secondary hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
-				destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+				destructive: "bg-destructive-fill text-destructive-foreground hover:bg-destructive-fill/90",
 				"destructive-secondary": "bg-destructive/10 text-destructive hover:bg-destructive/16",
 				link: "text-info underline-offset-4 hover:underline",
 			},

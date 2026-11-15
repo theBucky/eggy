@@ -113,7 +113,7 @@
 							<feComponentTransfer result="outline">
 								<feFuncA type="linear" slope="24" intercept="-3.3" />
 							</feComponentTransfer>
-							<feFlood style="flood-color: var(--surface)" />
+							<feFlood style="flood-color: var(--popover)" />
 							<feComposite in2="shape" operator="in" result="fill" />
 							<feFlood style="flood-color: var(--border)" />
 							<feComposite in2="outline" operator="in" />

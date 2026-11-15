@@ -18,41 +18,48 @@
 
 :root {
   color-scheme: light dark;
-  --background: light-dark(#fcfcfc, #181818);
-  --foreground: light-dark(#1c1c1c, #f0f0f0);
-  --card: light-dark(#ffffff, #1d1d1d);
+  --background: light-dark(#fcfcfc, #141414);
+  --foreground: light-dark(#1c1c1c, #f5f5f5);
+  --card: light-dark(#ffffff, #1f1f1f);
   --card-foreground: var(--foreground);
-  --popover: light-dark(#ffffff, #121211);
-  --popover-foreground: var(--foreground);
   /* Opaque so a select's trigger and menu can flow into one shape. */
-  --surface: light-dark(#ffffff, #1d1d1d);
+  --popover: light-dark(#ffffff, #1f1f1f);
+  --popover-foreground: var(--foreground);
   --primary: var(--foreground);
-  --primary-foreground: light-dark(#ffffff, #1c1c1c);
-  --secondary: light-dark(#1c1c1c14, #f0f0f014);
-  --secondary-hover: light-dark(#1c1c1c24, #f0f0f024);
+  --primary-foreground: light-dark(#ffffff, #141414);
+  --secondary: light-dark(#1c1c1c14, #f5f5f514);
+  --secondary-hover: light-dark(#1c1c1c24, #f5f5f524);
   --secondary-foreground: var(--foreground);
-  --muted: light-dark(#1c1c1c0a, #f0f0f00a);
+  --muted: light-dark(#1c1c1c0a, #f5f5f50a);
   /* The text tones are opaque so the strokes where an icon's paths cross don't composite twice. */
   --foreground-secondary: color-mix(in srgb, var(--foreground) 74%, var(--background));
   --muted-foreground: color-mix(in srgb, var(--foreground) 60%, var(--background));
   --placeholder: color-mix(in srgb, var(--foreground) 36%, var(--background));
-  --accent: light-dark(#1c1c1c14, #f0f0f014);
+  --accent: light-dark(#1c1c1c14, #f5f5f514);
   --accent-foreground: var(--foreground);
-  --destructive: light-dark(#cd2834, #e34671);
+  --brand: #f54e00;
+  --destructive: light-dark(#cd2834, #ff6161);
+  /* Dark mode softens the solid fill to 60%. */
+  --destructive-fill: light-dark(#cd2834, #ff616199);
   --destructive-foreground: #ffffff;
-  --success: light-dark(#00854a, #3fa266);
-  --warning: light-dark(#aa6300, #f1b467);
-  --info: light-dark(#0a6dd3, #599ce7);
+  --success: light-dark(#00854a, #41cb7e);
+  --warning: light-dark(#aa6300, #f69f16);
+  --info: light-dark(#0a6dd3, #71aeff);
   --added: light-dark(#00854a, #70b489);
   --removed: light-dark(#cd2834, #fc6b83);
   --added-line: light-dark(#14c16f24, #3fa26633);
   --removed-line: light-dark(#fb2b3e38, #b8004933);
-  --border: light-dark(#1c1c1c14, #f0f0f014);
-  --input: light-dark(#1c1c1c1f, #f0f0f01f);
-  --ring: var(--info);
+  --border: light-dark(#1c1c1c14, #f5f5f514);
+  --input: light-dark(#1c1c1c1f, #f5f5f51f);
+  --ring: light-dark(#0a6dd3, #1f87fc);
   --scrim: light-dark(#1c1c1c33, #00000099);
+  --chart-1: light-dark(#1680f3, #1f87fc);
+  --chart-2: light-dark(#10ab61, #14c16f);
+  --chart-3: light-dark(#ee620d, #fc680e);
+  --chart-4: light-dark(#8351e4, #925dfc);
+  --chart-5: light-dark(#11a693, #13baa5);
   --radius: 8px;
-  --sidebar: light-dark(#f5f5f5, #141414);
+  --sidebar: light-dark(#f5f5f5, #101010);
   --sidebar-foreground: var(--foreground);
   /* Opaque to hide the fluid hover highlight under selected rows. */
   --sidebar-accent: color-mix(in srgb, var(--sidebar-foreground) 8%, var(--sidebar));
@@ -85,9 +92,16 @@
   --text-2xl: 22px;
   --text-2xl--line-height: 28px;
   --text-2xl--letter-spacing: -0.016em;
+  /* Each mode blanks out the layers only the other casts. */
   --shadow-popup:
-    0 6px 18px rgb(0 0 0 / 0.02), 0 3px 9px rgb(0 0 0 / 0.04), 0 1px 1px rgb(0 0 0 / 0.04);
-  --shadow-modal: 0 16px 32px -8px rgb(0 0 0 / 0.08), 0 3px 9px rgb(0 0 0 / 0.04);
+    0 6px 18px light-dark(rgb(0 0 0 / 0.02), transparent),
+    0 3px 9px light-dark(rgb(0 0 0 / 0.04), transparent),
+    0 3px 8px light-dark(transparent, rgb(0 0 0 / 0.12)),
+    0 2px 5px light-dark(transparent, rgb(0 0 0 / 0.12)),
+    0 1px 1px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.12));
+  --shadow-modal:
+    0 16px 32px -8px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.4)),
+    0 3px 9px light-dark(rgb(0 0 0 / 0.04), rgb(0 0 0 / 0.2));
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -98,11 +112,18 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-fill: var(--destructive-fill);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-scrim: var(--scrim);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-brand: var(--brand);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
   --color-added: var(--added);
   --color-removed: var(--removed);
   --color-selected: var(--selected);
@@ -119,7 +140,6 @@
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
-  --color-surface: var(--surface);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-foreground: var(--foreground);
