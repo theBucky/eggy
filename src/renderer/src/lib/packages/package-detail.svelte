@@ -115,5 +115,5 @@
 </Page>
 
 {#snippet upgrade()}
-  <UpgradeButton {packages} {entry} size="lg" variant="primary" />
+  <UpgradeButton {packages} {entry} variant="primary" />
 {/snippet}

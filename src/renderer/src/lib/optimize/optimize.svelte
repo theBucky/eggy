@@ -157,7 +157,6 @@
 
   {#snippet actions()}
     <Button
-      size="lg"
       variant={outcomes.length > 0 ? 'secondary' : 'primary'}
       disabled={optimizer.running}
       onclick={() => optimizer.optimize([...OPTIMIZATIONS])}
@@ -239,6 +238,7 @@
     <Table.Cell>
       <RowActions>
         <Button
+          size="sm"
           variant="ghost"
           disabled={optimizer.running}
           onclick={() => optimizer.optimize([optimization])}
@@ -246,7 +246,13 @@
           Run
         </Button>
         {#if outcome?.status === 'attention'}
-          <Button variant="ghost" onclick={() => window.api.review(outcome.review)}>Review</Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onclick={() => window.api.review(outcome.review)}
+          >
+            Review
+          </Button>
         {/if}
       </RowActions>
     </Table.Cell>

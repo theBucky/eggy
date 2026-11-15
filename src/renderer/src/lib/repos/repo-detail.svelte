@@ -58,9 +58,9 @@
 
     {#snippet actions()}
       {#if diverged(entry)}
-        <PullButton {repos} {entry} command="rebase" size="lg" variant="destructive-secondary" />
+        <PullButton {repos} {entry} command="rebase" variant="destructive-secondary" />
       {/if}
-      <PullButton {repos} {entry} command="pull" size="lg" variant="primary" />
+      <PullButton {repos} {entry} command="pull" variant="primary" />
     {/snippet}
 
     <MetaList>

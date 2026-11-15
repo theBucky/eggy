@@ -88,7 +88,7 @@
   {/snippet}
 
   {#snippet actions()}
-    <Button size="lg" variant="secondary" disabled={sources.busy} onclick={() => sources.refresh()}>
+    <Button variant="secondary" disabled={sources.busy} onclick={() => sources.refresh()}>
       {#if sources.checking}
         Checking
       {:else if sources.checked}
@@ -98,7 +98,6 @@
       {/if}
     </Button>
     <Button
-      size="lg"
       variant="primary"
       disabled={sources.busy || pending === 0}
       onclick={() => sources.upgradeOutdated()}
@@ -185,7 +184,12 @@
 
 {#snippet upgradeAll(source: Source, verb: string)}
   {#if source.outdated.length > 0}
-    <Button variant="ghost" disabled={source.busy} onclick={() => source.upgradeOutdated()}>
+    <Button
+      size="sm"
+      variant="ghost"
+      disabled={source.busy}
+      onclick={() => source.upgradeOutdated()}
+    >
       {verb} all {source.outdated.length}
     </Button>
   {/if}
@@ -231,7 +235,7 @@
     <Table.Cell>
       {#if release}
         <RowActions shown={task?.command === 'upgrade' && task.status === 'running'}>
-          <AppUpgradeButton {apps} {entry} variant="ghost" />
+          <AppUpgradeButton {apps} {entry} size="sm" variant="ghost" />
         </RowActions>
       {/if}
     </Table.Cell>
@@ -269,7 +273,7 @@
     {/if}
     <Table.Cell>
       <RowActions shown={task?.status === 'running'}>
-        <PackageUpgradeButton {packages} {entry} variant="ghost" />
+        <PackageUpgradeButton {packages} {entry} size="sm" variant="ghost" />
       </RowActions>
     </Table.Cell>
   </Table.Row>
@@ -313,6 +317,7 @@
             {repos}
             {entry}
             command={pull ?? (diverged(entry) ? 'rebase' : 'pull')}
+            size="sm"
             variant="ghost"
           />
         </RowActions>
