@@ -114,5 +114,5 @@
 </Page>
 
 {#snippet upgrade()}
-  <UpgradeButton {packages} {entry} size="pill" />
+  <UpgradeButton {packages} {entry} size="lg" variant="primary" />
 {/snippet}

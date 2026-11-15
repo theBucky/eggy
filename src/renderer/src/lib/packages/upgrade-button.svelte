@@ -1,10 +1,14 @@
 <script lang="ts">
-  import { Button, type ButtonSize } from '$lib/components/ui/button'
+  import { Button, type ButtonProps } from '$lib/components/ui/button'
   import type { Entry, Packages } from '$lib/packages/packages.svelte'
 
-  let { packages, entry, size }: { packages: Packages; entry: Entry; size?: ButtonSize } = $props()
+  let {
+    packages,
+    entry,
+    ...button
+  }: { packages: Packages; entry: Entry } & Pick<ButtonProps, 'size' | 'variant'> = $props()
 </script>
 
-<Button {size} disabled={packages.busy} onclick={() => packages.upgrade([entry])}>
+<Button {...button} disabled={packages.busy} onclick={() => packages.upgrade([entry])}>
   {entry.task?.status === 'running' ? 'Upgrading' : 'Upgrade'}
 </Button>

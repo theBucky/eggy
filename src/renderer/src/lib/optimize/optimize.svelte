@@ -154,8 +154,8 @@
 
   {#snippet actions()}
     <Button
-      size="pill"
-      variant={outcomes.length > 0 ? 'secondary' : 'default'}
+      size="lg"
+      variant={outcomes.length > 0 ? 'secondary' : 'primary'}
       disabled={optimizer.running}
       onclick={() => optimizer.optimize([...OPTIMIZATIONS])}
     >

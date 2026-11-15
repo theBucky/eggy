@@ -86,12 +86,7 @@
   {/snippet}
 
   {#snippet actions()}
-    <Button
-      size="pill"
-      variant="secondary"
-      disabled={sources.busy}
-      onclick={() => sources.refresh()}
-    >
+    <Button size="lg" variant="secondary" disabled={sources.busy} onclick={() => sources.refresh()}>
       {#if sources.checking}
         Checking
       {:else if sources.checked}
@@ -101,7 +96,8 @@
       {/if}
     </Button>
     <Button
-      size="pill"
+      size="lg"
+      variant="primary"
       disabled={sources.busy || pending === 0}
       onclick={() => sources.upgradeOutdated()}
     >

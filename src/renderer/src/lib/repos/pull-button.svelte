@@ -9,22 +9,23 @@
 </script>
 
 <script lang="ts">
-  import { Button, type ButtonSize } from '$lib/components/ui/button'
+  import { Button, type ButtonProps } from '$lib/components/ui/button'
   import { runningPull, type Entry, type Repos } from '$lib/repos/repos.svelte'
 
   let {
     repos,
     entry,
     command,
-    size
-  }: { repos: Repos; entry: Entry; command: PullCommand; size?: ButtonSize } = $props()
+    ...button
+  }: { repos: Repos; entry: Entry; command: PullCommand } & Pick<ButtonProps, 'size' | 'variant'> =
+    $props()
 
   const look = $derived(looks[command])
 </script>
 
 <Button
-  {size}
   variant={look.variant}
+  {...button}
   disabled={repos.busy}
   onclick={() => repos.pull([entry], command)}
 >

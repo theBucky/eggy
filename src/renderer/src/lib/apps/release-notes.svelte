@@ -44,7 +44,7 @@
 </script>
 
 {#if notes.format === 'link'}
-  <Button variant="outline" href={notes.url} target="_blank">
+  <Button href={notes.url} target="_blank">
     Open release notes
     <IconExternalLink data-icon="inline-end" />
   </Button>

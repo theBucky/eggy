@@ -4,11 +4,11 @@
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
 
 	export const buttonVariants = tv({
-		base: "ring-inset focus-visible:ring-1 focus-visible:ring-ring aria-invalid:ring-1 aria-invalid:ring-danger rounded-md border border-transparent bg-clip-padding text-base font-normal active:not-aria-[haspopup]:translate-y-px group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+		base: "ring-inset focus-visible:ring-1 focus-visible:ring-ring aria-invalid:ring-1 aria-invalid:ring-danger rounded-lg border border-transparent bg-clip-padding text-base font-normal active:not-aria-[haspopup]:translate-y-px group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
 		variants: {
 			variant: {
-				default: "bg-secondary text-secondary-foreground hover:bg-secondary-hover",
-				outline: "border-border text-foreground hover:bg-muted aria-expanded:bg-muted",
+				default: "border-border text-foreground hover:bg-muted aria-expanded:bg-muted",
+				primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
 				secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary-hover",
 				ghost: "text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
 				destructive: "bg-destructive text-destructive-foreground hover:bg-danger",
@@ -16,20 +16,14 @@
 			},
 			size: {
 				default: "h-6 gap-1.5 px-2 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5",
-				sm: "h-5 gap-1 rounded-sm px-1.5 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 [&_svg:not([class*='size-'])]:size-3",
-				lg: "h-7 gap-1.5 rounded-lg px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
-				pill: "h-7 gap-1.5 rounded-full px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+				sm: "h-5 gap-1 px-1.5 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 [&_svg:not([class*='size-'])]:size-3",
+				lg: "h-7 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
 				icon: "size-6",
-				"icon-sm": "size-5 rounded-sm",
-				"icon-lg": "size-7 rounded-lg [&_svg:not([class*='size-'])]:size-4",
+				"icon-sm": "size-5",
+				"icon-lg": "size-7 [&_svg:not([class*='size-'])]:size-4",
 			},
 		},
 		compoundVariants: [
-			{
-				variant: "default",
-				size: "pill",
-				class: "bg-primary text-primary-foreground hover:bg-primary-hover",
-			},
 			{
 				variant: "ghost",
 				size: ["icon", "icon-sm", "icon-lg"],

@@ -56,9 +56,9 @@
 
     {#snippet actions()}
       {#if diverged(entry)}
-        <PullButton {repos} {entry} command="rebase" size="pill" />
+        <PullButton {repos} {entry} command="rebase" size="lg" />
       {/if}
-      <PullButton {repos} {entry} command="pull" size="pill" />
+      <PullButton {repos} {entry} command="pull" size="lg" variant="primary" />
     {/snippet}
 
     <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
