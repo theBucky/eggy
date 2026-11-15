@@ -1,6 +1,8 @@
 <script lang="ts">
   import FailureAlert from '$lib/components/failure-alert.svelte'
+  import MetaList from '$lib/components/meta-list.svelte'
   import Page from '$lib/components/page.svelte'
+  import Section from '$lib/components/section.svelte'
   import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import { labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
@@ -43,40 +45,40 @@
 
 <Page title={app.name} icon={app.icon} actions={release ? upgrade : undefined}>
   {#snippet subtitle()}
-    <p class="truncate font-mono text-sm text-muted-foreground select-text">{tilde(app.path)}</p>
+    <p class="truncate font-mono text-xs text-muted-foreground select-text">{tilde(app.path)}</p>
   {/snippet}
 
-  <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
-    <dt class="text-muted-foreground">Installed</dt>
+  <MetaList>
+    <dt>Installed</dt>
     <dd class="flex min-w-0 items-center gap-2">
-      <span class="truncate font-mono text-sm select-text">{labelOf(app)}</span>
+      <span class="truncate font-mono text-xs select-text">{labelOf(app)}</span>
       {#if badge}
         <Badge variant={badge.variant}>{badge.label}</Badge>
       {/if}
     </dd>
     {#if release}
-      <dt class="text-muted-foreground">Latest</dt>
+      <dt>Latest</dt>
       <dd class="flex min-w-0 items-center gap-2">
-        <span class="truncate font-mono text-sm select-text">{labelOf(release)}</span>
+        <span class="truncate font-mono text-xs select-text">{labelOf(release)}</span>
         {#if release.date !== undefined}
-          <span class="shrink-0 text-sm text-tertiary-foreground">{ago(release.date)}</span>
+          <span class="shrink-0 text-xs text-muted-foreground">{ago(release.date)}</span>
         {/if}
       </dd>
-      <dt class="text-muted-foreground">Download</dt>
-      <dd class="flex min-w-0 gap-2 font-mono text-sm">
+      <dt>Download</dt>
+      <dd class="flex min-w-0 gap-2 font-mono text-xs">
         <span class="truncate select-text"
           >{decodeURIComponent(nameOf(new URL(release.url).pathname))}</span
         >
         {#if release.size !== undefined}
-          <span class="shrink-0 text-tertiary-foreground">{megabytes(release.size)}</span>
+          <span class="shrink-0 text-muted-foreground">{megabytes(release.size)}</span>
         {/if}
       </dd>
     {/if}
-    <dt class="text-muted-foreground">Feed</dt>
-    <dd class="-my-1 -ml-2 flex font-mono">
-      <Button variant="link" href={app.feed} target="_blank">{feedLabel}</Button>
+    <dt>Feed</dt>
+    <dd class="-ml-2 flex font-mono">
+      <Button variant="link" size="sm" href={app.feed} target="_blank">{feedLabel}</Button>
     </dd>
-  </dl>
+  </MetaList>
 
   {#if task?.status === 'failed'}
     <div class="mt-8">
@@ -88,12 +90,11 @@
   {/if}
 
   {#if release?.notes}
-    <section class="mt-8 flex min-h-0 max-w-160 flex-col">
-      <h2 class="text-muted-foreground">Release notes</h2>
+    <Section title="Release notes" class="min-h-0">
       <div class="scroll-section">
         <ReleaseNotes notes={release.notes} />
       </div>
-    </section>
+    </Section>
   {/if}
 </Page>
 

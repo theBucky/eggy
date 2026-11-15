@@ -2,7 +2,7 @@
 	import { tv, type VariantProps } from "tailwind-variants";
 
 	export const sidebarMenuButtonVariants = tv({
-		base: "text-muted-foreground ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-highlighted:text-sidebar-accent-foreground gap-2 rounded-xl px-2 py-1 text-left text-base transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! ring-inset focus-visible:ring-1 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+		base: "text-foreground-secondary ring-sidebar-ring data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground data-highlighted:text-sidebar-accent-foreground gap-2 rounded-xl px-2.5 py-1 text-left text-sm transition-[width,height,padding] group-has-data-[sidebar=menu-action]/menu-item:pr-8 group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! ring-inset focus-visible:ring-1 peer/menu-button group/menu-button flex w-full items-center overflow-hidden outline-hidden disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&_svg]:size-3.5 [&_svg]:shrink-0",
 		variants: {
 			variant: {
 				default: "",

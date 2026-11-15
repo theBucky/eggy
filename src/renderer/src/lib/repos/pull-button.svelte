@@ -1,11 +1,10 @@
 <script lang="ts" module>
-  import type { ButtonVariant } from '$lib/components/ui/button'
   import type { PullCommand } from '$shared/api'
 
-  const looks = {
-    pull: { variant: 'default', idle: 'Pull', running: 'Pulling' },
-    rebase: { variant: 'destructive', idle: 'Rebase and pull', running: 'Rebasing' }
-  } satisfies Record<PullCommand, { variant: ButtonVariant; idle: string; running: string }>
+  const labels = {
+    pull: { idle: 'Pull', running: 'Pulling' },
+    rebase: { idle: 'Rebase and pull', running: 'Rebasing' }
+  } satisfies Record<PullCommand, { idle: string; running: string }>
 </script>
 
 <script lang="ts">
@@ -20,14 +19,9 @@
   }: { repos: Repos; entry: Entry; command: PullCommand } & Pick<ButtonProps, 'size' | 'variant'> =
     $props()
 
-  const look = $derived(looks[command])
+  const label = $derived(labels[command])
 </script>
 
-<Button
-  variant={look.variant}
-  {...button}
-  disabled={repos.busy}
-  onclick={() => repos.pull([entry], command)}
->
-  {runningPull(entry) === command ? look.running : look.idle}
+<Button {...button} disabled={repos.busy} onclick={() => repos.pull([entry], command)}>
+  {runningPull(entry) === command ? label.running : label.idle}
 </Button>

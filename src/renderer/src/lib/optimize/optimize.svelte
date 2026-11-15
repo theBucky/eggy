@@ -73,14 +73,17 @@
     skipped: 'text-muted-foreground',
     unavailable: 'text-muted-foreground',
     attention: 'text-warning',
-    failed: 'text-danger'
+    failed: 'text-destructive'
   } satisfies Record<OptimizeOutcome['status'], string>
 </script>
 
 <script lang="ts">
   import { onMount } from 'svelte'
   import IconLock from '@tabler/icons-svelte/icons/lock'
+  import MetaList from '$lib/components/meta-list.svelte'
   import Page from '$lib/components/page.svelte'
+  import RowActions from '$lib/components/row-actions.svelte'
+  import Section from '$lib/components/section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import { Button } from '$lib/components/ui/button'
   import * as Table from '$lib/components/ui/table'
@@ -171,23 +174,23 @@
 
   {#if optimizer.machine}
     {@const { memory, disk } = optimizer.machine}
-    <dl class="mt-6 grid grid-cols-[96px_1fr] items-center gap-x-4 gap-y-2">
-      <dt class="text-muted-foreground">Memory</dt>
+    <MetaList>
+      <dt>Memory</dt>
       <dd class="truncate">
         {gibibytes.format(memory.used / 2 ** 30)} of {gibibytes.format(memory.total / 2 ** 30)} GB in
         use
       </dd>
-      <dt class="text-muted-foreground">Disk</dt>
+      <dt>Disk</dt>
       <dd class="truncate">
         {gigabytes.format(disk.free / 1e9)} GB free of {gigabytes.format(disk.total / 1e9)} GB
       </dd>
-      <dt class="text-muted-foreground">Uptime</dt>
+      <dt>Uptime</dt>
       <dd class="truncate">{duration(optimizer.machine.uptime)}</dd>
-    </dl>
+    </MetaList>
   {/if}
 
   {#each groups as [group, optimizations] (group)}
-    <section class="mt-8">
+    <Section title={group}>
       <Table.Root>
         <colgroup>
           <col class="w-10" />
@@ -195,18 +198,13 @@
           <col />
           <col class="w-32" />
         </colgroup>
-        <Table.Header>
-          <Table.Row>
-            <Table.Head colspan={4}>{group}</Table.Head>
-          </Table.Row>
-        </Table.Header>
         <Table.Body>
           {#each optimizations as optimization (optimization)}
             {@render row(optimization)}
           {/each}
         </Table.Body>
       </Table.Root>
-    </section>
+    </Section>
   {/each}
 </Page>
 
@@ -214,8 +212,7 @@
   {@const { name, description } = CATALOG[optimization]}
   {@const outcome = optimizer.outcomeOf(optimization)}
   {@const status = optimizer.statusOf(optimization)}
-  {@const pinned = outcome?.status === 'skipped' || outcome?.status === 'failed'}
-  <Table.Row class="group">
+  <Table.Row>
     <Table.Cell>
       <div class="flex w-6 justify-center">
         <StatusDot {status} />
@@ -223,7 +220,7 @@
     </Table.Cell>
     <Table.Cell>
       <div class="flex fill-cell items-center gap-1.5">
-        <span class="truncate text-base">{name}</span>
+        <span class="truncate">{name}</span>
         {#if isPrivileged(optimization)}
           <IconLock
             class="size-3.5 shrink-0 text-muted-foreground"
@@ -240,23 +237,18 @@
       {/if}
     </Table.Cell>
     <Table.Cell>
-      <div class="flex justify-end gap-2">
-        <!-- Hidden until hover unless a rerun is the next step, yet kept in the layout so a row holds
-             its height as its state changes. -->
-        <div
-          class={[
-            !pinned && 'opacity-0',
-            status !== 'running' && 'group-hover:opacity-100 has-focus-visible:opacity-100'
-          ]}
+      <RowActions>
+        <Button
+          variant="ghost"
+          disabled={optimizer.running}
+          onclick={() => optimizer.optimize([optimization])}
         >
-          <Button disabled={optimizer.running} onclick={() => optimizer.optimize([optimization])}>
-            Run
-          </Button>
-        </div>
+          Run
+        </Button>
         {#if outcome?.status === 'attention'}
-          <Button onclick={() => window.api.review(outcome.review)}>Review</Button>
+          <Button variant="ghost" onclick={() => window.api.review(outcome.review)}>Review</Button>
         {/if}
-      </div>
+      </RowActions>
     </Table.Cell>
   </Table.Row>
 {/snippet}

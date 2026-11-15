@@ -4,32 +4,26 @@
 	import type { HTMLAnchorAttributes, HTMLButtonAttributes } from "svelte/elements";
 
 	export const buttonVariants = tv({
-		base: "ring-inset focus-visible:ring-1 focus-visible:ring-ring aria-invalid:ring-1 aria-invalid:ring-danger rounded-lg border border-transparent bg-clip-padding text-base font-normal active:not-aria-[haspopup]:translate-y-px group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+		base: "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:ring-1 aria-invalid:ring-inset aria-invalid:ring-destructive rounded-lg text-sm font-normal active:not-aria-[haspopup]:translate-y-px group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
 		variants: {
 			variant: {
-				default: "border-border text-foreground hover:bg-muted aria-expanded:bg-muted",
-				primary: "bg-primary text-primary-foreground hover:bg-primary-hover",
+				default: "ring-1 ring-inset ring-input text-foreground-secondary hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
+				primary: "bg-primary text-primary-foreground hover:bg-primary/90",
 				secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-hover aria-expanded:bg-secondary-hover",
-				ghost: "text-muted-foreground hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
-				destructive: "bg-destructive text-destructive-foreground hover:bg-danger",
+				ghost: "text-foreground-secondary hover:bg-accent hover:text-foreground aria-expanded:bg-accent aria-expanded:text-foreground",
+				destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+				"destructive-secondary": "bg-destructive/10 text-destructive hover:bg-destructive/16",
 				link: "text-info underline-offset-4 hover:underline",
 			},
 			size: {
-				default: "h-6 gap-1.5 px-2 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5",
-				sm: "h-5 gap-1 px-1.5 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 [&_svg:not([class*='size-'])]:size-3",
-				lg: "h-7 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+				default: "h-7 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2",
+				sm: "h-6 gap-1 px-2 has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+				lg: "h-8 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2.5 has-data-[icon=inline-start]:pl-2.5",
 				icon: "size-6",
-				"icon-sm": "size-5",
-				"icon-lg": "size-7 [&_svg:not([class*='size-'])]:size-4",
+				"icon-sm": "size-5 [&_svg:not([class*='size-'])]:size-3",
+				"icon-lg": "size-8 [&_svg:not([class*='size-'])]:size-4",
 			},
 		},
-		compoundVariants: [
-			{
-				variant: "ghost",
-				size: ["icon", "icon-sm", "icon-lg"],
-				class: "text-icon",
-			},
-		],
 		defaultVariants: {
 			variant: "default",
 			size: "default",

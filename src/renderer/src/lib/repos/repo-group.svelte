@@ -55,7 +55,7 @@
                   {#if !open}
                     {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}
-                      <span class="text-sm">{outdated} outdated</span>
+                      <span class="text-xs">{outdated} outdated</span>
                     {/if}
                   {/if}
                 </Sidebar.MenuButton>
@@ -73,13 +73,13 @@
                       <StatusDot {status} />
                       <span class="flex-1 truncate-fade">{nameOf(entry.repo.path)}</span>
                       {#if status === 'failed'}
-                        <span class="text-sm text-danger">failed</span>
+                        <span class="text-xs text-destructive">failed</span>
                       {:else if status === 'outdated'}
-                        <span class="font-mono text-sm text-info">
+                        <span class="font-mono text-xs text-info">
                           ↓{entry.repo.sync?.behind}
                         </span>
                       {:else if entry.task?.status === 'updated'}
-                        <span class="font-mono text-sm text-success">
+                        <span class="font-mono text-xs text-success">
                           +{entry.task.count}
                         </span>
                       {/if}

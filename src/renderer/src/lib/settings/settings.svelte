@@ -25,7 +25,7 @@
             <span class="font-mono select-text">{tilde(repos.root)}</span>
           </Field.Description>
         </Field.Content>
-        <Button size="lg" disabled={repos.busy} onclick={() => repos.chooseRoot()}>Change</Button>
+        <Button disabled={repos.busy} onclick={() => repos.chooseRoot()}>Change</Button>
       </Field.Field>
       <Field.Separator />
       <Field.Field orientation="horizontal">

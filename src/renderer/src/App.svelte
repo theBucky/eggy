@@ -63,7 +63,7 @@
             <IconHome />
             <span class="flex-1 truncate-fade">Home</span>
             {#if sources.outdated.length > 0}
-              <span class="font-mono text-sm text-info">{sources.outdated.length}</span>
+              <span class="font-mono text-xs text-info">{sources.outdated.length}</span>
             {/if}
           </Sidebar.MenuButton>
         </Sidebar.MenuItem>

@@ -17,7 +17,7 @@
 	bind:this={ref}
 	data-slot="field-legend"
 	data-variant={variant}
-	class={cn("mb-2 text-base font-medium", className)}
+	class={cn("mb-2 text-sm font-medium", className)}
 	{...restProps}
 >
 	{@render children?.()}

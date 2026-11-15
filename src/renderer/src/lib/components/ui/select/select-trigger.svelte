@@ -33,12 +33,12 @@
 	data-slot="select-trigger"
 	data-size={size}
 	class={cn(
-		"data-placeholder:text-muted-foreground focus-visible:border-ring aria-invalid:border-danger gap-1 border text-base *:data-[slot=select-value]:flex *:data-[slot=select-value]:gap-1.5 flex w-fit items-center justify-between whitespace-nowrap outline-none disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+		"data-placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 aria-invalid:border-destructive gap-1 border text-sm *:data-[slot=select-value]:flex *:data-[slot=select-value]:gap-1.5 flex w-fit items-center justify-between whitespace-nowrap outline-none disabled:cursor-not-allowed disabled:opacity-50 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
 		sizes[size],
 		className
 	)}
 	{...restProps}
 >
 	{@render children?.()}
-	<IconChevronDown class="text-icon size-2.5 pointer-events-none" />
+	<IconChevronDown class="text-foreground-secondary size-2.5 pointer-events-none" />
 </SelectPrimitive.Trigger>

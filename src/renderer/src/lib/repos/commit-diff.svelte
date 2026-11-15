@@ -86,8 +86,8 @@
         --diffs-bg-addition-number-override: var(--added-line);
         --diffs-bg-deletion-override: var(--removed-line);
         --diffs-bg-deletion-number-override: var(--removed-line);
-        --diffs-fg-number-override: color-mix(in srgb, var(--foreground) 36%, transparent);
-        --diffs-bg-separator-override: color-mix(in srgb, var(--foreground) 4%, transparent);
+        --diffs-fg-number-override: var(--placeholder);
+        --diffs-bg-separator-override: var(--muted);
       }
       [data-line-type^='change'] {
         --mix-light: 0%;
@@ -224,13 +224,13 @@
 <section class={['flex size-full flex-col transition-opacity', !rendered && 'opacity-0']}>
   <header class="flex h-12 shrink-0 items-center justify-between gap-3 border-b pr-3 pl-5">
     <div class="flex min-w-0 items-center gap-3">
-      <span class="font-mono select-text">{shown.hash}</span>
+      <span class="font-mono text-xs select-text">{shown.hash}</span>
       {#if totals}
         <span class="truncate text-muted-foreground">
           {totals.files}
           {totals.files === 1 ? 'file' : 'files'}
         </span>
-        <span class="flex gap-2 font-mono text-sm">
+        <span class="flex gap-2 font-mono text-xs">
           <span class="text-added">+{totals.additions}</span>
           <span class="text-removed">-{totals.deletions}</span>
         </span>
@@ -262,13 +262,13 @@
   <!-- The viewer moves the summary into the scroll content, above the first file. -->
   <div bind:this={root} class="mb-2 flex-1 overflow-y-auto select-text">
     <div bind:this={summary} class="flex flex-col gap-2 p-5 wrap-anywhere">
-      <h2 class="text-xl font-semibold">{shown.subject}</h2>
+      <h2 class="text-lg font-semibold">{shown.subject}</h2>
       {#if detail?.body}
-        <p class="whitespace-pre-wrap text-muted-foreground">{detail.body}</p>
+        <p class="whitespace-pre-wrap text-foreground-secondary">{detail.body}</p>
       {/if}
-      <p class="flex gap-2 pt-1 text-sm">
-        <span class="text-muted-foreground">{shown.author}</span>
-        <span class="text-tertiary-foreground">committed {ago(shown.date)}</span>
+      <p class="flex gap-2 pt-1 text-xs">
+        <span class="text-foreground-secondary">{shown.author}</span>
+        <span class="text-muted-foreground">committed {ago(shown.date)}</span>
       </p>
     </div>
   </div>

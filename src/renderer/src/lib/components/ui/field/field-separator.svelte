@@ -20,7 +20,7 @@
 	bind:this={ref}
 	data-slot="field-separator"
 	data-content={hasContent}
-	class={cn("h-px text-base relative data-[content=true]:h-5", className)}
+	class={cn("h-px text-sm relative data-[content=true]:h-5", className)}
 	{...restProps}
 >
 	<Separator class="absolute inset-x-0 top-1/2" />

@@ -2,7 +2,7 @@
   import type { Status } from '$lib/status'
 
   const dots = {
-    unknown: 'bg-muted-foreground/30',
+    unknown: 'bg-placeholder',
     failed: 'bg-destructive',
     attention: 'bg-warning',
     outdated: 'bg-info',
@@ -16,7 +16,7 @@
   let { status }: { status: Status } = $props()
 </script>
 
-<span class="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+<span class="flex size-3.5 shrink-0 items-center justify-center text-muted-foreground">
   {#if status === 'running'}
     <Spinner />
   {:else}

@@ -45,7 +45,7 @@ function createWindow(): BrowserWindow {
     minHeight: 760,
     show: false,
     titleBarStyle: 'hidden',
-    trafficLightPosition: { x: 17, y: 17 },
+    trafficLightPosition: { x: 18, y: 18 },
     backgroundColor: sidebarColor(),
     webPreferences: {
       preload: join(import.meta.dirname, '../preload/index.mjs'),

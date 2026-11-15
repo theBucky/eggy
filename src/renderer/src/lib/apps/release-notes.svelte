@@ -49,9 +49,9 @@
     <IconExternalLink data-icon="inline-end" />
   </Button>
 {:else if notes.format === 'plain-text'}
-  <p class="typeset whitespace-pre-wrap select-text">{notes.text}</p>
+  <p class="typeset text-base whitespace-pre-wrap select-text">{notes.text}</p>
 {:else}
-  <div class="typeset select-text">
+  <div class="typeset text-base select-text">
     {@html render(notes.format, notes.text)}
   </div>
 {/if}
