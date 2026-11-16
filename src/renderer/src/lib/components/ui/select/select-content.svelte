@@ -84,8 +84,9 @@
 					<div {...props}>
 						<SelectScrollUpButton />
 						<SelectPrimitive.Viewport
+							data-fluid-hover
 							class={cn(
-								"h-(--bits-select-anchor-height) w-full min-w-(--bits-select-anchor-width) p-1.5 scroll-py-1.5"
+								"h-(--bits-select-anchor-height) w-full min-w-(--bits-select-anchor-width) p-1.5 scroll-py-1.5 before:rounded-lg before:bg-accent"
 							)}
 						>
 							{@render children?.()}
@@ -317,6 +318,18 @@
 	.frame[data-docked] :global(:is([data-select-viewport] > *, [data-slot^="select-scroll"])) {
 		opacity: 0;
 		filter: blur(8px);
+	}
+
+	/* The viewport draws the highlight, which no item's fade reaches. Hovering drives its opacity,
+	   so this fade goes through the filter. */
+	.frame:not([data-docked]) :global([data-select-viewport]::before) {
+		animation: emerge var(--list-motion, 0s);
+	}
+
+	@keyframes emerge {
+		from {
+			filter: opacity(0) blur(8px);
+		}
 	}
 
 	/* The item farthest from the trigger clears first, as the front of a pour would. The whole
