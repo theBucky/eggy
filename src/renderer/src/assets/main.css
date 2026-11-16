@@ -263,12 +263,6 @@
   @apply -mx-scrollbar my-2 overflow-fade-y overflow-y-auto px-scrollbar py-1;
 }
 
-/* Auto table layout widens a column to fit its content, so long text truncates inside a block that
-   is zero wide until it stretches to the cell. */
-@utility fill-cell {
-  @apply w-0 min-w-full;
-}
-
 @layer base {
   *,
   ::before,

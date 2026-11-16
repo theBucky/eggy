@@ -55,7 +55,7 @@
           <ToolbarButton
             label="{upgradeVerb} {source.outdated.length} outdated"
             icon={IconCloudDownload}
-            busy={source.upgrading}
+            busy={source.bulk}
             disabled={source.busy || source.outdated.length === 0}
             onclick={() => source.upgradeOutdated()}
           />

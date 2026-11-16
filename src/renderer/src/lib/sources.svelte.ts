@@ -1,7 +1,10 @@
+// What a source is doing as a whole. Items act on their own only while it idles.
+export type Phase = 'idle' | 'scanning' | 'checking' | 'bulk'
+
 export type Source = {
   readonly scanning: boolean
   readonly checking: boolean
-  readonly upgrading: boolean
+  readonly bulk: boolean
   readonly busy: boolean
   readonly checked: boolean
   readonly checkFailed: boolean
@@ -17,7 +20,7 @@ export class Sources implements Source {
   readonly #all: Source[]
   scanning = $derived.by(() => this.#all.some((source) => source.scanning))
   checking = $derived.by(() => this.#all.some((source) => source.checking))
-  upgrading = $derived.by(() => this.#all.some((source) => source.upgrading))
+  bulk = $derived.by(() => this.#all.some((source) => source.bulk))
   busy = $derived.by(() => this.#all.some((source) => source.busy))
   checked = $derived.by(() => this.#all.some((source) => source.checked))
   checkFailed = $derived.by(() => this.#all.some((source) => source.checkFailed))

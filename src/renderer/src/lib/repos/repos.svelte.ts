@@ -1,10 +1,12 @@
 import type { Status } from '$lib/status'
 import { tilde } from '$lib/paths'
-import type { Source } from '$lib/sources.svelte'
+import { Serial } from '$lib/serial'
+import type { Phase, Source } from '$lib/sources.svelte'
 import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '$shared/api'
 
 type Task =
-  | { command: 'fetch' | PullCommand; status: 'running' }
+  | { command: 'fetch'; status: 'running' }
+  | { command: PullCommand; status: 'queued' | 'running' }
   | ({ command: 'fetch' } & FetchOutcome)
   | ({ command: PullCommand } & PullOutcome)
 
@@ -13,10 +15,16 @@ export type Entry = {
   task?: Task
 }
 
+function pending(task: Task | undefined): task is Extract<Task, { status: 'queued' | 'running' }> {
+  return task?.status === 'queued' || task?.status === 'running'
+}
+
 export function statusOf(entry: Entry): Status {
   const { task } = entry
 
-  if (task?.status === 'running' || task?.status === 'failed') return task.status
+  if (pending(task)) return 'running'
+
+  if (task?.status === 'failed') return 'failed'
 
   if (behind(entry)) return 'outdated'
 
@@ -31,13 +39,13 @@ export function diverged({ repo }: Entry): boolean {
   return repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0
 }
 
-export function runningPull({ task }: Entry): PullCommand | undefined {
-  return task?.status === 'running' && task.command !== 'fetch' ? task.command : undefined
+export function pendingPull({ task }: Entry): PullCommand | undefined {
+  return pending(task) && task.command !== 'fetch' ? task.command : undefined
 }
 
 const CONCURRENCY = 8
 
-// Linked worktrees share refs, so their git commands run one after another to avoid lock errors.
+// Worktrees of one repo wait on each other anyway, so each worker takes a whole repo's worth.
 async function each(entries: Entry[], run: (entry: Entry) => Promise<void>): Promise<void> {
   const queue = [...Map.groupBy(entries, (entry) => entry.repo.gitDir).values()]
 
@@ -53,14 +61,16 @@ async function each(entries: Entry[], run: (entry: Entry) => Promise<void>): Pro
 export class Repos implements Source {
   root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
   entries = $state<Entry[]>([])
-  scanning = $state(false)
-  #refreshing = $state(false)
-  upgrading = $state(false)
-  checking = $derived(this.scanning || this.#refreshing)
-  busy = $derived(this.checking || this.upgrading)
-  checked = $derived(
-    this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
+  #phase = $state<Phase>('idle')
+  // Linked worktrees share refs, so their git commands run one after another to avoid lock errors.
+  #serials = new Map<string, Serial>()
+  scanning = $derived(this.#phase === 'scanning')
+  checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
+  bulk = $derived(this.#phase === 'bulk')
+  busy = $derived(
+    this.#phase !== 'idle' || this.entries.some((entry) => pendingPull(entry) !== undefined)
   )
+  checked = $derived(this.entries.some(({ task }) => task !== undefined && !pending(task)))
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
   )
@@ -72,14 +82,15 @@ export class Repos implements Source {
   }
 
   async scan(): Promise<void> {
-    this.scanning = true
-    this.entries = (await window.api.scanRepos(this.root)).map((repo) => ({ repo }))
-    this.scanning = false
+    this.#phase = 'scanning'
+    await this.#list()
+    this.#phase = 'idle'
   }
 
   async refresh(): Promise<void> {
-    this.#refreshing = true
-    await this.scan()
+    this.#phase = 'scanning'
+    await this.#list()
+    this.#phase = 'checking'
     await each(this.entries, async (entry) => {
       entry.task = { command: 'fetch', status: 'running' }
 
@@ -88,7 +99,7 @@ export class Repos implements Source {
       Object.assign(entry.repo, tracking)
       entry.task = { command: 'fetch', ...outcome }
     })
-    this.#refreshing = false
+    this.#phase = 'idle'
   }
 
   async chooseRoot(): Promise<void> {
@@ -102,19 +113,39 @@ export class Repos implements Source {
   }
 
   async pull(entries: Entry[], command: PullCommand): Promise<void> {
-    this.upgrading = true
-    await each(entries, async (entry) => {
-      entry.task = { command, status: 'running' }
+    for (const entry of entries) entry.task = { command, status: 'queued' }
 
-      const { outcome, ...tracking } = await window.api.pullRepo(entry.repo.path, command)
+    await each(entries, (entry) =>
+      this.#serialOf(entry).run(async () => {
+        entry.task = { command, status: 'running' }
 
-      Object.assign(entry.repo, tracking)
-      entry.task = { command, ...outcome }
-    })
-    this.upgrading = false
+        const { outcome, ...tracking } = await window.api.pullRepo(entry.repo.path, command)
+
+        Object.assign(entry.repo, tracking)
+        entry.task = { command, ...outcome }
+      })
+    )
   }
 
-  upgradeOutdated(): Promise<void> {
-    return this.pull(this.outdated, 'pull')
+  async upgradeOutdated(): Promise<void> {
+    this.#phase = 'bulk'
+    await this.pull(this.outdated, 'pull')
+    this.#phase = 'idle'
+  }
+
+  canPull(entry: Entry): boolean {
+    return this.#phase === 'idle' && pendingPull(entry) === undefined
+  }
+
+  async #list(): Promise<void> {
+    this.entries = (await window.api.scanRepos(this.root)).map((repo) => ({ repo }))
+  }
+
+  #serialOf({ repo }: Entry): Serial {
+    const serial = this.#serials.get(repo.gitDir) ?? new Serial()
+
+    this.#serials.set(repo.gitDir, serial)
+
+    return serial
   }
 }

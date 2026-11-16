@@ -1,23 +1,20 @@
 <script lang="ts">
-  import IconArrowRight from '@tabler/icons-svelte/icons/arrow-right'
+  import ListCard from '$lib/components/list-card.svelte'
   import Page from '$lib/components/page.svelte'
-  import RowActions from '$lib/components/row-actions.svelte'
-  import Section from '$lib/components/section.svelte'
-  import StatusDot from '$lib/components/status-dot.svelte'
   import { Button } from '$lib/components/ui/button'
-  import * as Table from '$lib/components/ui/table'
+  import * as Item from '$lib/components/ui/item'
   import { labelOf, releaseOf, type Apps, type Entry as AppEntry } from '$lib/apps/apps.svelte'
   import AppUpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { ago, list, megabytes } from '$lib/format'
   import { idOf, type Entry as PackageEntry, type Packages } from '$lib/packages/packages.svelte'
+  import type { Package, Release, Repo } from '$shared/api'
   import PackageUpgradeButton from '$lib/packages/upgrade-button.svelte'
-  import { dirOf, nameOf, tilde } from '$lib/paths'
+  import { nameOf, tilde } from '$lib/paths'
   import PullButton from '$lib/repos/pull-button.svelte'
   import {
     behind,
     diverged,
-    runningPull,
-    statusOf,
+    pendingPull,
     type Entry as RepoEntry,
     type Repos
   } from '$lib/repos/repos.svelte'
@@ -40,7 +37,7 @@
   // Fetching flashes through every repo, so only pulls count as activity worth a row.
   const repoRows = $derived(
     repos.entries.filter(
-      (entry) => behind(entry) || entry.task?.status === 'failed' || runningPull(entry)
+      (entry) => behind(entry) || entry.task?.status === 'failed' || pendingPull(entry)
     )
   )
 
@@ -77,6 +74,37 @@
     return `${list.format(installed)} installed, ${plural(repos.entries.length, 'repository', 'repositories')} under ${tilde(repos.root)}.`
   })
 
+  function clauses(...parts: (string | false)[]): string {
+    return parts.filter((part) => part !== false).join(', ')
+  }
+
+  function appMeta(entry: AppEntry, release: Release): string {
+    return clauses(
+      `${labelOf(entry.app)} → ${labelOf(release)}`,
+      release.size !== undefined && megabytes(release.size),
+      release.date !== undefined && `released ${ago(release.date)}`
+    )
+  }
+
+  function packageMeta(pkg: Package): string {
+    return clauses(
+      `${pkg.version} → ${pkg.latest}`,
+      pkg.kind === 'cask' && 'cask',
+      !pkg.requested && 'dependency'
+    )
+  }
+
+  function repoMeta({ branch, upstream, sync }: Repo): string {
+    const offsets = [
+      !!sync?.behind && `${sync.behind} behind`,
+      !!sync?.ahead && `${sync.ahead} ahead of`
+    ].filter((offset) => offset !== false)
+
+    return offsets.length > 0
+      ? `${branch} is ${list.format(offsets)} ${upstream}`
+      : `${branch} tracks ${upstream}`
+  }
+
   function standing(source: Source): string {
     return source.checked ? 'All up to date.' : 'Not checked yet.'
   }
@@ -102,226 +130,126 @@
       disabled={sources.busy || pending === 0}
       onclick={() => sources.upgradeOutdated()}
     >
-      {sources.upgrading ? 'Upgrading' : 'Upgrade everything'}
+      {sources.bulk ? 'Upgrading' : 'Upgrade everything'}
     </Button>
   {/snippet}
 
-  <Section title="Applications">
-    {#snippet actions()}{@render upgradeAll(apps, 'Upgrade')}{/snippet}
-    <Table.Root>
-      <colgroup>
-        <col class="w-10" />
-        <col class="w-48" />
-        <col />
-        <col class="w-22" />
-        <col class="w-28" />
-        <col class="w-40" />
-      </colgroup>
-      <Table.Body>
-        {#each appRows as entry (entry.app.path)}
-          {@render appRow(entry)}
-        {:else}
-          {@render note(6, apps.entries.length === 0 ? 'No applications.' : standing(apps))}
-        {/each}
-      </Table.Body>
-    </Table.Root>
-  </Section>
+  <ListCard title="Applications">
+    {#each appRows as entry, index (entry.app.path)}
+      {#if index > 0}<Item.Separator decorative />{/if}
+      {@render appRow(entry)}
+    {:else}
+      {@render note(apps.entries.length === 0 ? 'No applications.' : standing(apps))}
+    {/each}
+  </ListCard>
 
   {#if packages.installed}
-    <Section title="Packages">
-      {#snippet actions()}{@render upgradeAll(packages, 'Upgrade')}{/snippet}
-      <Table.Root>
-        <colgroup>
-          <col class="w-10" />
-          <col class="w-48" />
-          <col />
-          <col class="w-28" />
-          <col class="w-40" />
-        </colgroup>
-        <Table.Body>
-          {#each packages.outdated as entry (idOf(entry.package))}
-            {@render packageRow(entry)}
-          {/each}
-          {#if packages.check?.status === 'failed'}
-            <Table.Row>
-              <Table.Cell colspan={5}>
-                <div class="fill-cell truncate text-destructive">{packages.check.message}</div>
-              </Table.Cell>
-            </Table.Row>
-          {:else if packages.outdated.length === 0}
-            {@render note(5, packages.entries.length === 0 ? 'No packages.' : standing(packages))}
-          {/if}
-        </Table.Body>
-      </Table.Root>
-    </Section>
+    <ListCard title="Packages">
+      {#each packages.outdated as entry, index (idOf(entry.package))}
+        {#if index > 0}<Item.Separator decorative />{/if}
+        {@render packageRow(entry)}
+      {/each}
+      {#if packages.check?.status === 'failed'}
+        {#if packages.outdated.length > 0}<Item.Separator decorative />{/if}
+        {@render note(packages.check.message, true)}
+      {:else if packages.outdated.length === 0}
+        {@render note(packages.entries.length === 0 ? 'No packages.' : standing(packages))}
+      {/if}
+    </ListCard>
   {/if}
 
-  <Section title="Repositories">
-    {#snippet actions()}{@render upgradeAll(repos, 'Pull')}{/snippet}
-    <Table.Root>
-      <colgroup>
-        <col class="w-10" />
-        <col class="w-48" />
-        <col />
-        <col class="w-22" />
-        <col class="w-32" />
-      </colgroup>
-      <Table.Body>
-        {#each repoRows as entry (entry.repo.path)}
-          {@render repoRow(entry)}
-        {:else}
-          {@render note(
-            5,
-            repos.entries.length === 0
-              ? `Nothing under ${tilde(repos.root)} tracks an upstream branch.`
-              : standing(repos)
-          )}
-        {/each}
-      </Table.Body>
-    </Table.Root>
-  </Section>
+  <ListCard title="Repositories">
+    {#each repoRows as entry, index (entry.repo.path)}
+      {#if index > 0}<Item.Separator decorative />{/if}
+      {@render repoRow(entry)}
+    {:else}
+      {@render note(
+        repos.entries.length === 0
+          ? `Nothing under ${tilde(repos.root)} tracks an upstream branch.`
+          : standing(repos)
+      )}
+    {/each}
+  </ListCard>
 </Page>
 
-{#snippet upgradeAll(source: Source, verb: string)}
-  {#if source.outdated.length > 0}
-    <Button
-      size="sm"
-      variant="ghost"
-      disabled={source.busy}
-      onclick={() => source.upgradeOutdated()}
-    >
-      {verb} all {source.outdated.length}
-    </Button>
-  {/if}
+{#snippet note(text: string, failed = false)}
+  <Item.Root size="xs" role="listitem">
+    <Item.Content>
+      <Item.Description>
+        {#if failed}
+          {@render failure(text)}
+        {:else}
+          {text}
+        {/if}
+      </Item.Description>
+    </Item.Content>
+  </Item.Root>
 {/snippet}
 
-{#snippet note(colspan: number, text: string)}
-  <Table.Row>
-    <Table.Cell {colspan}>
-      <span class="text-muted-foreground">{text}</span>
-    </Table.Cell>
-  </Table.Row>
+{#snippet meta(text: string)}
+  <span class="font-mono">{text}</span>
+{/snippet}
+
+{#snippet failure(message: string)}
+  <span class="text-destructive">{message}</span>
 {/snippet}
 
 {#snippet appRow(entry: AppEntry)}
   {@const { app, task } = entry}
   {@const release = releaseOf(entry)}
-  <Table.Row>
-    <Table.Cell><img src={app.icon} alt="" class="size-6" /></Table.Cell>
-    <Table.Cell><div class="fill-cell truncate">{app.name}</div></Table.Cell>
-    {#if task?.status === 'failed'}
-      <Table.Cell colspan={3}>
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
-      </Table.Cell>
-    {:else if release}
-      <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-xs">
-          <span class="truncate text-muted-foreground">{labelOf(app)}</span>
-          <IconArrowRight class="size-3 shrink-0 text-placeholder" />
-          <span class="truncate">{labelOf(release)}</span>
-        </div>
-      </Table.Cell>
-      <Table.Cell>
-        <div class="text-right text-xs text-muted-foreground">
-          {#if release.size !== undefined}{megabytes(release.size)}{/if}
-        </div>
-      </Table.Cell>
-      <Table.Cell>
-        <div class="text-right text-xs text-muted-foreground">
-          {#if release.date !== undefined}{ago(release.date)}{/if}
-        </div>
-      </Table.Cell>
+  <Item.Root size="xs" role="listitem">
+    <Item.Media variant="image"><img src={app.icon} alt="" /></Item.Media>
+    <Item.Content>
+      <Item.Title><span class="line-clamp-1">{app.name}</span></Item.Title>
+      <Item.Description>
+        {#if task?.status === 'failed'}
+          {@render failure(task.message)}
+        {:else if release}
+          {@render meta(appMeta(entry, release))}
+        {/if}
+      </Item.Description>
+    </Item.Content>
+    {#if release}
+      <Item.Actions><AppUpgradeButton {apps} {entry} /></Item.Actions>
     {/if}
-    <Table.Cell>
-      {#if release}
-        <RowActions shown={task?.command === 'upgrade' && task.status === 'running'}>
-          <AppUpgradeButton {apps} {entry} size="sm" variant="ghost" />
-        </RowActions>
-      {/if}
-    </Table.Cell>
-  </Table.Row>
+  </Item.Root>
 {/snippet}
 
 {#snippet packageRow(entry: PackageEntry)}
   {@const { package: pkg, task } = entry}
-  <Table.Row>
-    <Table.Cell>
-      <div class="flex w-6 justify-center"><StatusDot status={packages.statusOf(entry)} /></div>
-    </Table.Cell>
-    <Table.Cell><div class="fill-cell truncate">{pkg.name}</div></Table.Cell>
-    {#if task?.status === 'failed'}
-      <Table.Cell colspan={2}>
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
-      </Table.Cell>
-    {:else}
-      <Table.Cell>
-        <div class="flex fill-cell items-center gap-2 font-mono text-xs">
-          <span class="truncate text-muted-foreground">{pkg.version}</span>
-          <IconArrowRight class="size-3 shrink-0 text-placeholder" />
-          <span class="truncate">{pkg.latest}</span>
-        </div>
-      </Table.Cell>
-      <Table.Cell>
-        <div class="text-right text-xs text-muted-foreground">
-          {#if pkg.kind === 'cask'}
-            Cask
-          {:else if !pkg.requested}
-            Dependency
-          {/if}
-        </div>
-      </Table.Cell>
-    {/if}
-    <Table.Cell>
-      <RowActions shown={task?.status === 'running'}>
-        <PackageUpgradeButton {packages} {entry} size="sm" variant="ghost" />
-      </RowActions>
-    </Table.Cell>
-  </Table.Row>
+  <Item.Root size="xs" role="listitem">
+    <Item.Content>
+      <Item.Title><span class="line-clamp-1">{pkg.name}</span></Item.Title>
+      <Item.Description>
+        {#if task?.status === 'failed'}
+          {@render failure(task.message)}
+        {:else}
+          {@render meta(packageMeta(pkg))}
+        {/if}
+      </Item.Description>
+    </Item.Content>
+    <Item.Actions><PackageUpgradeButton {packages} {entry} /></Item.Actions>
+  </Item.Root>
 {/snippet}
 
 {#snippet repoRow(entry: RepoEntry)}
   {@const { repo, task } = entry}
-  {@const dir = dirOf(repo.path)}
-  {@const pull = runningPull(entry)}
-  <Table.Row>
-    <Table.Cell>
-      <div class="flex w-6 justify-center"><StatusDot status={statusOf(entry)} /></div>
-    </Table.Cell>
-    <Table.Cell>
-      <div class="fill-cell truncate">
-        {nameOf(repo.path)}
-        {#if dir !== repos.root}
-          <span class="text-xs text-muted-foreground">{repos.relative(dir)}</span>
+  {@const pull = pendingPull(entry)}
+  <Item.Root size="xs" role="listitem">
+    <Item.Content>
+      <Item.Title><span class="line-clamp-1">{nameOf(repo.path)}</span></Item.Title>
+      <Item.Description>
+        {#if task?.status === 'failed'}
+          {@render failure(task.message)}
+        {:else}
+          {@render meta(repoMeta(repo))}
         {/if}
-      </div>
-    </Table.Cell>
-    <Table.Cell>
-      {#if task?.status === 'failed'}
-        <div class="fill-cell truncate text-destructive">{task.message}</div>
-      {:else}
-        <div class="fill-cell truncate font-mono text-xs text-foreground-secondary">
-          {repo.branch} ← {repo.upstream}
-        </div>
-      {/if}
-    </Table.Cell>
-    <Table.Cell>
-      <div class="text-right font-mono text-xs text-info">
-        {#if repo.sync?.ahead}↑{repo.sync.ahead}{/if}
-        {#if repo.sync?.behind}↓{repo.sync.behind}{/if}
-      </div>
-    </Table.Cell>
-    <Table.Cell>
-      {#if behind(entry) || pull}
-        <RowActions shown={pull !== undefined}>
-          <PullButton
-            {repos}
-            {entry}
-            command={pull ?? (diverged(entry) ? 'rebase' : 'pull')}
-            size="sm"
-            variant="ghost"
-          />
-        </RowActions>
-      {/if}
-    </Table.Cell>
-  </Table.Row>
+      </Item.Description>
+    </Item.Content>
+    {#if behind(entry) || pull}
+      <Item.Actions>
+        <PullButton {repos} {entry} command={pull ?? (diverged(entry) ? 'rebase' : 'pull')} />
+      </Item.Actions>
+    {/if}
+  </Item.Root>
 {/snippet}

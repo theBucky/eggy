@@ -1,4 +1,3 @@
-import type { Status } from '$lib/status'
 import type { Machine, Optimization, OptimizeOutcome, OptimizeState } from '$shared/api'
 
 export class Optimizer {
@@ -19,21 +18,8 @@ export class Optimizer {
     return state?.status === 'running' ? undefined : state
   }
 
-  statusOf(optimization: Optimization): Status {
-    const state = this.#states[optimization]
-
-    if (state === undefined) return 'unknown'
-
-    switch (state.status) {
-      case 'skipped':
-      case 'unavailable':
-        return 'unknown'
-      case 'applied':
-      case 'unchanged':
-        return 'current'
-      default:
-        return state.status
-    }
+  isRunning(optimization: Optimization): boolean {
+    return this.#states[optimization]?.status === 'running'
   }
 
   async inspect(): Promise<void> {

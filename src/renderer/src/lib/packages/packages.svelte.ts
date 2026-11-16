@@ -1,10 +1,11 @@
+import { Serial } from '$lib/serial'
 import type { Status } from '$lib/status'
-import type { Source } from '$lib/sources.svelte'
+import type { Phase, Source } from '$lib/sources.svelte'
 import type { Failure, Package, PackageList, PackageUpgrade } from '$shared/api'
 
-type Check = { status: 'running' | 'checked' } | Failure
+type Check = { status: 'checked' } | Failure
 
-type Task = { output: string } & ({ status: 'running' } | PackageUpgrade)
+type Task = { output: string } & ({ status: 'queued' | 'running' } | PackageUpgrade)
 
 export type Entry = {
   package: Package
@@ -16,16 +17,20 @@ export function idOf({ kind, fullName }: Package): string {
   return `${kind}:${fullName}`
 }
 
+function pending({ task }: Entry): boolean {
+  return task?.status === 'queued' || task?.status === 'running'
+}
+
 export class Packages implements Source {
   installed = $state(false)
   entries = $state<Entry[]>([])
-  scanning = $state(false)
-  #refreshing = $state(false)
+  #phase = $state<Phase>('idle')
   check = $state<Check>()
-  checking = $derived(this.scanning || this.#refreshing)
-  upgrading = $derived(this.entries.some(({ task }) => task?.status === 'running'))
-  busy = $derived(this.checking || this.upgrading)
-  checked = $derived(this.check !== undefined && this.check.status !== 'running')
+  scanning = $derived(this.#phase === 'scanning')
+  checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
+  bulk = $derived(this.#phase === 'bulk')
+  busy = $derived(this.#phase !== 'idle' || this.entries.some(pending))
+  checked = $derived(this.check !== undefined)
   checkFailed = $derived(this.check?.status === 'failed')
   outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
 
@@ -39,10 +44,14 @@ export class Packages implements Source {
     })
   }
 
-  statusOf({ package: pkg, task }: Entry): Status {
-    if (task?.status === 'running' || task?.status === 'failed') return task.status
+  statusOf(entry: Entry): Status {
+    const { package: pkg, task } = entry
 
-    if (this.check?.status === 'running') return 'running'
+    if (pending(entry)) return 'running'
+
+    if (task?.status === 'failed') return 'failed'
+
+    if (this.#phase === 'checking') return 'running'
 
     if (pkg.state === 'outdated') return 'outdated'
 
@@ -50,21 +59,17 @@ export class Packages implements Source {
   }
 
   async scan(): Promise<void> {
-    this.scanning = true
-
-    const list = await window.api.listPackages()
-
-    this.check = list.status === 'failed' ? list : undefined
-    this.#apply(list)
-    this.scanning = false
+    this.#phase = 'scanning'
+    await this.#list()
+    this.#phase = 'idle'
   }
 
   async refresh(): Promise<void> {
-    this.#refreshing = true
-    await this.scan()
+    this.#phase = 'scanning'
+    await this.#list()
 
     if (this.installed) {
-      this.check = { status: 'running' }
+      this.#phase = 'checking'
 
       const list = await window.api.checkPackages()
 
@@ -72,14 +77,42 @@ export class Packages implements Source {
       this.#apply(list)
     }
 
-    this.#refreshing = false
+    this.#phase = 'idle'
   }
 
   // brew locks the kegs it installs, so upgrades that share dependencies would collide.
-  async upgrade(entries: Entry[]): Promise<void> {
+  #serial = new Serial()
+
+  upgrade(entries: Entry[]): Promise<void> {
+    for (const entry of entries) entry.task = { status: 'queued', output: '' }
+
+    return this.#serial.run(() => this.#upgrade(entries))
+  }
+
+  async upgradeOutdated(): Promise<void> {
+    this.#phase = 'bulk'
+    await this.upgrade(this.outdated)
+    this.#phase = 'idle'
+  }
+
+  canUpgrade(entry: Entry): boolean {
+    return this.#phase === 'idle' && !pending(entry)
+  }
+
+  async #list(): Promise<void> {
+    const list = await window.api.listPackages()
+
+    this.check = list.status === 'failed' ? list : undefined
+    this.#apply(list)
+  }
+
+  async #upgrade(entries: Entry[]): Promise<void> {
     for (const entry of entries) {
-      // An earlier upgrade in the batch may have upgraded this one as a dependency.
-      if (entry.package.state !== 'outdated') continue
+      // An earlier upgrade may have upgraded this one as a dependency.
+      if (entry.package.state !== 'outdated') {
+        entry.task = undefined
+        continue
+      }
 
       entry.task = { status: 'running', output: '' }
 
@@ -90,10 +123,6 @@ export class Packages implements Source {
 
       if (list.status === 'listed') this.#merge(list.packages)
     }
-  }
-
-  upgradeOutdated(): Promise<void> {
-    return this.upgrade(this.outdated)
   }
 
   #apply(list: PackageList): void {

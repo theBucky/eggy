@@ -17,7 +17,7 @@
   const lines = $derived(task?.output.trimEnd().split('\n') ?? [])
 
   const badge = $derived.by((): StatusBadge | undefined => {
-    if (packages.check?.status === 'running') return { label: 'Checking', variant: 'secondary' }
+    if (packages.checking) return { label: 'Checking', variant: 'secondary' }
 
     if (pkg.state === 'pinned') return { label: 'Pinned', variant: 'secondary' }
 
@@ -90,7 +90,7 @@
     </div>
   {/if}
 
-  {#if task}
+  {#if task && task.status !== 'queued'}
     <Section title="Output" class="min-h-0">
       <div class="scroll-section" {@attach follow}>
         <div

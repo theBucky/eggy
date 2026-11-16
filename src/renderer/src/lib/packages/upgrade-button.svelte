@@ -9,6 +9,16 @@
   }: { packages: Packages; entry: Entry } & Pick<ButtonProps, 'size' | 'variant'> = $props()
 </script>
 
-<Button {...button} disabled={packages.busy} onclick={() => packages.upgrade([entry])}>
-  {entry.task?.status === 'running' ? 'Upgrading' : 'Upgrade'}
+<Button
+  {...button}
+  disabled={!packages.canUpgrade(entry)}
+  onclick={() => packages.upgrade([entry])}
+>
+  {#if entry.task?.status === 'queued'}
+    Queued
+  {:else if entry.task?.status === 'running'}
+    Upgrading
+  {:else}
+    Upgrade
+  {/if}
 </Button>

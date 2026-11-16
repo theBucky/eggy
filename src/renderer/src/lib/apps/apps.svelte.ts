@@ -1,5 +1,5 @@
 import type { Status } from '$lib/status'
-import type { Source } from '$lib/sources.svelte'
+import type { Phase, Source } from '$lib/sources.svelte'
 import type { App, CheckOutcome, Failure, InstallOutcome, Progress, Release } from '$shared/api'
 
 type Task =
@@ -28,6 +28,10 @@ export function labelOf({ version, build }: App | Release): string {
   return version === build ? version : `${version} (${build})`
 }
 
+function pending({ task }: Entry): boolean {
+  return task?.command === 'upgrade' && task.status === 'running'
+}
+
 export function statusOf({ task }: Entry): Status {
   if (task === undefined) return 'unknown'
 
@@ -38,14 +42,12 @@ export function statusOf({ task }: Entry): Status {
 
 export class Apps implements Source {
   entries = $state<Entry[]>([])
-  scanning = $state(false)
-  #refreshing = $state(false)
+  #phase = $state<Phase>('idle')
   prompt = $state<Prompt>({ open: false, quitting: [] })
-  checking = $derived(this.scanning || this.#refreshing)
-  upgrading = $derived(
-    this.entries.some(({ task }) => task?.status === 'running' && task.command === 'upgrade')
-  )
-  busy = $derived(this.checking || this.upgrading)
+  scanning = $derived(this.#phase === 'scanning')
+  checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
+  bulk = $derived(this.#phase === 'bulk')
+  busy = $derived(this.#phase !== 'idle' || this.entries.some(pending))
   checked = $derived(
     this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
   )
@@ -64,14 +66,15 @@ export class Apps implements Source {
   }
 
   async scan(): Promise<void> {
-    this.scanning = true
-    this.entries = (await window.api.listApps()).map((app) => ({ app }))
-    this.scanning = false
+    this.#phase = 'scanning'
+    await this.#list()
+    this.#phase = 'idle'
   }
 
   async refresh(): Promise<void> {
-    this.#refreshing = true
-    await this.scan()
+    this.#phase = 'scanning'
+    await this.#list()
+    this.#phase = 'checking'
     await Promise.all(
       this.entries.map(async (entry) => {
         entry.task = { command: 'check', status: 'running' }
@@ -79,7 +82,7 @@ export class Apps implements Source {
         entry.task = { command: 'check', ...(await window.api.checkApp(entry.app.path)) }
       })
     )
-    this.#refreshing = false
+    this.#phase = 'idle'
   }
 
   async upgrade(entries: Entry[]): Promise<void> {
@@ -105,8 +108,14 @@ export class Apps implements Source {
     )
   }
 
-  upgradeOutdated(): Promise<void> {
-    return this.upgrade(this.outdated)
+  async upgradeOutdated(): Promise<void> {
+    this.#phase = 'bulk'
+    await this.upgrade(this.outdated)
+    this.#phase = 'idle'
+  }
+
+  canUpgrade(entry: Entry): boolean {
+    return this.#phase === 'idle' && !pending(entry)
   }
 
   async confirm(): Promise<void> {
@@ -128,6 +137,10 @@ export class Apps implements Source {
         entry.task = { command: 'check', status: 'checked', release }
       })
     )
+  }
+
+  async #list(): Promise<void> {
+    this.entries = (await window.api.listApps()).map((app) => ({ app }))
   }
 
   #settle(entry: Entry, release: Release, outcome: InstallOutcome): void {

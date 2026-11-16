@@ -9,7 +9,7 @@
 
 <script lang="ts">
   import { Button, type ButtonProps } from '$lib/components/ui/button'
-  import { runningPull, type Entry, type Repos } from '$lib/repos/repos.svelte'
+  import { pendingPull, type Entry, type Repos } from '$lib/repos/repos.svelte'
 
   let {
     repos,
@@ -22,6 +22,12 @@
   const label = $derived(labels[command])
 </script>
 
-<Button {...button} disabled={repos.busy} onclick={() => repos.pull([entry], command)}>
-  {runningPull(entry) === command ? label.running : label.idle}
+<Button {...button} disabled={!repos.canPull(entry)} onclick={() => repos.pull([entry], command)}>
+  {#if entry.task?.status === 'queued'}
+    Queued
+  {:else if pendingPull(entry) === command}
+    {label.running}
+  {:else}
+    {label.idle}
+  {/if}
 </Button>

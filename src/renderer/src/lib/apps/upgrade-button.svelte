@@ -16,17 +16,14 @@
   )
 </script>
 
-<Button
-  {...button}
-  data-progress={progress?.stage === 'install' ? 100 : progress?.percent}
-  disabled={apps.busy}
-  onclick={() => apps.upgrade([entry])}
->
-  {#if progress?.stage === 'install'}
-    Installing
-  {:else if progress}
-    Downloading
-  {:else}
-    Upgrade
-  {/if}
+<Button {...button} disabled={!apps.canUpgrade(entry)} onclick={() => apps.upgrade([entry])}>
+  <span data-progress={progress?.stage === 'install' ? 100 : progress?.percent}>
+    {#if progress?.stage === 'install'}
+      Installing
+    {:else if progress}
+      Downloading
+    {:else}
+      Upgrade
+    {/if}
+  </span>
 </Button>
