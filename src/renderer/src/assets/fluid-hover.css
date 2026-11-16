@@ -14,7 +14,8 @@
     &::before {
       /* The box collapses once no row anchors it, so its place holds until the fade out ends. */
       --fade: 60ms;
-      --move: 0s 60ms allow-discrete;
+      --hold: 0s 60ms allow-discrete;
+      --move: var(--hold);
       @apply bg-muted;
       content: '';
       position: absolute;
@@ -25,12 +26,14 @@
       width: anchor-size(width);
       height: anchor-size(height);
       opacity: 0;
+      /* Only the slide between rows eases. An eased width restarts on every frame of a row's
+         resize, which stalls the highlight until the row comes to rest. */
       transition:
         opacity var(--fade),
         top var(--move),
-        left var(--move),
-        width var(--move),
-        height var(--move);
+        height var(--move),
+        left var(--hold),
+        width var(--hold);
       @apply ease-out;
     }
 
@@ -56,6 +59,7 @@
 
     [data-fluid-hover]:has(&)::before {
       --fade: 80ms;
+      --hold: 0s;
       --move: 80ms;
       opacity: 1;
 
