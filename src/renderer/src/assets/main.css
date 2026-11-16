@@ -40,7 +40,6 @@
   --accent-foreground: var(--foreground);
   --brand: #f54e00;
   --destructive: light-dark(#cd2834, #ff6161);
-  /* Dark mode softens the solid fill to 60%. */
   --destructive-fill: light-dark(#cd2834, #ff616199);
   --destructive-foreground: #ffffff;
   --success: light-dark(#00854a, #41cb7e);

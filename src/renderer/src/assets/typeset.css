@@ -13,12 +13,10 @@
     overflow-wrap: break-word;
     margin-trim: block-start;
 
-    /* Paragraphs. */
     :where(p) {
       margin-block-start: var(--typeset-flow);
     }
 
-    /* Headings. */
     :where(h1, h2, h3, h4, h5, h6) {
       font-family: var(--font-heading);
       font-weight: 600;
@@ -67,7 +65,6 @@
       margin-block-start: 1em;
     }
 
-    /* Links. */
     :where(a) {
       font-weight: 500;
       text-decoration-line: underline;
@@ -86,12 +83,10 @@
       font-weight: inherit;
     }
 
-    /* Inline semantics. */
     :where(strong, b) {
       font-weight: 600;
     }
 
-    /* Lists. */
     :where(ul) {
       list-style-type: disc;
     }
@@ -119,7 +114,6 @@
       color: var(--color-muted-foreground);
     }
 
-    /* Inline code. */
     :where(code:not(pre code)) {
       background-color: var(--color-muted);
       font-size: 0.85em;
@@ -127,7 +121,6 @@
       padding: 0.125em 0.3em;
     }
 
-    /* Code blocks. */
     :where(pre) {
       background-color: var(--color-muted);
       font-size: calc(13em / 15);
@@ -139,14 +132,12 @@
       margin-block-start: calc(var(--typeset-flow) * 15 / 13);
     }
 
-    /* Blockquote. */
     :where(blockquote) {
       border-inline-start: 2px solid var(--color-border);
       padding-inline-start: 1em;
       margin-block-start: var(--typeset-flow);
     }
 
-    /* Dividers. */
     :where(hr) {
       margin-block-start: calc(var(--typeset-flow) * 2.4);
     }
