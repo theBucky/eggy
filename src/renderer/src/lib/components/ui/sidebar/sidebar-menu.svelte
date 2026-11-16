@@ -5,7 +5,6 @@
 
 <script lang="ts">
 	import { hasContext, setContext } from "svelte";
-	import { fluidHover } from "$lib/fluid-hover.js";
 	import { cn, type WithElementRef } from "$lib/utils.js";
 	import type { HTMLAttributes } from "svelte/elements";
 
@@ -23,10 +22,10 @@
 
 <ul
 	bind:this={ref}
-	{@attach root && fluidHover('[data-sidebar="menu-button"]')}
+	data-fluid-hover={root ? "" : undefined}
 	data-slot="sidebar-menu"
 	data-sidebar="menu"
-	class={cn("gap-0.5 flex w-full min-w-0 flex-col", className)}
+	class={cn("gap-0.5 flex w-full min-w-0 flex-col", root && "before:rounded-xl", className)}
 	{...restProps}
 >
 	{@render children?.()}

@@ -46,6 +46,7 @@
 	const mergedProps = $derived({
 		class: cn(itemVariants({ variant, size }), className),
 		"data-slot": "item",
+		"data-fluid-hover-item": "",
 		"data-variant": variant,
 		"data-size": size,
 		...restProps,

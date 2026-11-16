@@ -2,6 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
 @import './typeset.css';
+@import './fluid-hover.css';
 
 @font-face {
   font-family: 'Geist Variable';

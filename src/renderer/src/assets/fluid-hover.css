@@ -1,0 +1,67 @@
+/* A highlight that slides between the rows of a list. The list carries `data-fluid-hover` and rounds
+   the highlight with a `before:` utility; its rows carry `data-fluid-hover-item`. Links and buttons
+   light up under the pointer, any other row while it carries `data-highlighted`. */
+@layer components {
+  [data-fluid-hover] {
+    position: relative;
+    isolation: isolate;
+    /* Cuts off the last row's reach. */
+    overflow-y: clip;
+    anchor-scope: --fluid-hover;
+
+    /* Sized from the row alone. Insets from the list's far edges would trail behind a list that is
+       changing size. */
+    &::before {
+      /* The box collapses once no row anchors it, so its place holds until the fade out ends. */
+      --fade: 60ms;
+      --move: 0s 60ms allow-discrete;
+      @apply bg-muted;
+      content: '';
+      position: absolute;
+      position-anchor: --fluid-hover;
+      top: anchor(top);
+      left: anchor(left);
+      z-index: -1;
+      width: anchor-size(width);
+      height: anchor-size(height);
+      opacity: 0;
+      transition:
+        opacity var(--fade),
+        top var(--move),
+        left var(--move),
+        width var(--move),
+        height var(--move);
+      @apply ease-out;
+    }
+
+    /* Every row is positioned, so a row stacks over the reach of the one before. */
+    [data-fluid-hover-item] {
+      position: relative;
+
+      /* Reaches past the widest gap between rows, which keeps the pointer on a row while crossing
+         or clicking between two. */
+      &:is(a[href], button:enabled)::after {
+        content: '';
+        position: absolute;
+        inset: 100% 0 auto;
+        height: calc(var(--spacing) * 5);
+      }
+    }
+  }
+
+  /* Kept out of the list's block: nested under a descendant selector, `:has(&)` compiles to one
+     that looks for a second list inside the first. */
+  [data-fluid-hover-item]:is(:is(a[href], button:enabled):hover, [data-highlighted]) {
+    anchor-name: --fluid-hover;
+
+    [data-fluid-hover]:has(&)::before {
+      --fade: 80ms;
+      --move: 80ms;
+      opacity: 1;
+
+      @media (prefers-reduced-motion: reduce) {
+        --move: 0s;
+      }
+    }
+  }
+}
