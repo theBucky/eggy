@@ -11,7 +11,7 @@ import {
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { is } from '@electron-toolkit/utils'
-import type { Events, Ipc, Launch } from '$shared/api'
+import type { Events, Ipc, Launch, PackageList } from '$shared/api'
 import * as apps from './apps'
 import * as brew from './brew'
 import * as git from './git'
@@ -33,6 +33,18 @@ function send<Channel extends keyof Events>(
   ...args: Events[Channel]
 ): void {
   if (!contents.isDestroyed()) contents.send(channel, ...args)
+}
+
+// brew lists its packages slower than the window opens, so the listing starts with the process and
+// the page's first request takes that result.
+let launchPackages: Promise<PackageList> | undefined = brew.list()
+
+function listPackages(): Promise<PackageList> {
+  const packages = launchPackages ?? brew.list()
+
+  launchPackages = undefined
+
+  return packages
 }
 
 let quitting = false
@@ -121,7 +133,7 @@ app.whenReady().then(() => {
       apps.upgrade(path, (progress) => send(event.sender, 'appProgress', path, progress)),
     forceAppUpgrade: (_, path) => apps.forceUpgrade(path),
     discardAppUpgrade: (_, path) => apps.discardUpgrade(path),
-    listPackages: () => brew.list(),
+    listPackages,
     checkPackages: () => brew.check(),
     upgradePackage: (event, kind, fullName) =>
       brew.upgrade(kind, fullName, (text) =>
