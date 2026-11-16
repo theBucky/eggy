@@ -11,7 +11,11 @@ export default defineConfig({
     // Electron's own module, which Node's built-in list leaves out.
     build: { rolldownOptions: { external: ['original-fs'] } }
   },
-  preload: { resolve: { alias: shared } },
+  preload: {
+    resolve: { alias: shared },
+    // A sandboxed renderer loads its preload as CommonJS only.
+    build: { rolldownOptions: { output: { format: 'cjs' } } }
+  },
   renderer: {
     resolve: {
       alias: { $lib: resolve(import.meta.dirname, 'src/renderer/src/lib'), ...shared }

@@ -8,9 +8,10 @@ import {
   type IpcMainInvokeEvent,
   type WebContents
 } from 'electron'
+import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { is } from '@electron-toolkit/utils'
-import type { Events, Ipc } from '$shared/api'
+import type { Events, Ipc, Launch } from '$shared/api'
 import * as apps from './apps'
 import * as brew from './brew'
 import * as git from './git'
@@ -48,8 +49,7 @@ function createWindow(): BrowserWindow {
     trafficLightPosition: { x: 18, y: 18 },
     backgroundColor: sidebarColor(),
     webPreferences: {
-      preload: join(import.meta.dirname, '../preload/index.mjs'),
-      sandbox: false,
+      preload: join(import.meta.dirname, '../preload/index.cjs'),
       spellcheck: false
     }
   })
@@ -87,9 +87,8 @@ function createWindow(): BrowserWindow {
 app.whenReady().then(() => {
   restoreTheme()
 
-  // The preload reads the theme synchronously, before the page renders.
-  ipcMain.on('theme', (event) => {
-    event.returnValue = nativeTheme.themeSource
+  ipcMain.on('launch', (event) => {
+    event.returnValue = { home: homedir(), theme: nativeTheme.themeSource } satisfies Launch
   })
 
   const window = createWindow()

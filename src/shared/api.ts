@@ -180,11 +180,16 @@ export type Events = {
   menuCommand: [command: MenuCommand]
 }
 
-export type Api = Ipc & {
+// What the preload reads synchronously, before the page renders.
+export type Launch = {
   home: string
   theme: Theme
-  onAppProgress: (listener: (...args: Events['appProgress']) => void) => void
-  onPackageOutput: (listener: (...args: Events['packageOutput']) => void) => void
-  onOptimization: (listener: (...args: Events['optimization']) => void) => void
-  onMenuCommand: (listener: (...args: Events['menuCommand']) => void) => void
 }
+
+export type Api = Ipc &
+  Launch & {
+    onAppProgress: (listener: (...args: Events['appProgress']) => void) => void
+    onPackageOutput: (listener: (...args: Events['packageOutput']) => void) => void
+    onOptimization: (listener: (...args: Events['optimization']) => void) => void
+    onMenuCommand: (listener: (...args: Events['menuCommand']) => void) => void
+  }
