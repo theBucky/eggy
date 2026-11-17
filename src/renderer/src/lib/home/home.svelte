@@ -179,7 +179,7 @@
 {/snippet}
 
 {#snippet failure(message: string)}
-  <span class="text-destructive">{message}</span>
+  <span class="block truncate-fade text-destructive">{message}</span>
 {/snippet}
 
 {#snippet appRow(entry: AppEntry)}
@@ -223,20 +223,17 @@
 {#snippet repoRow(entry: RepoEntry)}
   {@const { repo, task } = entry}
   {@const pull = pendingPull(entry)}
+  {@const offsets = repo.sync && offsetsOf(repo.sync)}
   <Item.Root size="xs" role="listitem">
     <Item.Content>
       <Item.Title>
-        <Badge variant="secondary">{repo.branch}</Badge>
         <span class="shrink-0">{nameOf(repo.path)}</span>
-        <Item.Description>
-          <span class="line-clamp-1 wrap-anywhere">
-            {#if task?.status === 'failed'}
-              {@render failure(task.message)}
-            {:else}
-              {repo.sync && offsetsOf(repo.sync)}
-            {/if}
-          </span>
-        </Item.Description>
+        <Badge variant="secondary">{repo.branch}</Badge>
+        {#if task?.status === 'failed'}
+          <Item.Description>{@render failure(task.message)}</Item.Description>
+        {:else if offsets}
+          <Badge variant="info">{offsets}</Badge>
+        {/if}
       </Item.Title>
     </Item.Content>
     {#if behind(entry) || pull}
