@@ -1,19 +1,21 @@
 <script lang="ts">
   import ListCard from '$lib/components/list-card.svelte'
   import Page from '$lib/components/page.svelte'
+  import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
   import { labelOf, releaseOf, type Apps, type Entry as AppEntry } from '$lib/apps/apps.svelte'
   import AppUpgradeButton from '$lib/apps/upgrade-button.svelte'
-  import { ago, list, megabytes } from '$lib/format'
+  import { list, megabytes } from '$lib/format'
   import { idOf, type Entry as PackageEntry, type Packages } from '$lib/packages/packages.svelte'
-  import type { Package, Release, Repo } from '$shared/api'
+  import type { App, Package, Release } from '$shared/api'
   import PackageUpgradeButton from '$lib/packages/upgrade-button.svelte'
   import { nameOf, tilde } from '$lib/paths'
   import PullButton from '$lib/repos/pull-button.svelte'
   import {
     behind,
     diverged,
+    offsetsOf,
     pendingPull,
     type Entry as RepoEntry,
     type Repos
@@ -78,35 +80,21 @@
     return parts.filter((part) => part !== false).join(', ')
   }
 
-  function appMeta(entry: AppEntry, release: Release): string {
-    return clauses(
-      `${labelOf(entry.app)} → ${labelOf(release)}`,
-      release.size !== undefined && megabytes(release.size),
-      release.date !== undefined && `released ${ago(release.date)}`
-    )
+  function appMeta(app: App, release: Release): string {
+    const bump =
+      app.version === release.version
+        ? `${labelOf(app)} → ${labelOf(release)}`
+        : `${app.version} → ${release.version}`
+
+    return clauses(bump, release.size !== undefined && megabytes(release.size))
   }
 
   function packageMeta(pkg: Package): string {
-    return clauses(
-      `${pkg.version} → ${pkg.latest}`,
-      pkg.kind === 'cask' && 'cask',
-      !pkg.requested && 'dependency'
-    )
-  }
-
-  function repoMeta({ branch, upstream, sync }: Repo): string {
-    const offsets = [
-      !!sync?.behind && `${sync.behind} behind`,
-      !!sync?.ahead && `${sync.ahead} ahead of`
-    ].filter((offset) => offset !== false)
-
-    return offsets.length > 0
-      ? `${branch} is ${list.format(offsets)} ${upstream}`
-      : `${branch} tracks ${upstream}`
+    return clauses(`${pkg.version} → ${pkg.latest}`, !pkg.requested && 'dependency')
   }
 
   function standing(source: Source): string {
-    return source.checked ? 'All up to date.' : 'Not checked yet.'
+    return source.checked ? 'Up to date.' : 'Not checked.'
   }
 </script>
 
@@ -205,7 +193,7 @@
         {#if task?.status === 'failed'}
           {@render failure(task.message)}
         {:else if release}
-          {@render meta(appMeta(entry, release))}
+          {@render meta(appMeta(app, release))}
         {/if}
       </Item.Description>
     </Item.Content>
@@ -237,14 +225,19 @@
   {@const pull = pendingPull(entry)}
   <Item.Root size="xs" role="listitem">
     <Item.Content>
-      <Item.Title><span class="line-clamp-1">{nameOf(repo.path)}</span></Item.Title>
-      <Item.Description>
-        {#if task?.status === 'failed'}
-          {@render failure(task.message)}
-        {:else}
-          {@render meta(repoMeta(repo))}
-        {/if}
-      </Item.Description>
+      <Item.Title>
+        <Badge variant="secondary">{repo.branch}</Badge>
+        <span class="shrink-0">{nameOf(repo.path)}</span>
+        <Item.Description>
+          <span class="line-clamp-1 wrap-anywhere">
+            {#if task?.status === 'failed'}
+              {@render failure(task.message)}
+            {:else}
+              {repo.sync && offsetsOf(repo.sync)}
+            {/if}
+          </span>
+        </Item.Description>
+      </Item.Title>
     </Item.Content>
     {#if behind(entry) || pull}
       <Item.Actions>

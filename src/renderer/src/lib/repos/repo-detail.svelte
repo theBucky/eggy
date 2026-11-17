@@ -13,7 +13,7 @@
   import { ago } from '$lib/format'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
   import PullButton from '$lib/repos/pull-button.svelte'
-  import { diverged, type Entry, type Repos } from '$lib/repos/repos.svelte'
+  import { diverged, offsetsOf, type Entry, type Repos } from '$lib/repos/repos.svelte'
   import type { Commit } from '$shared/api'
 
   type SyncBadge = { label: string; variant: BadgeVariant }
@@ -41,12 +41,7 @@
 
     if (ahead === 0 && behind === 0) return { label: 'Up to date', variant: 'success' }
 
-    return {
-      label: [ahead > 0 && `${ahead} ahead`, behind > 0 && `${behind} behind`]
-        .filter(Boolean)
-        .join(', '),
-      variant: behind > 0 ? 'info' : 'secondary'
-    }
+    return { label: offsetsOf(repo.sync), variant: behind > 0 ? 'info' : 'secondary' }
   })
 </script>
 

@@ -2,7 +2,7 @@ import type { Status } from '$lib/status'
 import { tilde } from '$lib/paths'
 import { Serial } from '$lib/serial'
 import type { Phase, Source } from '$lib/sources.svelte'
-import type { FetchOutcome, PullCommand, PullOutcome, Repo } from '$shared/api'
+import type { FetchOutcome, PullCommand, PullOutcome, Repo, Sync } from '$shared/api'
 
 type Task =
   | { command: 'fetch'; status: 'running' }
@@ -37,6 +37,12 @@ export function behind({ repo }: Entry): boolean {
 
 export function diverged({ repo }: Entry): boolean {
   return repo.sync !== undefined && repo.sync.ahead > 0 && repo.sync.behind > 0
+}
+
+export function offsetsOf({ ahead, behind }: Sync): string {
+  return [ahead > 0 && `${ahead} ahead`, behind > 0 && `${behind} behind`]
+    .filter((offset) => offset !== false)
+    .join(', ')
 }
 
 export function pendingPull({ task }: Entry): PullCommand | undefined {
