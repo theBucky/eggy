@@ -258,6 +258,12 @@
   animation-range: 0 calc(100% + 1px);
 }
 
+/* Stretches a button over the positioned row it names, which takes the focus ring in its place. The
+   row's other controls need a positioned box to stack over the stretch. */
+@utility stretched {
+  @apply outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-1 focus-visible:after:ring-ring focus-visible:after:ring-inset;
+}
+
 /* The negative margin puts a section's scrollbar in the page's padding, clear of the content. */
 @utility scroll-section {
   @apply -mx-scrollbar my-2 overflow-fade-y overflow-y-auto px-scrollbar py-1;

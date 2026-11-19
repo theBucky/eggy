@@ -42,6 +42,10 @@
       (view.page === 'detail' && repo === undefined && app === undefined && pkg === undefined)
   )
 
+  function select(id: string): void {
+    view = { page: 'detail', id }
+  }
+
   if (preferences.checkOnLaunch) sources.refresh()
   else sources.scan()
 
@@ -83,11 +87,11 @@
     </div>
 
     <Sidebar.Content class="overflow-fade-y">
-      <AppGroup {apps} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+      <AppGroup {apps} {selected} onselect={select} />
       {#if packages.installed}
-        <PackageGroup {packages} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+        <PackageGroup {packages} {selected} onselect={select} />
       {/if}
-      <RepoGroup {repos} {selected} onselect={(id) => (view = { page: 'detail', id })} />
+      <RepoGroup {repos} {selected} onselect={select} />
     </Sidebar.Content>
 
     <div class="px-1 py-2">
@@ -123,7 +127,7 @@
         <PackageDetail {packages} entry={pkg} />
       {/key}
     {:else}
-      <Home {apps} {packages} {repos} {sources} />
+      <Home {apps} {packages} {repos} {sources} onselect={select} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>

@@ -27,8 +27,15 @@
     apps,
     packages,
     repos,
-    sources
-  }: { apps: Apps; packages: Packages; repos: Repos; sources: Source } = $props()
+    sources,
+    onselect
+  }: {
+    apps: Apps
+    packages: Packages
+    repos: Repos
+    sources: Source
+    onselect: (id: string) => void
+  } = $props()
 
   const pending = $derived(sources.outdated.length)
 
@@ -188,7 +195,11 @@
   <Item.Root size="xs" role="listitem">
     <Item.Media variant="image"><img src={app.icon} alt="" /></Item.Media>
     <Item.Content>
-      <Item.Title><span class="line-clamp-1">{app.name}</span></Item.Title>
+      <Item.Title>
+        <button type="button" class="stretched truncate" onclick={() => onselect(app.path)}>
+          {app.name}
+        </button>
+      </Item.Title>
       <Item.Description>
         {#if task?.status === 'failed'}
           {@render failure(task.message)}
@@ -198,7 +209,7 @@
       </Item.Description>
     </Item.Content>
     {#if release}
-      <Item.Actions><AppUpgradeButton {apps} {entry} /></Item.Actions>
+      <Item.Actions class="relative"><AppUpgradeButton {apps} {entry} /></Item.Actions>
     {/if}
   </Item.Root>
 {/snippet}
@@ -227,7 +238,9 @@
   <Item.Root size="xs" role="listitem">
     <Item.Content>
       <Item.Title>
-        <span class="shrink-0">{nameOf(repo.path)}</span>
+        <button type="button" class="stretched shrink-0" onclick={() => onselect(repo.path)}>
+          {nameOf(repo.path)}
+        </button>
         <Badge variant="secondary">{repo.branch}</Badge>
         {#if task?.status === 'failed'}
           <Item.Description>{@render failure(task.message)}</Item.Description>
@@ -237,7 +250,7 @@
       </Item.Title>
     </Item.Content>
     {#if behind(entry) || pull}
-      <Item.Actions>
+      <Item.Actions class="relative">
         <PullButton {repos} {entry} command={pull ?? (diverged(entry) ? 'rebase' : 'pull')} />
       </Item.Actions>
     {/if}
