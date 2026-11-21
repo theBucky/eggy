@@ -32,6 +32,7 @@
 		const node = trigger.node;
 		if (!wrapper || !node) throw new Error("Select.Content needs a Select.Trigger to flow out of");
 		const placed = requestAnimationFrame(() => (placing = false));
+		trigger.pouring = true;
 		// The trigger's box, as insets from the menu's box.
 		const measure = () => {
 			const menu = wrapper.getBoundingClientRect();
@@ -54,6 +55,7 @@
 		return () => {
 			cancelAnimationFrame(placed);
 			placing = true;
+			trigger.pouring = false;
 			moved.disconnect();
 			resized.disconnect();
 		};
@@ -96,8 +98,8 @@
 					<!-- Kept off the liquid layer, so the trigger the menu flows out of casts no shadow. -->
 					<div class="lift shadow-popup" aria-hidden="true"></div>
 					<div class="liquid" style:filter="url(#{filterId})" aria-hidden="true">
-						<div class="blob trigger"></div>
 						<div class="blob menu"></div>
+						<div class="blob trigger"></div>
 					</div>
 					<svg class="absolute size-0" aria-hidden="true">
 						<!-- Blurring the two boxes and thresholding the result bridges them wherever they sit
@@ -119,10 +121,27 @@
 							<feFlood style="flood-color: var(--border)" />
 							<feComposite in2="outline" operator="in" />
 							<feComposite in2="shape" operator="out" result="border" />
+							<!-- The trigger draws its own border, so the liquid keeps out of the trigger's border
+							     box, short of a fill solid enough to bridge it: a softer edge would wash over the
+							     border. The trigger's blob is the red one on top, grown here by that border. -->
+							<feColorMatrix
+								in="SourceGraphic"
+								type="matrix"
+								values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 1 -1"
+							/>
+							<feGaussianBlur stdDeviation="1" />
+							<feComponentTransfer result="box">
+								<feFuncA type="linear" slope="24" intercept="-3.3" />
+							</feComponentTransfer>
+							<feComponentTransfer in="fill" result="bridge">
+								<feFuncA type="linear" slope="5" intercept="-4" />
+							</feComponentTransfer>
+							<feComposite in="box" in2="bridge" operator="out" result="own" />
 							<feMerge>
 								<feMergeNode in="fill" />
 								<feMergeNode in="border" />
 							</feMerge>
+							<feComposite in2="own" operator="out" />
 						</filter>
 					</svg>
 				</div>
@@ -208,7 +227,7 @@
 				) +
 				16px
 		);
-		/* The trigger's box less its border, which the ring drawn outside the shape lands on. */
+		/* The trigger's box less its border, which the trigger draws itself. */
 		--docked: calc(var(--reach) + var(--anchor-top) + 1px)
 			calc(var(--reach) + var(--anchor-right) + 1px)
 			calc(var(--reach) + var(--anchor-bottom) + 1px)
@@ -255,16 +274,19 @@
 
 	.blob {
 		position: absolute;
-		border-radius: var(--radius);
-		background: #000;
 	}
 
 	/* A box and not a clip, which would round the corners differently from every other frame. */
 	.menu {
 		inset: var(--reach);
 		border-radius: var(--menu-radius);
+		background: #000;
 		transition: var(--menu-motion, 0s);
 		transition-property: inset, border-radius;
+	}
+
+	.trigger {
+		background: #f00;
 	}
 
 	.trigger,

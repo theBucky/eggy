@@ -1,9 +1,10 @@
 <script lang="ts" module>
 	import { createContext } from "svelte";
 
-	type Trigger = { node: HTMLElement | null };
+	type Trigger = { node: HTMLElement | null; pouring: boolean };
 
-	// The content draws its surface out of the trigger, so it needs the trigger's element.
+	// The content draws its surface out of the trigger, so it needs the trigger's element, and the
+	// trigger needs to know for how long that surface is out.
 	export const [getSelectTrigger, setSelectTrigger] = createContext<Trigger>();
 </script>
 
@@ -16,7 +17,7 @@
 		...restProps
 	}: SelectPrimitive.RootProps = $props();
 
-	const trigger: Trigger = $state({ node: null });
+	const trigger: Trigger = $state({ node: null, pouring: false });
 	setSelectTrigger(trigger);
 </script>
 
