@@ -10,7 +10,7 @@ import type { Update } from './feeds/feed'
 import { fs } from './fs'
 import { forceQuit } from './processes'
 
-export type Staged = {
+export type Staged = AsyncDisposable & {
   bundle: Bundle
   work: string
   replacement: string
@@ -64,6 +64,10 @@ async function prepare(
 ): Promise<Staged> {
   const work = await makeWork(bundle.path)
 
+  function discard(): Promise<void> {
+    return fs.rm(work, { recursive: true, force: true })
+  }
+
   try {
     const archive = join(work, basename(new URL(update.release.url).pathname))
 
@@ -74,9 +78,9 @@ async function prepare(
 
     await update.verify(archive, replacement)
 
-    return { bundle, work, replacement }
+    return { bundle, work, replacement, [Symbol.asyncDispose]: discard }
   } catch (cause) {
-    await fs.rm(work, { recursive: true, force: true })
+    await discard()
     throw cause
   }
 }
@@ -97,12 +101,7 @@ export async function stage(
   throw new Error(`${bundle.name} is already up to date.`)
 }
 
-export async function discard({ work }: Staged): Promise<void> {
-  await fs.rm(work, { recursive: true, force: true })
-}
-
-export async function install(staged: Staged): Promise<InstallOutcome> {
-  const { bundle, replacement } = staged
+export async function install({ bundle, replacement }: Staged): Promise<InstallOutcome> {
   const { path } = bundle
 
   try {
@@ -120,7 +119,5 @@ export async function install(staged: Staged): Promise<InstallOutcome> {
     return { status: 'upgraded', version, build }
   } catch (cause) {
     return failure(cause)
-  } finally {
-    await discard(staged)
   }
 }

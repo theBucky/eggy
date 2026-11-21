@@ -6,7 +6,7 @@ import { failure } from '../errors'
 import { readBundle } from './bundle'
 import { feedOf, fetchUpdates } from './feeds'
 import { fs, rmSync } from './fs'
-import { discard, install, stage, type Staged } from './install'
+import { install, stage, type Staged } from './install'
 import { isRunning } from './processes'
 
 const folders = ['/Applications', join(homedir(), 'Applications')]
@@ -55,7 +55,7 @@ export async function upgrade(
 ): Promise<UpgradeOutcome> {
   try {
     const bundle = await readBundle(path)
-    const staged = await stage(bundle, await fetchUpdates(bundle), report)
+    await using staged = await stage(bundle, await fetchUpdates(bundle), report)
 
     if (await isRunning(bundle)) {
       const { promise, resolve } = Promise.withResolvers<boolean>()
@@ -63,11 +63,7 @@ export async function upgrade(
       waiting.set(path, { staged, answer: resolve })
       report({ stage: 'waiting' })
 
-      if (!(await promise)) {
-        await discard(staged)
-
-        return { status: 'discarded' }
-      }
+      if (!(await promise)) return { status: 'discarded' }
 
       report({ stage: 'install' })
     }
