@@ -1,13 +1,17 @@
 <script lang="ts" module>
+  import { renderToHtml } from '@pierre/words'
   import DOMPurify from 'dompurify'
-  import { marked } from 'marked'
 
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'A') node.setAttribute('target', '_blank')
   })
 
+  const decoder = new TextDecoder()
+
   function render(format: 'html' | 'markdown', text: string): string {
-    return DOMPurify.sanitize(format === 'markdown' ? marked.parse(text, { async: false }) : text, {
+    const html = format === 'markdown' ? decoder.decode(renderToHtml(text, { cjk: true })) : text
+
+    return DOMPurify.sanitize(html, {
       ALLOWED_TAGS: [
         'p',
         'br',
