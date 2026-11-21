@@ -1,6 +1,8 @@
 import { createSubscriber } from 'svelte/reactivity'
 
-export const list = new Intl.ListFormat('en')
+export function clauses(...parts: (string | false)[]): string {
+  return parts.filter((part) => part !== false).join(', ')
+}
 
 const relative = new Intl.RelativeTimeFormat('en')
 

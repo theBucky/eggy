@@ -5,10 +5,12 @@
   let { title, message }: { title: string; message: string } = $props()
 </script>
 
-<Alert.Root variant="destructive">
-  <IconAlertCircle />
-  <Alert.Title>{title}</Alert.Title>
-  <Alert.Description>
-    <p class="wrap-anywhere whitespace-pre-wrap select-text">{message}</p>
-  </Alert.Description>
-</Alert.Root>
+<div class="mt-8">
+  <Alert.Root variant="destructive">
+    <IconAlertCircle />
+    <Alert.Title>{title}</Alert.Title>
+    <Alert.Description>
+      <p class="wrap-anywhere whitespace-pre-wrap select-text">{message}</p>
+    </Alert.Description>
+  </Alert.Root>
+</div>

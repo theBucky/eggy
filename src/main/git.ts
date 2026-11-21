@@ -4,7 +4,6 @@ import { join } from 'node:path'
 import type {
   Commit,
   CommitDetail,
-  Failure,
   FetchResult,
   History,
   PullCommand,
@@ -12,27 +11,23 @@ import type {
   Repo,
   Sync,
   Tracking
-} from '$shared/api'
+} from '$shared/repos'
 import { exec } from './exec'
 import { loginEnv } from './login-env'
 
-type GitResult = {
-  ok: boolean
-  stdout: string
-  stderr: string
-}
+type Output = { ok: boolean; stdout: string; stderr: string }
 
 // A repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
 const env = loginEnv.then((env) => ({ ...env, GIT_TERMINAL_PROMPT: '0' }))
 
-async function git(cwd: string, args: string[]): Promise<GitResult> {
+async function git(cwd: string, args: string[]): Promise<Output> {
   const { exit, stdout, stderr } = await exec('git', args, { cwd, env: await env })
 
   return { ok: exit === 0, stdout, stderr: exit instanceof Error ? exit.message : stderr }
 }
 
-function failure({ stdout, stderr }: GitResult): Failure {
-  return { status: 'failed', message: (stdout + stderr).trim() }
+function messageOf({ stdout, stderr }: Output): string {
+  return (stdout + stderr).trim()
 }
 
 async function readSync(path: string): Promise<Sync | undefined> {
@@ -52,9 +47,7 @@ async function readSync(path: string): Promise<Sync | undefined> {
 
 const log = ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']
 
-function parseLog({ ok, stdout }: GitResult, pages?: string): Commit[] {
-  if (!ok) return []
-
+function parseLog(stdout: string, pages?: string): Commit[] {
   return stdout.split('\n').flatMap((line) => {
     if (line === '') return []
 
@@ -105,8 +98,8 @@ async function readHistory(path: string, remote: string): Promise<History> {
   ])
 
   return {
-    unpushed: parseLog(unpushed),
-    pushed: parseLog(pushed, commitPagesOf(remote))
+    unpushed: parseLog(unpushed.stdout),
+    pushed: parseLog(pushed.stdout, commitPagesOf(remote))
   }
 }
 
@@ -133,9 +126,14 @@ async function readRepo(path: string): Promise<Repo | undefined> {
   if (current === null) return undefined
 
   const [, branch, upstream] = current
-  const gitDir = commonDir.stdout.trim()
 
-  return { path, gitDir, branch, upstream, ...(await readTracking(path)) }
+  return {
+    path,
+    commonDir: commonDir.stdout.trim(),
+    branch,
+    upstream,
+    ...(await readTracking(path))
+  }
 }
 
 async function findRepos(dir: string): Promise<string[]> {
@@ -154,14 +152,12 @@ async function findRepos(dir: string): Promise<string[]> {
   return nested.flat()
 }
 
-const CONCURRENCY = 16
-
 export async function scan(root: string): Promise<Repo[]> {
   const queue = (await findRepos(root)).entries()
   const repos: (Repo | undefined)[] = []
 
   await Promise.all(
-    Array.from({ length: CONCURRENCY }, async () => {
+    Array.from({ length: 16 }, async () => {
       for (const [index, path] of queue) repos[index] = await readRepo(path)
     })
   )
@@ -170,19 +166,19 @@ export async function scan(root: string): Promise<Repo[]> {
 }
 
 export async function fetch(path: string): Promise<FetchResult> {
-  const result = await git(path, ['fetch', '--tags', '--force'])
+  const fetched = await git(path, ['fetch', '--tags', '--force'])
   const tracking = await readTracking(path)
 
-  if (!result.ok) return { ...tracking, outcome: failure(result) }
+  if (!fetched.ok) return { tracking, outcome: { status: 'failed', message: messageOf(fetched) } }
 
   if (tracking.sync === undefined) {
     return {
-      ...tracking,
+      tracking,
       outcome: { status: 'failed', message: 'The upstream branch no longer exists.' }
     }
   }
 
-  return { ...tracking, outcome: { status: 'fetched' } }
+  return { tracking, outcome: { status: 'fetched' } }
 }
 
 export async function pull(path: string, command: PullCommand): Promise<PullResult> {
@@ -201,7 +197,7 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   const rebasing = states.some((state) => existsSync(state))
 
   // Git's conflict hints explain how to continue a rebase that the abort below undoes.
-  const result = await git(
+  const pulled = await git(
     path,
     command === 'rebase'
       ? ['-c', 'advice.mergeConflict=false', 'pull', '--rebase', '--autostash']
@@ -212,7 +208,7 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   // and any stashed changes go back to how they were. A rebase already underway, such as one paused
   // in a terminal, isn't this pull's to abort.
   const aborted =
-    command === 'rebase' && !rebasing && !result.ok && (await git(path, ['rebase', '--abort'])).ok
+    command === 'rebase' && !rebasing && !pulled.ok && (await git(path, ['rebase', '--abort'])).ok
 
   const [tracking, added, unmerged] = await Promise.all([
     readTracking(path),
@@ -221,20 +217,22 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
     git(path, ['diff', '--name-only', '--diff-filter=U'])
   ])
 
-  if (!result.ok || unmerged.stdout !== '') {
-    const outcome = failure(result)
+  if (!pulled.ok || unmerged.stdout !== '') {
+    const message = messageOf(pulled)
 
-    if (aborted) outcome.message += '\n\nRebase aborted, so the branch is unchanged.'
-
-    return { ...tracking, outcome }
+    return {
+      tracking,
+      outcome: {
+        status: 'failed',
+        message: aborted ? `${message}\n\nRebase aborted, so the branch is unchanged.` : message
+      }
+    }
   }
 
   // Counting from the upstream leaves out local commits that a rebase replays under new hashes.
   const count = Number(added.stdout)
 
-  if (count === 0) return { ...tracking, outcome: { status: 'current' } }
-
-  return { ...tracking, outcome: { status: 'updated', count } }
+  return { tracking, outcome: count === 0 ? { status: 'current' } : { status: 'updated', count } }
 }
 
 export async function show(path: string, hash: string): Promise<CommitDetail> {

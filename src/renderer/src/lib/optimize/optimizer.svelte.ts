@@ -1,13 +1,23 @@
-import type { Machine, Optimization, OptimizeOutcome, OptimizeState } from '$shared/api'
+import {
+  OPTIMIZATIONS,
+  type Machine,
+  type Optimization,
+  type OptimizeOutcome,
+  type OptimizeState
+} from '$shared/optimize'
 
 export class Optimizer {
-  machine = $state<Machine>()
+  machine = $state.raw<Machine>()
+  batch = $state.raw<Optimization[]>([])
   #states = $state<Partial<Record<Optimization, OptimizeState>>>({})
-  batch = $state<Optimization[]>([])
-  running = $derived(this.batch.some((optimization) => this.outcomeOf(optimization) === undefined))
+  outcomes = $derived(OPTIMIZATIONS.flatMap((optimization) => this.outcomeOf(optimization) ?? []))
+  done = $derived(
+    this.batch.filter((optimization) => this.outcomeOf(optimization) !== undefined).length
+  )
+  running = $derived(this.done < this.batch.length)
 
   constructor() {
-    window.api.onOptimization((optimization, state) => {
+    window.api.on('optimization', (optimization, state) => {
       this.#states[optimization] = state
     })
   }
@@ -23,14 +33,14 @@ export class Optimizer {
   }
 
   async inspect(): Promise<void> {
-    this.machine = await window.api.inspectMachine()
+    this.machine = await window.api.invoke('inspectMachine').catch(() => this.machine)
   }
 
   async optimize(optimizations: Optimization[]): Promise<void> {
     for (const optimization of optimizations) delete this.#states[optimization]
 
     this.batch = optimizations
-    await window.api.optimize(optimizations)
+    await window.api.invoke('optimize', optimizations)
     await this.inspect()
   }
 }

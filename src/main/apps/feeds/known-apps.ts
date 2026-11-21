@@ -3,9 +3,9 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
 import * as z from 'zod'
-import { output } from '../exec'
-import type { Bundle } from './bundle'
-import { fetchFeed, type Feed, type Framework } from './framework'
+import { output } from '../../exec'
+import type { Bundle } from '../bundle'
+import { fetchFeed, type Feed, type Framework } from './feed'
 import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
@@ -24,10 +24,10 @@ const CursorSettings = z.object({
 const anyMachine = '0'.repeat(64)
 
 // Apps that pick their feed in code at launch, so these pick it the way the app does.
-const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
+const feeds = new Map<string, (bundle: Bundle) => Feed | Promise<Feed>>([
   [
     'com.openai.codex',
-    async (bundle) =>
+    (bundle) =>
       sparkleFeed(bundle, {
         url: 'https://persistent.oaistatic.com/codex-app-prod/appcast.xml',
         channels: []
@@ -36,7 +36,7 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
   // OrbStack, whose feed lags a release behind without a rollout bucket.
   [
     'dev.kdrag0n.MacVirt',
-    async (bundle) =>
+    (bundle) =>
       sparkleFeed(bundle, {
         url: `https://api-updates.orbstack.dev/${process.arch === 'arm64' ? 'arm64' : 'amd64'}/appcast.xml?bucket=0`,
         channels: ['stable']
@@ -47,7 +47,7 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
   // nor a link the feed resolves carries it.
   [
     'pl.maketheweb.cleanshotx',
-    async (bundle) => {
+    (bundle) => {
       const appcast = { url: 'https://legit.maketheweb.io/api/v1/appcast', channels: [] }
 
       return {
@@ -105,7 +105,7 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
   // Grok Bot, whose other release tracks are internal.
   [
     'com.anysphere.sand',
-    async (bundle) => {
+    (bundle) => {
       const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64'
 
       return squirrelFeed(bundle, {
@@ -116,10 +116,10 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
   ],
   // Chrome, whose updates hold the app itself, unlike Google apps that update through an installer
   // package.
-  ['com.google.Chrome', async (bundle) => googleUpdaterFeed(bundle)],
+  ['com.google.Chrome', googleUpdaterFeed],
   [
     'com.figma.Desktop',
-    async (bundle) =>
+    (bundle) =>
       squirrelFeed(bundle, {
         url: `https://desktop.figma.com/${process.arch === 'arm64' ? 'mac-arm' : 'mac'}/RELEASE.json`,
         changelog: 'https://www.figma.com/release-notes/'

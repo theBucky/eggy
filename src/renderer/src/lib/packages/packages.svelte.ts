@@ -1,44 +1,44 @@
-import { Serial } from '$lib/serial'
+import { Source } from '$lib/source.svelte'
 import type { Status } from '$lib/status'
-import type { Phase, Source } from '$lib/sources.svelte'
-import type { Failure, Package, PackageList, PackageUpgrade } from '$shared/api'
+import type { Failure } from '$shared/failure'
+import type { Package, PackageCheck, PackageList, PackageUpgrade } from '$shared/packages'
 
-type Check = { status: 'checked' } | Failure
+type Listing = { status: 'missing' | 'listed' | 'checked' } | Failure
 
-type Task = { output: string } & ({ status: 'queued' | 'running' } | PackageUpgrade)
+type Task =
+  | { status: 'queued' }
+  | { status: 'running'; output: string }
+  | ({ output: string } & PackageUpgrade)
 
 export type Entry = {
+  id: string
   package: Package
   task?: Task
 }
 
 // A formula and a cask can share a name.
-export function idOf({ kind, fullName }: Package): string {
+function idOf({ kind, fullName }: Pick<Package, 'kind' | 'fullName'>): string {
   return `${kind}:${fullName}`
 }
 
-function pending({ task }: Entry): boolean {
-  return task?.status === 'queued' || task?.status === 'running'
+function entryOf(pkg: Package): Entry {
+  return { id: idOf(pkg), package: pkg }
 }
 
-export class Packages implements Source {
-  installed = $state(false)
-  entries = $state<Entry[]>([])
-  #phase = $state<Phase>('idle')
-  check = $state<Check>()
-  scanning = $derived(this.#phase === 'scanning')
-  checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
-  bulk = $derived(this.#phase === 'bulk')
-  busy = $derived(this.#phase !== 'idle' || this.entries.some(pending))
-  checked = $derived(this.check !== undefined)
-  checkFailed = $derived(this.check?.status === 'failed')
+export class Packages extends Source<Entry> {
+  listing = $state<Listing>()
+  installed = $derived(this.listing !== undefined && this.listing.status !== 'missing')
+  checked = $derived(this.listing?.status === 'checked' || this.listing?.status === 'failed')
+  checkFailed = $derived(this.listing?.status === 'failed')
   outdated = $derived(this.entries.filter(({ package: pkg }) => pkg.state === 'outdated'))
+  requested = $derived(this.entries.filter(({ package: pkg }) => pkg.requested))
+  // brew locks the kegs it installs, so upgrades that share dependencies would collide.
+  #queue = Promise.resolve()
 
   constructor() {
-    window.api.onPackageOutput((kind, fullName, text) => {
-      const task = this.entries.find(
-        ({ package: pkg }) => pkg.kind === kind && pkg.fullName === fullName
-      )?.task
+    super()
+    window.api.on('packageOutput', (kind, fullName, text) => {
+      const task = this.find(idOf({ kind, fullName }))?.task
 
       if (task?.status === 'running') task.output += text
     })
@@ -47,99 +47,69 @@ export class Packages implements Source {
   statusOf(entry: Entry): Status {
     const { package: pkg, task } = entry
 
-    if (pending(entry)) return 'running'
+    if (this.pending(entry)) return 'running'
 
     if (task?.status === 'failed') return 'failed'
 
-    if (this.#phase === 'checking') return 'running'
+    if (this.phase === 'checking') return 'running'
 
     if (pkg.state === 'outdated') return 'outdated'
 
-    return task === undefined && this.check?.status !== 'checked' ? 'unknown' : 'current'
+    return task === undefined && this.listing?.status !== 'checked' ? 'unknown' : 'current'
   }
 
-  async scan(): Promise<void> {
-    this.#phase = 'scanning'
-    await this.#list()
-    this.#phase = 'idle'
-  }
+  async upgrade(entries: Entry[]): Promise<void> {
+    for (const entry of entries) entry.task = { status: 'queued' }
 
-  async refresh(): Promise<void> {
-    this.#phase = 'scanning'
-    await this.#list()
+    this.#queue = this.#queue.then(async () => {
+      for (const entry of entries) {
+        // An earlier upgrade may have upgraded this one as a dependency.
+        if (entry.package.state !== 'outdated') {
+          entry.task = undefined
+          continue
+        }
 
-    if (this.installed) {
-      this.#phase = 'checking'
+        entry.task = { status: 'running', output: '' }
 
-      const list = await window.api.checkPackages()
+        const { kind, fullName } = entry.package
+        const outcome = await window.api.invoke('upgradePackage', kind, fullName)
+        const reply = await window.api.invoke('listPackages')
 
-      this.check = list.status === 'failed' ? list : { status: 'checked' }
-      this.#apply(list)
-    }
+        entry.task = { output: entry.task.output, ...outcome }
 
-    this.#phase = 'idle'
-  }
-
-  // brew locks the kegs it installs, so upgrades that share dependencies would collide.
-  #serial = new Serial()
-
-  upgrade(entries: Entry[]): Promise<void> {
-    for (const entry of entries) entry.task = { status: 'queued', output: '' }
-
-    return this.#serial.run(() => this.#upgrade(entries))
-  }
-
-  async upgradeOutdated(): Promise<void> {
-    this.#phase = 'bulk'
-    await this.upgrade(this.outdated)
-    this.#phase = 'idle'
-  }
-
-  canUpgrade(entry: Entry): boolean {
-    return this.#phase === 'idle' && !pending(entry)
-  }
-
-  async #list(): Promise<void> {
-    const list = await window.api.listPackages()
-
-    this.check = list.status === 'failed' ? list : undefined
-    this.#apply(list)
-  }
-
-  async #upgrade(entries: Entry[]): Promise<void> {
-    for (const entry of entries) {
-      // An earlier upgrade may have upgraded this one as a dependency.
-      if (entry.package.state !== 'outdated') {
-        entry.task = undefined
-        continue
+        if (reply.status === 'listed') this.#merge(reply.packages)
       }
+    })
 
-      entry.task = { status: 'running', output: '' }
-
-      const outcome = await window.api.upgradePackage(entry.package.kind, entry.package.fullName)
-      const list = await window.api.listPackages()
-
-      entry.task = { output: entry.task.output, ...outcome }
-
-      if (list.status === 'listed') this.#merge(list.packages)
-    }
+    await this.#queue
   }
 
-  #apply(list: PackageList): void {
-    this.installed = list.status !== 'missing'
-
-    if (list.status === 'listed') this.entries = list.packages.map((pkg) => ({ package: pkg }))
-    else if (list.status === 'missing') this.entries = []
+  protected async list(): Promise<void> {
+    this.#apply(await window.api.invoke('listPackages'))
   }
 
-  // Keeps each surviving entry, so its task and any upgrade still waiting on it carry over.
+  protected async check(): Promise<void> {
+    if (this.installed) this.#apply(await window.api.invoke('checkPackages'))
+  }
+
+  protected pending({ task }: Entry): boolean {
+    return task?.status === 'queued' || task?.status === 'running'
+  }
+
+  #apply(reply: PackageList | PackageCheck): void {
+    if (reply.status === 'missing') this.entries = []
+    else if (reply.status !== 'failed') this.entries = reply.packages.map(entryOf)
+
+    this.listing = reply.status === 'failed' ? reply : { status: reply.status }
+  }
+
   #merge(packages: Package[]): void {
-    const entries = new Map(this.entries.map((entry) => [idOf(entry.package), entry]))
+    const entries = new Map(this.entries.map((entry) => [entry.id, entry]))
 
     this.entries = packages.map((pkg) => {
       const entry = entries.get(idOf(pkg))
 
-      if (entry === undefined) return { package: pkg }
+      if (entry === undefined) return entryOf(pkg)
 
       entry.package = pkg
 

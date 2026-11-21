@@ -1,1 +1,5 @@
-export type Status = 'unknown' | 'running' | 'failed' | 'attention' | 'outdated' | 'current'
+import type { BadgeVariant } from '$lib/components/ui/badge'
+
+export type Status = 'unknown' | 'running' | 'failed' | 'outdated' | 'current'
+
+export type StatusBadge = { label: string; variant: BadgeVariant }

@@ -4,17 +4,11 @@ import { join } from 'node:path'
 import { gt, prerelease, valid } from 'semver'
 import { parse } from 'yaml'
 import * as z from 'zod'
-import type { Notes } from '$shared/api'
-import type { Bundle } from './bundle'
-import {
-  fetchFeed,
-  verifyChecksum,
-  verifySigner,
-  type Feed,
-  type Framework,
-  type Update
-} from './framework'
-import { parseXml } from './xml'
+import type { Notes } from '$shared/apps'
+import type { Bundle } from '../bundle'
+import { parseXml } from '../xml'
+import { fetchFeed, type Feed, type Framework, type Update } from './feed'
+import { verifyChecksum, verifySigner } from './verify'
 
 const Generic = z.object({
   provider: z.literal('generic'),
@@ -54,6 +48,11 @@ type Info = z.infer<typeof Info>
 const LatestRelease = z.object({ tag_name: z.string() })
 
 type Channel = string | number | undefined
+
+type Entry = {
+  tag: string | undefined
+  content: string | undefined
+}
 
 const tagLink = /\/tag\/(v?[^/]+)$/
 
@@ -112,11 +111,6 @@ function follows(installed: Channel, candidate: Channel): boolean {
   }
 
   return candidate === installed
-}
-
-type Entry = {
-  tag: string | undefined
-  content: string | undefined
 }
 
 async function findTag(

@@ -42,7 +42,7 @@
 <script lang="ts">
   import IconExternalLink from '@tabler/icons-svelte/icons/external-link'
   import { Button } from '$lib/components/ui/button'
-  import type { Notes } from '$shared/api'
+  import type { Notes } from '$shared/apps'
 
   let { notes }: { notes: Notes } = $props()
 </script>

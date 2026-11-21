@@ -1,0 +1,23 @@
+import { net } from 'electron'
+import type { Release } from '$shared/apps'
+import type { Bundle } from '../bundle'
+
+export type Update = {
+  release: Release
+  verify: (archive: string, replacement: string) => Promise<void>
+}
+
+export type Feed = {
+  url: string
+  check: () => Promise<Update[]>
+}
+
+export type Framework = (bundle: Bundle) => Promise<Feed | undefined>
+
+export async function fetchFeed(url: string, init?: RequestInit): Promise<Response> {
+  const response = await net.fetch(url, { headers: { accept: '*/*' }, ...init })
+
+  if (!response.ok) throw new Error(`The update feed answered with HTTP ${response.status}.`)
+
+  return response
+}

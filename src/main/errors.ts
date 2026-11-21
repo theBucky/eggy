@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import type { Failure } from '$shared/api'
+import type { Failure } from '$shared/failure'
 
 const SystemError = z.object({ code: z.string() })
 

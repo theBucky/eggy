@@ -1,6 +1,7 @@
 import * as z from 'zod'
-import type { Bundle } from './bundle'
-import { fetchFeed, verifySigner, type Feed, type Update } from './framework'
+import type { Bundle } from '../bundle'
+import { fetchFeed, type Feed, type Update } from './feed'
+import { verifySigner } from './verify'
 import { compare } from './version'
 
 const Offer = z.object({ url: z.string(), name: z.string() })

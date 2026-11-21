@@ -3,15 +3,14 @@
   import MetaList from '$lib/components/meta-list.svelte'
   import Page from '$lib/components/page.svelte'
   import Section from '$lib/components/section.svelte'
-  import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
+  import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import { labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
   import UpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { ago, megabytes } from '$lib/format'
   import { nameOf, tilde } from '$lib/paths'
-
-  type StatusBadge = { label: string; variant: BadgeVariant }
+  import type { StatusBadge } from '$lib/status'
 
   let { apps, entry }: { apps: Apps; entry: Entry } = $props()
 
@@ -81,16 +80,14 @@
   </MetaList>
 
   {#if task?.status === 'failed'}
-    <div class="mt-8">
-      <FailureAlert
-        title={task.command === 'check' ? 'Check failed' : 'Upgrade failed'}
-        message={task.message}
-      />
-    </div>
+    <FailureAlert
+      title={task.command === 'check' ? 'Check failed' : 'Upgrade failed'}
+      message={task.message}
+    />
   {/if}
 
   {#if release?.notes}
-    <Section title="Release notes" class="min-h-0">
+    <Section title="Release notes">
       <div class="scroll-section">
         <ReleaseNotes notes={release.notes} />
       </div>

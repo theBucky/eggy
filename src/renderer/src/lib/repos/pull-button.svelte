@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import type { PullCommand } from '$shared/api'
+  import type { PullCommand } from '$shared/repos'
 
   const labels = {
     pull: { idle: 'Pull', running: 'Pulling' },
@@ -8,26 +8,27 @@
 </script>
 
 <script lang="ts">
-  import { Button, type ButtonProps } from '$lib/components/ui/button'
+  import { Button, type ButtonVariant } from '$lib/components/ui/button'
   import { pendingPull, type Entry, type Repos } from '$lib/repos/repos.svelte'
 
   let {
     repos,
     entry,
     command,
-    ...button
-  }: { repos: Repos; entry: Entry; command: PullCommand } & Pick<ButtonProps, 'size' | 'variant'> =
-    $props()
-
-  const label = $derived(labels[command])
+    variant
+  }: { repos: Repos; entry: Entry; command: PullCommand; variant?: ButtonVariant } = $props()
 </script>
 
-<Button {...button} disabled={!repos.canPull(entry)} onclick={() => repos.pull([entry], command)}>
-  {#if entry.task?.status === 'queued'}
+<Button
+  {variant}
+  disabled={!repos.canUpgrade(entry)}
+  onclick={() => repos.upgrade([entry], command)}
+>
+  {#if pendingPull(entry) !== command}
+    {labels[command].idle}
+  {:else if entry.task?.status === 'queued'}
     Queued
-  {:else if pendingPull(entry) === command}
-    {label.running}
   {:else}
-    {label.idle}
+    {labels[command].running}
   {/if}
 </Button>

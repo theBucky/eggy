@@ -1,37 +1,9 @@
-import { createPublicKey, verify } from 'node:crypto'
 import { existsSync } from 'node:fs'
-import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { promisify } from 'node:util'
+import type { Bundle } from '../bundle'
 import { findItem, type Appcast, type Enclosure } from './appcast'
-import type { Bundle } from './bundle'
-import { fetchFeed, verifySigner, type Feed, type Framework, type Update } from './framework'
-
-const verifyAsync = promisify(verify)
-
-async function verifySignature(
-  archive: string,
-  signature: string | undefined,
-  key: string
-): Promise<void> {
-  if (signature === undefined) {
-    throw new Error('The update is unsigned, but the app expects a signature.')
-  }
-
-  const publicKey = createPublicKey({
-    key: { kty: 'OKP', crv: 'Ed25519', x: Buffer.from(key, 'base64').toString('base64url') },
-    format: 'jwk'
-  })
-
-  const matches = await verifyAsync(
-    null,
-    await readFile(archive),
-    publicKey,
-    Buffer.from(signature, 'base64')
-  )
-
-  if (!matches) throw new Error("The update's signature doesn't match the app's key.")
-}
+import { fetchFeed, type Feed, type Framework, type Update } from './feed'
+import { verifyEdSignature, verifySigner } from './verify'
 
 export function readAppcast(bundle: Bundle, xml: string, appcast: Appcast): Update[] {
   const item = findItem(xml, appcast, bundle.build)
@@ -46,7 +18,7 @@ export function readAppcast(bundle: Bundle, xml: string, appcast: Appcast): Upda
     verify: (archive, replacement) =>
       key === undefined
         ? verifySigner(bundle.path, replacement)
-        : verifySignature(archive, enclosure.signature, key)
+        : verifyEdSignature(archive, enclosure.signature, key)
   })
 
   return (item.delta ? [item.delta, item.archive] : [item.archive]).map(updateOf)

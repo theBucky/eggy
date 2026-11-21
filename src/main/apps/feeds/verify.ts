@@ -1,29 +1,10 @@
-import { createHash, type BinaryToTextEncoding } from 'node:crypto'
+import { createHash, createPublicKey, verify, type BinaryToTextEncoding } from 'node:crypto'
 import { createReadStream } from 'node:fs'
-import { net } from 'electron'
-import type { Release } from '$shared/api'
-import { output } from '../exec'
-import type { Bundle } from './bundle'
+import { readFile } from 'node:fs/promises'
+import { promisify } from 'node:util'
+import { output } from '../../exec'
 
-export type Update = {
-  release: Release
-  verify: (archive: string, replacement: string) => Promise<void>
-}
-
-export type Feed = {
-  url: string
-  check: () => Promise<Update[]>
-}
-
-export type Framework = (bundle: Bundle) => Promise<Feed | undefined>
-
-export async function fetchFeed(url: string, init?: RequestInit): Promise<Response> {
-  const response = await net.fetch(url, { headers: { accept: '*/*' }, ...init })
-
-  if (!response.ok) throw new Error(`The update feed answered with HTTP ${response.status}.`)
-
-  return response
-}
+const verifyAsync = promisify(verify)
 
 export async function verifyChecksum(
   archive: string,
@@ -38,6 +19,30 @@ export async function verifyChecksum(
   if (hash.digest(encoding) !== digest) {
     throw new Error("The download doesn't match the update's checksum.")
   }
+}
+
+export async function verifyEdSignature(
+  archive: string,
+  signature: string | undefined,
+  key: string
+): Promise<void> {
+  if (signature === undefined) {
+    throw new Error('The update is unsigned, but the app expects a signature.')
+  }
+
+  const publicKey = createPublicKey({
+    key: { kty: 'OKP', crv: 'Ed25519', x: Buffer.from(key, 'base64').toString('base64url') },
+    format: 'jwk'
+  })
+
+  const matches = await verifyAsync(
+    null,
+    await readFile(archive),
+    publicKey,
+    Buffer.from(signature, 'base64')
+  )
+
+  if (!matches) throw new Error("The update's signature doesn't match the app's key.")
 }
 
 // Like Squirrel, this trusts a replacement only when its code signature meets the installed app's

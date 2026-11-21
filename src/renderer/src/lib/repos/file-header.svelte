@@ -1,11 +1,8 @@
-<script lang="ts" module>
-  export const HEADER_HEIGHT = 36
-</script>
-
 <script lang="ts">
   import type { FileDiffMetadata } from '@pierre/diffs'
   import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
   import * as Collapsible from '$lib/components/ui/collapsible'
+  import { changesOf, HEADER_HEIGHT } from '$lib/repos/diff-viewer'
   import { cn } from '$lib/utils'
 
   let {
@@ -15,8 +12,7 @@
   }: { fileDiff: FileDiffMetadata; open: boolean; ontoggle: (open: boolean) => void } = $props()
 
   const directory = $derived(fileDiff.name.slice(0, fileDiff.name.lastIndexOf('/') + 1))
-  const additions = $derived(fileDiff.hunks.reduce((sum, hunk) => sum + hunk.additionLines, 0))
-  const deletions = $derived(fileDiff.hunks.reduce((sum, hunk) => sum + hunk.deletionLines, 0))
+  const { additions, deletions } = $derived(changesOf(fileDiff.hunks))
 </script>
 
 <!-- The viewer hides the file's lines itself, so the collapsible has no content of its own. A

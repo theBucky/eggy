@@ -1,99 +1,19 @@
-import {
-  app,
-  shell,
-  BrowserWindow,
-  dialog,
-  ipcMain,
-  nativeTheme,
-  type IpcMainInvokeEvent,
-  type WebContents
-} from 'electron'
+import { app, dialog, ipcMain, nativeTheme, type IpcMainInvokeEvent } from 'electron'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
-import { is } from '@electron-toolkit/utils'
-import type { Events, Ipc, Launch, PackageList } from '$shared/api'
+import type { Events, Launch, Requests } from '$shared/ipc'
 import * as apps from './apps'
 import * as brew from './brew'
 import * as git from './git'
 import * as optimize from './optimize'
-import { installContextMenu, installMenu } from './menu'
-import { restoreTheme, setTheme, sidebarColor } from './theme'
-import { resizer, savedBounds } from './window'
+import { installMenu } from './menu'
+import { restoreTheme, setTheme } from './theme'
+import { createWindow } from './window'
 
 type Handlers = {
-  [Channel in keyof Ipc]: (
+  [Channel in keyof Requests]: (
     event: IpcMainInvokeEvent,
-    ...args: Parameters<Ipc[Channel]>
-  ) => ReturnType<Ipc[Channel]> | Awaited<ReturnType<Ipc[Channel]>>
-}
-
-function send<Channel extends keyof Events>(
-  contents: WebContents,
-  channel: Channel,
-  ...args: Events[Channel]
-): void {
-  if (!contents.isDestroyed()) contents.send(channel, ...args)
-}
-
-// brew lists its packages slower than the window opens, so the listing starts with the process and
-// the page's first request takes that result.
-let launchPackages: Promise<PackageList> | undefined = brew.list()
-
-function listPackages(): Promise<PackageList> {
-  const packages = launchPackages ?? brew.list()
-
-  launchPackages = undefined
-
-  return packages
-}
-
-let quitting = false
-
-function createWindow(): BrowserWindow {
-  const mainWindow = new BrowserWindow({
-    width: 1150,
-    height: 760,
-    ...savedBounds(),
-    minWidth: 1150,
-    minHeight: 760,
-    show: false,
-    titleBarStyle: 'hidden',
-    trafficLightPosition: { x: 18, y: 18 },
-    backgroundColor: sidebarColor(),
-    webPreferences: {
-      preload: join(import.meta.dirname, '../preload/index.cjs'),
-      spellcheck: false
-    }
-  })
-
-  installContextMenu(mainWindow)
-
-  nativeTheme.on('updated', () => mainWindow.setBackgroundColor(sidebarColor()))
-
-  mainWindow.once('ready-to-show', () => mainWindow.show())
-
-  // Hiding keeps the renderer, so an upgrade underway still reports its progress and asks before it
-  // force quits.
-  mainWindow.on('close', (event) => {
-    if (quitting) return
-
-    event.preventDefault()
-    mainWindow.hide()
-  })
-
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (['http:', 'https:'].includes(new URL(url).protocol)) shell.openExternal(url)
-
-    return { action: 'deny' }
-  })
-
-  if (is.dev && process.env.ELECTRON_RENDERER_URL) {
-    mainWindow.loadURL(process.env.ELECTRON_RENDERER_URL)
-  } else {
-    mainWindow.loadFile(join(import.meta.dirname, '../renderer/index.html'))
-  }
-
-  return mainWindow
+    ...args: Parameters<Requests[Channel]>
+  ) => ReturnType<Requests[Channel]> | Promise<ReturnType<Requests[Channel]>>
 }
 
 app.whenReady().then(() => {
@@ -103,12 +23,15 @@ app.whenReady().then(() => {
     event.returnValue = { home: homedir(), theme: nativeTheme.themeSource } satisfies Launch
   })
 
-  const window = createWindow()
-  const pane = resizer(window)
+  const { window, pane } = createWindow()
+
+  function send<Channel extends keyof Events>(channel: Channel, ...args: Events[Channel]): void {
+    if (!window.isDestroyed()) window.webContents.send(channel, ...args)
+  }
 
   installMenu((command) => {
     window.show()
-    send(window.webContents, 'menuCommand', command)
+    send('menuCommand', command)
   })
 
   const handlers: Handlers = {
@@ -129,32 +52,23 @@ app.whenReady().then(() => {
     moveWindow: () => pane.move(),
     listApps: () => apps.list(),
     checkApp: (_, path) => apps.check(path),
-    upgradeApp: (event, path) =>
-      apps.upgrade(path, (progress) => send(event.sender, 'appProgress', path, progress)),
+    upgradeApp: (_, path) => apps.upgrade(path, (progress) => send('appProgress', path, progress)),
     forceAppUpgrade: (_, path) => apps.forceUpgrade(path),
     discardAppUpgrade: (_, path) => apps.discardUpgrade(path),
-    listPackages,
+    listPackages: () => brew.list(),
     checkPackages: () => brew.check(),
-    upgradePackage: (event, kind, fullName) =>
-      brew.upgrade(kind, fullName, (text) =>
-        send(event.sender, 'packageOutput', kind, fullName, text)
-      ),
+    upgradePackage: (_, kind, fullName) =>
+      brew.upgrade(kind, fullName, (text) => send('packageOutput', kind, fullName, text)),
     setTheme: (_, theme) => setTheme(theme),
     inspectMachine: () => optimize.inspectMachine(),
-    optimize: (event, optimizations) =>
+    optimize: (_, optimizations) =>
       optimize.run(optimizations, (optimization, state) =>
-        send(event.sender, 'optimization', optimization, state)
+        send('optimization', optimization, state)
       ),
     review: (_, target) => optimize.review(target)
   }
 
   for (const [channel, handler] of Object.entries(handlers)) ipcMain.handle(channel, handler)
-
-  app.on('activate', () => window.show())
-})
-
-app.on('before-quit', () => {
-  quitting = true
 })
 
 app.on('will-quit', apps.discardWaiting)

@@ -2,7 +2,7 @@
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
-  import { idOf, type Packages } from '$lib/packages/packages.svelte'
+  import type { Packages } from '$lib/packages/packages.svelte'
 
   let {
     packages,
@@ -24,10 +24,9 @@
   upgradeVerb="Upgrade"
 >
   <Sidebar.Menu>
-    {#each shown as entry (idOf(entry.package))}
-      {@const id = idOf(entry.package)}
+    {#each shown as entry (entry.id)}
       <Sidebar.MenuItem>
-        <Sidebar.MenuButton isActive={id === selected} onclick={() => onselect(id)}>
+        <Sidebar.MenuButton isActive={entry.id === selected} onclick={() => onselect(entry.id)}>
           <StatusDot status={packages.statusOf(entry)} />
           <span class="flex-1 truncate-fade">{entry.package.name}</span>
         </Sidebar.MenuButton>

@@ -1,34 +1,5 @@
-<script lang="ts">
+<script lang="ts" module>
   import { on } from 'svelte/events'
-  import FailureAlert from '$lib/components/failure-alert.svelte'
-  import MetaList from '$lib/components/meta-list.svelte'
-  import Page from '$lib/components/page.svelte'
-  import Section from '$lib/components/section.svelte'
-  import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
-  import { Button } from '$lib/components/ui/button'
-  import type { Entry, Packages } from '$lib/packages/packages.svelte'
-  import UpgradeButton from '$lib/packages/upgrade-button.svelte'
-
-  type StatusBadge = { label: string; variant: BadgeVariant }
-
-  let { packages, entry }: { packages: Packages; entry: Entry } = $props()
-
-  const { package: pkg, task } = $derived(entry)
-  const lines = $derived(task?.output.trimEnd().split('\n') ?? [])
-
-  const badge = $derived.by((): StatusBadge | undefined => {
-    if (packages.checking) return { label: 'Checking', variant: 'secondary' }
-
-    if (pkg.state === 'pinned') return { label: 'Pinned', variant: 'secondary' }
-
-    if (pkg.state === 'outdated') return { label: 'Upgrade available', variant: 'info' }
-
-    if (task?.status === 'upgraded') return { label: 'Upgraded', variant: 'success' }
-
-    return packages.check?.status === 'checked'
-      ? { label: 'Up to date', variant: 'success' }
-      : undefined
-  })
 
   function follow(node: HTMLElement): () => void {
     let following = true
@@ -50,10 +21,38 @@
   }
 </script>
 
-<Page
-  title={pkg.name}
-  actions={pkg.state === 'outdated' || task?.status === 'running' ? upgrade : undefined}
->
+<script lang="ts">
+  import FailureAlert from '$lib/components/failure-alert.svelte'
+  import MetaList from '$lib/components/meta-list.svelte'
+  import Page from '$lib/components/page.svelte'
+  import Section from '$lib/components/section.svelte'
+  import { Badge } from '$lib/components/ui/badge'
+  import { Button } from '$lib/components/ui/button'
+  import type { Entry, Packages } from '$lib/packages/packages.svelte'
+  import UpgradeButton from '$lib/packages/upgrade-button.svelte'
+  import type { StatusBadge } from '$lib/status'
+
+  let { packages, entry }: { packages: Packages; entry: Entry } = $props()
+
+  const { package: pkg, task } = $derived(entry)
+  const output = $derived(task === undefined || task.status === 'queued' ? undefined : task.output)
+
+  const badge = $derived.by((): StatusBadge | undefined => {
+    if (packages.checking) return { label: 'Checking', variant: 'secondary' }
+
+    if (pkg.state === 'pinned') return { label: 'Pinned', variant: 'secondary' }
+
+    if (pkg.state === 'outdated') return { label: 'Upgrade available', variant: 'info' }
+
+    if (task?.status === 'upgraded') return { label: 'Upgraded', variant: 'success' }
+
+    return packages.listing?.status === 'checked'
+      ? { label: 'Up to date', variant: 'success' }
+      : undefined
+  })
+</script>
+
+<Page title={pkg.name} actions={pkg.state === 'outdated' ? upgrade : undefined}>
   {#snippet subtitle()}
     {#if pkg.description}
       <p class="truncate text-muted-foreground">{pkg.description}</p>
@@ -85,18 +84,16 @@
   </MetaList>
 
   {#if task?.status === 'failed'}
-    <div class="mt-8">
-      <FailureAlert title="Upgrade failed" message={task.message} />
-    </div>
+    <FailureAlert title="Upgrade failed" message={task.message} />
   {/if}
 
-  {#if task && task.status !== 'queued'}
-    <Section title="Output" class="min-h-0">
+  {#if output !== undefined}
+    <Section title="Output">
       <div class="scroll-section" {@attach follow}>
         <div
           class="font-mono text-xs wrap-anywhere whitespace-pre-wrap text-foreground-secondary select-text"
         >
-          {#each lines as line, index (index)}
+          {#each output.trimEnd().split('\n') as line, index (index)}
             <p class="min-h-lh">
               {#if line.startsWith('==> ')}
                 <span class="text-info">==&gt;</span>

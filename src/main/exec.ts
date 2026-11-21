@@ -1,42 +1,54 @@
-import { execFile } from 'node:child_process'
+import { execFile, type ExecFileException } from 'node:child_process'
 import * as z from 'zod'
 
-type Options = { cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number; input?: string }
+export type Options = {
+  cwd?: string
+  env?: NodeJS.ProcessEnv
+  timeout?: number
+  input?: string
+  report?: (text: string) => void
+}
 
-// `exit` holds Node's error when the command never started or a signal stopped it.
+// Node's error stands in for an exit code when the command never started or a signal stopped it.
+type Exit = number | 'timeout' | Error
+
 type Ran = {
   file: string
   timeout: number
-  exit: number | 'timeout' | Error
+  exit: Exit
   stdout: string
   stderr: string
 }
 
-const Status = z.object({ code: z.number() })
+const ExitCode = z.object({ code: z.number() })
+
+function exitOf(error: ExecFileException | null): Exit {
+  if (error === null) return 0
+
+  if (error.killed) return 'timeout'
+
+  return ExitCode.safeParse(error).data?.code ?? error
+}
 
 // Output is unbounded, since hitting the default 1 MB cap kills a command midway, as it would a
 // large pull that prints a diffstat line per file while updating the working tree.
 export function exec(
   file: string,
   args: string[],
-  { input, timeout = 0, ...options }: Options = {}
+  { input, report, timeout = 0, ...options }: Options = {}
 ): Promise<Ran> {
   return new Promise((resolve) => {
     const child = execFile(
       file,
       args,
       { ...options, timeout, maxBuffer: Infinity },
-      (error, stdout, stderr) => {
-        const exit =
-          error === null
-            ? 0
-            : error.killed
-              ? 'timeout'
-              : (Status.safeParse(error).data?.code ?? error)
-
-        resolve({ file, timeout, exit, stdout, stderr })
-      }
+      (error, stdout, stderr) => resolve({ file, timeout, exit: exitOf(error), stdout, stderr })
     )
+
+    if (report !== undefined) {
+      child.stdout?.on('data', report)
+      child.stderr?.on('data', report)
+    }
 
     child.stdin?.end(input)
   })

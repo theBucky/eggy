@@ -1,5 +1,5 @@
 import { open, readdir, stat } from 'node:fs/promises'
-import type { OptimizeOutcome } from '$shared/api'
+import type { OptimizeOutcome } from '$shared/optimize'
 import { errorCode } from '../errors'
 import { checked, exec } from '../exec'
 

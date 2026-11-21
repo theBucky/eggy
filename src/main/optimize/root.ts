@@ -1,7 +1,7 @@
-import type { OptimizeOutcome } from '$shared/api'
+import type { OptimizeOutcome } from '$shared/optimize'
 import { checked, exec } from '../exec'
 
-export type Exit = { code: number; printed: string }
+type Exit = { code: number; printed: string }
 
 export type Plan = { script: string; interpret: (exit: Exit) => OptimizeOutcome }
 
@@ -55,30 +55,29 @@ function appleScriptString(text: string): string {
   return `"${text.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 }
 
-// Runs every script in one shell as root, so macOS asks for the administrator password once. Each
-// script's output and exit status come back in order, or `undefined` when the user cancels.
-export async function runAsRoot(scripts: string[], prompt: string): Promise<Exit[] | undefined> {
-  const shell = scripts
-    .map((script) => `(${script}) 2>&1; printf '${SEPARATOR}%d${SEPARATOR}' "$?"`)
+// Runs every plan in one shell as root, so macOS asks for the administrator password once.
+export async function runAsRoot(plans: Plan[]): Promise<OptimizeOutcome[]> {
+  const shell = plans
+    .map(({ script }) => `(${script}) 2>&1; printf '${SEPARATOR}%d${SEPARATOR}' "$?"`)
     .join('\n')
 
+  const names = plans.length === 1 ? 'an optimization' : `${plans.length} optimizations`
+  const prompt = `eggy needs an administrator to run ${names}.`
   const source = `do shell script ${appleScriptString(shell)} with prompt ${appleScriptString(prompt)} with administrator privileges without altering line endings`
 
   const ran = await exec('/usr/bin/osascript', ['-e', source])
 
   // -128 is AppleScript's "User canceled."
-  if (ran.exit !== 0 && ran.stderr.includes('(-128)')) return undefined
-
-  return parse(checked(ran))
-}
-
-function parse(stdout: string): Exit[] {
-  const parts = stdout.split(SEPARATOR)
-  const exits: Exit[] = []
-
-  for (let index = 0; index + 1 < parts.length; index += 2) {
-    exits.push({ code: Number(parts[index + 1]), printed: parts[index].trim() })
+  if (ran.exit !== 0 && ran.stderr.includes('(-128)')) {
+    return plans.map(() => ({
+      status: 'skipped',
+      message: 'Administrator access was not granted.'
+    }))
   }
 
-  return exits
+  const parts = checked(ran).split(SEPARATOR)
+
+  return plans.map((plan, index) =>
+    plan.interpret({ code: Number(parts[2 * index + 1]), printed: parts[2 * index].trim() })
+  )
 }

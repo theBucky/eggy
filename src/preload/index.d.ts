@@ -1,4 +1,4 @@
-import type { Api } from '$shared/api'
+import type { Api } from '$shared/ipc'
 
 declare global {
   interface Window {

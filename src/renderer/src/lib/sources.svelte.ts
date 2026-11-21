@@ -1,34 +1,19 @@
-// What a source is doing as a whole. Items act on their own only while it idles.
-export type Phase = 'idle' | 'scanning' | 'checking' | 'bulk'
+import { Apps } from '$lib/apps/apps.svelte'
+import { Packages } from '$lib/packages/packages.svelte'
+import { Repos } from '$lib/repos/repos.svelte'
 
-export type Source = {
-  readonly scanning: boolean
-  readonly checking: boolean
-  readonly bulk: boolean
-  readonly busy: boolean
-  readonly checked: boolean
-  readonly checkFailed: boolean
-  readonly outdated: readonly object[]
-  scan: () => Promise<void>
-  refresh: () => Promise<void>
-  upgradeOutdated: () => Promise<void>
-}
-
-export class Sources implements Source {
-  // TypeScript rejects a field initializer that reads `#all` before the constructor assigns it, so
-  // each derived reads it through a thunk.
-  readonly #all: Source[]
-  scanning = $derived.by(() => this.#all.some((source) => source.scanning))
-  checking = $derived.by(() => this.#all.some((source) => source.checking))
-  bulk = $derived.by(() => this.#all.some((source) => source.bulk))
-  busy = $derived.by(() => this.#all.some((source) => source.busy))
-  checked = $derived.by(() => this.#all.some((source) => source.checked))
-  checkFailed = $derived.by(() => this.#all.some((source) => source.checkFailed))
-  outdated = $derived.by(() => this.#all.flatMap((source) => source.outdated))
-
-  constructor(all: Source[]) {
-    this.#all = all
-  }
+export class Sources {
+  readonly apps = new Apps()
+  readonly packages = new Packages()
+  readonly repos = new Repos()
+  readonly #all = [this.apps, this.packages, this.repos]
+  scanning = $derived(this.#all.some((source) => source.scanning))
+  checking = $derived(this.#all.some((source) => source.checking))
+  bulk = $derived(this.#all.some((source) => source.bulk))
+  busy = $derived(this.#all.some((source) => source.busy))
+  checked = $derived(this.#all.some((source) => source.checked))
+  checkFailed = $derived(this.#all.some((source) => source.checkFailed))
+  outdated = $derived(this.#all.reduce((count, source) => count + source.outdated.length, 0))
 
   async scan(): Promise<void> {
     await Promise.all(this.#all.map((source) => source.scan()))

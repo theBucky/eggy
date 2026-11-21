@@ -6,17 +6,16 @@
   import Page from '$lib/components/page.svelte'
   import Section from '$lib/components/section.svelte'
   import SidePane from '$lib/components/side-pane.svelte'
-  import { Badge, type BadgeVariant } from '$lib/components/ui/badge'
+  import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
   import * as Item from '$lib/components/ui/item'
-  import { nameOf, tilde } from '$lib/paths'
   import { ago } from '$lib/format'
+  import { nameOf, tilde } from '$lib/paths'
   import CommitDiff from '$lib/repos/commit-diff.svelte'
   import PullButton from '$lib/repos/pull-button.svelte'
   import { diverged, offsetsOf, type Entry, type Repos } from '$lib/repos/repos.svelte'
-  import type { Commit } from '$shared/api'
-
-  type SyncBadge = { label: string; variant: BadgeVariant }
+  import type { StatusBadge } from '$lib/status'
+  import type { Commit } from '$shared/repos'
 
   let { repos, entry }: { repos: Repos; entry: Entry } = $props()
 
@@ -30,7 +29,7 @@
     `${unpushed.length}${(repo.sync?.ahead ?? 0) > unpushed.length ? '+' : ''} ahead`
   )
 
-  const badge = $derived.by((): SyncBadge => {
+  const badge = $derived.by((): StatusBadge => {
     if (task?.command === 'fetch' && task.status === 'running') {
       return { label: 'Checking', variant: 'secondary' }
     }
@@ -71,20 +70,14 @@
     </MetaList>
 
     {#if task?.status === 'failed'}
-      <div class="mt-8">
-        <FailureAlert
-          title={task.command === 'fetch' ? 'Fetch failed' : 'Pull failed'}
-          message={task.message}
-        />
-      </div>
+      <FailureAlert
+        title={task.command === 'fetch' ? 'Fetch failed' : 'Pull failed'}
+        message={task.message}
+      />
     {/if}
 
     {#if unpushed.length > 0 || pushed.length > 0}
-      <Section
-        title="Recent commits"
-        class="min-h-0"
-        actions={unpushed.length > 0 ? ahead : undefined}
-      >
+      <Section title="Recent commits" actions={unpushed.length > 0 ? ahead : undefined}>
         <div class="scroll-section">
           <Item.Group>
             {#if showUnpushed}

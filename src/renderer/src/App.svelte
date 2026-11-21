@@ -2,9 +2,9 @@
   import IconGauge from '@tabler/icons-svelte/icons/gauge'
   import IconHome from '@tabler/icons-svelte/icons/home'
   import IconSettings from '@tabler/icons-svelte/icons/settings'
+  import type { Snippet } from 'svelte'
   import AppDetail from '$lib/apps/app-detail.svelte'
   import AppGroup from '$lib/apps/app-group.svelte'
-  import { Apps } from '$lib/apps/apps.svelte'
   import QuitDialog from '$lib/apps/quit-dialog.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
   import { Spinner } from '$lib/components/ui/spinner'
@@ -13,43 +13,29 @@
   import { Optimizer } from '$lib/optimize/optimizer.svelte'
   import PackageDetail from '$lib/packages/package-detail.svelte'
   import PackageGroup from '$lib/packages/package-group.svelte'
-  import { idOf, Packages } from '$lib/packages/packages.svelte'
   import RepoDetail from '$lib/repos/repo-detail.svelte'
   import RepoGroup from '$lib/repos/repo-group.svelte'
-  import { Repos } from '$lib/repos/repos.svelte'
   import { Preferences } from '$lib/settings/preferences.svelte'
   import Settings from '$lib/settings/settings.svelte'
   import { Sources } from '$lib/sources.svelte'
+  import type { Detail, View } from '$lib/view'
 
-  type View = { page: 'home' | 'optimize' | 'settings' } | { page: 'detail'; id: string }
-
-  const repos = new Repos()
-  const apps = new Apps()
-  const packages = new Packages()
-  const sources = new Sources([apps, packages, repos])
+  const sources = new Sources()
+  const { apps, packages, repos } = sources
   const optimizer = new Optimizer()
   const preferences = new Preferences()
 
   let view = $state<View>({ page: 'home' })
 
-  const selected = $derived(view.page === 'detail' ? view.id : undefined)
-  const repo = $derived(repos.entries.find((entry) => entry.repo.path === selected))
-  const app = $derived(apps.entries.find((entry) => entry.app.path === selected))
-  const pkg = $derived(packages.entries.find((entry) => idOf(entry.package) === selected))
-
-  const home = $derived(
-    view.page === 'home' ||
-      (view.page === 'detail' && repo === undefined && app === undefined && pkg === undefined)
-  )
-
-  function select(id: string): void {
-    view = { page: 'detail', id }
-  }
+  const app = $derived(view.page === 'app' ? apps.find(view.id) : undefined)
+  const pkg = $derived(view.page === 'package' ? packages.find(view.id) : undefined)
+  const repo = $derived(view.page === 'repo' ? repos.find(view.id) : undefined)
+  const page = $derived('id' in view && !app && !pkg && !repo ? 'home' : view.page)
 
   if (preferences.checkOnLaunch) sources.refresh()
   else sources.scan()
 
-  window.api.onMenuCommand((command) => {
+  window.api.on('menuCommand', (command) => {
     if (command === 'settings') view = { page: 'settings' }
     else if (!sources.busy) sources.refresh()
   })
@@ -62,74 +48,78 @@
   <Sidebar.Root variant="inset">
     <div class="px-1 pt-12 pb-2">
       <Sidebar.Menu>
-        <Sidebar.MenuItem>
-          <Sidebar.MenuButton isActive={home} onclick={() => (view = { page: 'home' })}>
-            <IconHome />
-            <span class="flex-1 truncate-fade">Home</span>
-            {#if sources.outdated.length > 0}
-              <span class="font-mono text-xs text-info">{sources.outdated.length}</span>
-            {/if}
-          </Sidebar.MenuButton>
-        </Sidebar.MenuItem>
-        <Sidebar.MenuItem>
-          <Sidebar.MenuButton
-            isActive={view.page === 'optimize'}
-            onclick={() => (view = { page: 'optimize' })}
-          >
-            <IconGauge />
-            <span class="flex-1 truncate-fade">Optimize</span>
-            {#if optimizer.running}
-              <Spinner />
-            {/if}
-          </Sidebar.MenuButton>
-        </Sidebar.MenuItem>
+        {@render nav('home', IconHome, 'Home', outdated)}
+        {@render nav('optimize', IconGauge, 'Optimize', optimizing)}
       </Sidebar.Menu>
     </div>
 
     <Sidebar.Content class="overflow-fade-y">
-      <AppGroup {apps} {selected} onselect={select} />
+      <AppGroup {apps} selected={app?.id} onselect={(id) => (view = { page: 'app', id })} />
       {#if packages.installed}
-        <PackageGroup {packages} {selected} onselect={select} />
+        <PackageGroup
+          {packages}
+          selected={pkg?.id}
+          onselect={(id) => (view = { page: 'package', id })}
+        />
       {/if}
-      <RepoGroup {repos} {selected} onselect={select} />
+      <RepoGroup {repos} selected={repo?.id} onselect={(id) => (view = { page: 'repo', id })} />
     </Sidebar.Content>
 
     <div class="px-1 py-2">
       <Sidebar.Menu>
-        <Sidebar.MenuItem>
-          <Sidebar.MenuButton
-            isActive={view.page === 'settings'}
-            onclick={() => (view = { page: 'settings' })}
-          >
-            <IconSettings />
-            <span class="flex-1 truncate-fade">Settings</span>
-          </Sidebar.MenuButton>
-        </Sidebar.MenuItem>
+        {@render nav('settings', IconSettings, 'Settings')}
       </Sidebar.Menu>
     </div>
   </Sidebar.Root>
 
   <Sidebar.Inset>
-    {#if view.page === 'settings'}
+    {#if page === 'settings'}
       <Settings {repos} {preferences} />
-    {:else if view.page === 'optimize'}
+    {:else if page === 'optimize'}
       <Optimize {optimizer} />
     {:else if repo}
-      {#key repo.repo.path}
+      {#key repo.id}
         <RepoDetail {repos} entry={repo} />
       {/key}
     {:else if app}
-      {#key app.app.path}
+      {#key app.id}
         <AppDetail {apps} entry={app} />
       {/key}
     {:else if pkg}
-      {#key idOf(pkg.package)}
+      {#key pkg.id}
         <PackageDetail {packages} entry={pkg} />
       {/key}
     {:else}
-      <Home {apps} {packages} {repos} {sources} onselect={select} />
+      <Home {sources} onselect={(detail) => (view = detail)} />
     {/if}
   </Sidebar.Inset>
 </Sidebar.Provider>
 
-<QuitDialog {apps} />
+<QuitDialog prompt={apps.prompt} />
+
+{#snippet nav(
+  target: Exclude<View['page'], Detail['page']>,
+  Icon: typeof IconHome,
+  label: string,
+  trailing?: Snippet
+)}
+  <Sidebar.MenuItem>
+    <Sidebar.MenuButton isActive={page === target} onclick={() => (view = { page: target })}>
+      <Icon />
+      <span class="flex-1 truncate-fade">{label}</span>
+      {@render trailing?.()}
+    </Sidebar.MenuButton>
+  </Sidebar.MenuItem>
+{/snippet}
+
+{#snippet outdated()}
+  {#if sources.outdated > 0}
+    <span class="font-mono text-xs text-info">{sources.outdated}</span>
+  {/if}
+{/snippet}
+
+{#snippet optimizing()}
+  {#if optimizer.running}
+    <Spinner />
+  {/if}
+{/snippet}

@@ -1,63 +1,17 @@
-import { homedir, tmpdir } from 'node:os'
-import { basename, dirname, join } from 'node:path'
-import { setTimeout as sleep } from 'node:timers/promises'
-import { nativeImage, net, shell } from 'electron'
-// Electron's fs reads an app's asar archive as a folder, so it can't remove an app that holds one.
-import { promises as fs, rmSync } from 'original-fs'
-import * as z from 'zod'
-import type {
-  App,
-  CheckOutcome,
-  InstallOutcome,
-  Progress,
-  Release,
-  UpgradeOutcome
-} from '$shared/api'
-import { errorCode, failure } from '../errors'
-import { output } from '../exec'
-import { unpack } from './archive'
-import { readBundle, type Bundle } from './bundle'
-import { electronUpdater } from './electron-updater'
-import type { Feed, Framework, Update } from './framework'
-import { knownApps } from './known-apps'
-import { sparkle } from './sparkle'
-
-type Staged = {
-  work: string
-  replacement: string
-  bundle: Bundle
-}
-
-// Known apps come first since their feed overrides the one their bundle names.
-const frameworks: Framework[] = [knownApps, sparkle, electronUpdater]
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { nativeImage } from 'electron'
+import type { App, CheckOutcome, InstallOutcome, Progress, UpgradeOutcome } from '$shared/apps'
+import { failure } from '../errors'
+import { readBundle } from './bundle'
+import { feedOf, fetchUpdates } from './feeds'
+import { fs, rmSync } from './fs'
+import { discard, install, stage, type Staged } from './install'
+import { isRunning } from './processes'
 
 const folders = ['/Applications', join(homedir(), 'Applications')]
 
 const waiting = new Map<string, Staged>()
-
-const iconSize = { width: 96, height: 96 }
-
-async function feedOf(bundle: Bundle): Promise<Feed | undefined> {
-  for (const framework of frameworks) {
-    const feed = await framework(bundle)
-
-    if (feed !== undefined) return feed
-  }
-
-  return undefined
-}
-
-async function fetchUpdates(bundle: Bundle): Promise<Update[]> {
-  const feed = await feedOf(bundle)
-
-  if (feed === undefined) throw new Error(`${bundle.name} no longer names its update feed.`)
-
-  try {
-    return await feed.check()
-  } catch (cause) {
-    throw cause instanceof z.ZodError ? new Error('The update feed is malformed.') : cause
-  }
-}
 
 async function readApp(path: string): Promise<App | undefined> {
   const bundle = await readBundle(path)
@@ -66,7 +20,7 @@ async function readApp(path: string): Promise<App | undefined> {
   if (feed === undefined) return undefined
 
   const { name, version, build } = bundle
-  const icon = await nativeImage.createThumbnailFromPath(path, iconSize)
+  const icon = await nativeImage.createThumbnailFromPath(path, { width: 96, height: 96 })
 
   return { path, name, version, build, feed: feed.url, icon: icon.toDataURL() }
 }
@@ -95,177 +49,48 @@ export async function check(path: string): Promise<CheckOutcome> {
   }
 }
 
-async function download(
-  release: Release,
-  file: string,
-  report: (progress: Progress) => void
-): Promise<void> {
-  const response = await net.fetch(release.url)
-
-  if (!response.ok || response.body === null) {
-    throw new Error(`The download answered with HTTP ${response.status}.`)
-  }
-
-  const total = Number(response.headers.get('content-length')) || release.size
-  await using handle = await fs.open(file, 'w')
-  let received = 0
-  let reported = 0
-
-  report({ stage: 'download', percent: total === undefined ? undefined : 0 })
-
-  for await (const chunk of response.body) {
-    await handle.write(chunk)
-    received += chunk.length
-
-    if (total === undefined) continue
-
-    const percent = Math.min(Math.floor((received / total) * 100), 100)
-
-    if (percent > reported) {
-      reported = percent
-      report({ stage: 'download', percent })
-    }
-  }
-}
-
-// Bundles can also ship CLI tools whose processes must stay running.
-async function pidsOf({ executable }: Bundle): Promise<number[]> {
-  const lines = (await output('/bin/ps', ['-axo', 'pid=,comm='])).split('\n')
-
-  return lines.flatMap((line) => {
-    const [, pid, command] = /^\s*(\d+) (.+)$/.exec(line) ?? []
-
-    return command === executable ? [Number(pid)] : []
-  })
-}
-
-// The app can exit on its own between listing and killing.
-function kill(pid: number): void {
-  try {
-    process.kill(pid, 'SIGKILL')
-  } catch (cause) {
-    if (errorCode(cause) !== 'ESRCH') throw cause
-  }
-}
-
-// Each pass also catches an instance that launchd restarts.
-async function forceQuit(bundle: Bundle): Promise<boolean> {
-  for (let pass = 0; pass < 20; pass++) {
-    const pids = await pidsOf(bundle)
-
-    if (pids.length === 0) return pass > 0
-
-    for (const pid of pids) kill(pid)
-
-    await sleep(100)
-  }
-
-  throw new Error(`${bundle.name} keeps relaunching, so it can't be replaced.`)
-}
-
-// Renaming the replacement into place only works within a volume, so it stages on the app's.
-async function makeWork(path: string): Promise<string> {
-  const folder = dirname(path)
-  const [app, temporary] = await Promise.all([fs.stat(folder), fs.stat(tmpdir())])
-
-  return fs.mkdtemp(join(app.dev === temporary.dev ? tmpdir() : folder, '.eggy-'))
-}
-
-async function prepare(
-  bundle: Bundle,
-  update: Update,
-  report: (progress: Progress) => void
-): Promise<Staged> {
-  const work = await makeWork(bundle.path)
-
-  try {
-    const archive = join(work, basename(new URL(update.release.url).pathname))
-
-    await download(update.release, archive, report)
-    report({ stage: 'install' })
-
-    const replacement = await unpack(archive, work, bundle)
-
-    await update.verify(archive, replacement)
-
-    return { work, replacement, bundle }
-  } catch (cause) {
-    await fs.rm(work, { recursive: true, force: true })
-    throw cause
-  }
-}
-
-async function stage(path: string, report: (progress: Progress) => void): Promise<Staged> {
-  const bundle = await readBundle(path)
-  const updates = await fetchUpdates(bundle)
-
-  for (const [index, update] of updates.entries()) {
-    try {
-      return await prepare(bundle, update, report)
-    } catch (cause) {
-      if (index === updates.length - 1) throw cause
-    }
-  }
-
-  throw new Error(`${bundle.name} is already up to date.`)
-}
-
-async function install({ work, replacement, bundle }: Staged): Promise<InstallOutcome> {
-  const { path } = bundle
-
-  try {
-    const running = await forceQuit(bundle)
-
-    // Moving a whole bundle avoids the app management access needed to delete files inside.
-    await shell.trashItem(path)
-    await fs.rename(replacement, path)
-
-    const { version, build } = await readBundle(path)
-
-    // The upgrade has landed, so an app that fails to reopen stays closed instead of failing it.
-    if (running) await output('/usr/bin/open', ['-g', path]).catch(() => undefined)
-
-    return { status: 'upgraded', version, build }
-  } catch (cause) {
-    return failure(cause)
-  } finally {
-    await fs.rm(work, { recursive: true, force: true })
-  }
-}
-
 export async function upgrade(
   path: string,
   report: (progress: Progress) => void
 ): Promise<UpgradeOutcome> {
   try {
-    const staged = await stage(path, report)
+    const bundle = await readBundle(path)
+    const staged = await stage(bundle, await fetchUpdates(bundle), report)
 
-    if ((await pidsOf(staged.bundle)).length === 0) return await install(staged)
+    if (await isRunning(bundle)) {
+      waiting.set(path, staged)
 
-    waiting.set(path, staged)
+      return { status: 'waiting' }
+    }
 
-    return { status: 'waiting' }
+    return await install(staged)
   } catch (cause) {
     return failure(cause)
   }
 }
 
-function takeWaiting(path: string): Staged {
+function takeWaiting(path: string): Staged | undefined {
   const staged = waiting.get(path)
-
-  if (staged === undefined) throw new Error('No upgrade is waiting for this app.')
 
   waiting.delete(path)
 
   return staged
 }
 
-export function forceUpgrade(path: string): Promise<InstallOutcome> {
-  return install(takeWaiting(path))
+export async function forceUpgrade(path: string): Promise<InstallOutcome> {
+  const staged = takeWaiting(path)
+
+  if (staged === undefined) {
+    return { status: 'failed', message: 'No upgrade is waiting for this app.' }
+  }
+
+  return install(staged)
 }
 
 export async function discardUpgrade(path: string): Promise<void> {
-  await fs.rm(takeWaiting(path).work, { recursive: true, force: true })
+  const staged = takeWaiting(path)
+
+  if (staged !== undefined) await discard(staged)
 }
 
 export function discardWaiting(): void {

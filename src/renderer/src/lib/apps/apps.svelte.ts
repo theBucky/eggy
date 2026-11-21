@@ -1,6 +1,8 @@
+import { QuitPrompt } from '$lib/apps/quit-prompt.svelte'
+import { Source } from '$lib/source.svelte'
 import type { Status } from '$lib/status'
-import type { Phase, Source } from '$lib/sources.svelte'
-import type { App, CheckOutcome, Failure, InstallOutcome, Progress, Release } from '$shared/api'
+import type { App, CheckOutcome, InstallOutcome, Progress, Release } from '$shared/apps'
+import type { Failure } from '$shared/failure'
 
 type Task =
   | { command: 'check'; status: 'running' }
@@ -10,26 +12,23 @@ type Task =
   | { command: 'upgrade'; status: 'upgraded' }
 
 export type Entry = {
+  id: string
   app: App
   task?: Task
 }
 
-// Kept after closing, so the dialog fades out with the apps it named.
-type Prompt = {
-  open: boolean
-  quitting: { entry: Entry; release: Release }[]
+function upgrading(
+  task: Task | undefined
+): task is Extract<Task, { command: 'upgrade'; status: 'running' }> {
+  return task?.command === 'upgrade' && task.status === 'running'
 }
 
 export function releaseOf({ task }: Entry): Release | undefined {
   return task !== undefined && 'release' in task ? task.release : undefined
 }
 
-export function labelOf({ version, build }: App | Release): string {
-  return version === build ? version : `${version} (${build})`
-}
-
-function pending({ task }: Entry): boolean {
-  return task?.command === 'upgrade' && task.status === 'running'
+export function progressOf({ task }: Entry): Progress | undefined {
+  return upgrading(task) ? task.progress : undefined
 }
 
 export function statusOf({ task }: Entry): Status {
@@ -40,49 +39,27 @@ export function statusOf({ task }: Entry): Status {
   return task.status === 'upgraded' ? 'current' : task.status
 }
 
-export class Apps implements Source {
-  entries = $state<Entry[]>([])
-  #phase = $state<Phase>('idle')
-  prompt = $state<Prompt>({ open: false, quitting: [] })
-  scanning = $derived(this.#phase === 'scanning')
-  checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
-  bulk = $derived(this.#phase === 'bulk')
-  busy = $derived(this.#phase !== 'idle' || this.entries.some(pending))
+export function labelOf({ version, build }: App | Release): string {
+  return version === build ? version : `${version} (${build})`
+}
+
+export class Apps extends Source<Entry> {
+  readonly prompt = new QuitPrompt()
   checked = $derived(
     this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
   )
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'check')
   )
-  // Counts an app through its download and after a failed install, so the tally holds steady.
   outdated = $derived(this.entries.filter(releaseOf))
 
   constructor() {
-    window.api.onAppProgress((path, progress) => {
-      const task = this.entries.find((entry) => entry.app.path === path)?.task
+    super()
+    window.api.on('appProgress', (path, progress) => {
+      const task = this.find(path)?.task
 
-      if (task?.command === 'upgrade' && task.status === 'running') task.progress = progress
+      if (upgrading(task)) task.progress = progress
     })
-  }
-
-  async scan(): Promise<void> {
-    this.#phase = 'scanning'
-    await this.#list()
-    this.#phase = 'idle'
-  }
-
-  async refresh(): Promise<void> {
-    this.#phase = 'scanning'
-    await this.#list()
-    this.#phase = 'checking'
-    await Promise.all(
-      this.entries.map(async (entry) => {
-        entry.task = { command: 'check', status: 'running' }
-
-        entry.task = { command: 'check', ...(await window.api.checkApp(entry.app.path)) }
-      })
-    )
-    this.#phase = 'idle'
   }
 
   async upgrade(entries: Entry[]): Promise<void> {
@@ -99,48 +76,39 @@ export class Apps implements Source {
           progress: { stage: 'download', percent: 0 }
         }
 
-        const outcome = await window.api.upgradeApp(entry.app.path)
+        const outcome = await window.api.invoke('upgradeApp', entry.app.path)
 
-        if (outcome.status !== 'waiting') this.#settle(entry, release, outcome)
-        else if (this.prompt.open) this.prompt.quitting.push({ entry, release })
-        else this.prompt = { open: true, quitting: [{ entry, release }] }
+        if (outcome.status === 'waiting') void this.#settleWaiting(entry, release)
+        else this.#settle(entry, release, outcome)
       })
     )
   }
 
-  async upgradeOutdated(): Promise<void> {
-    this.#phase = 'bulk'
-    await this.upgrade(this.outdated)
-    this.#phase = 'idle'
+  protected async list(): Promise<void> {
+    this.entries = (await window.api.invoke('listApps')).map((app) => ({ id: app.path, app }))
   }
 
-  canUpgrade(entry: Entry): boolean {
-    return this.#phase === 'idle' && !pending(entry)
-  }
-
-  async confirm(): Promise<void> {
-    this.prompt.open = false
-
+  protected async check(): Promise<void> {
     await Promise.all(
-      this.prompt.quitting.map(async ({ entry, release }) => {
-        this.#settle(entry, release, await window.api.forceAppUpgrade(entry.app.path))
+      this.entries.map(async (entry) => {
+        entry.task = { command: 'check', status: 'running' }
+
+        entry.task = { command: 'check', ...(await window.api.invoke('checkApp', entry.app.path)) }
       })
     )
   }
 
-  async cancel(): Promise<void> {
-    this.prompt.open = false
-
-    await Promise.all(
-      this.prompt.quitting.map(async ({ entry, release }) => {
-        await window.api.discardAppUpgrade(entry.app.path)
-        entry.task = { command: 'check', status: 'checked', release }
-      })
-    )
+  protected pending({ task }: Entry): boolean {
+    return upgrading(task)
   }
 
-  async #list(): Promise<void> {
-    this.entries = (await window.api.listApps()).map((app) => ({ app }))
+  async #settleWaiting(entry: Entry, release: Release): Promise<void> {
+    if (await this.prompt.ask(entry.app)) {
+      this.#settle(entry, release, await window.api.invoke('forceAppUpgrade', entry.app.path))
+    } else {
+      await window.api.invoke('discardAppUpgrade', entry.app.path)
+      entry.task = { command: 'check', status: 'checked', release }
+    }
   }
 
   #settle(entry: Entry, release: Release, outcome: InstallOutcome): void {

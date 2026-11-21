@@ -4,7 +4,6 @@
   const dots = {
     unknown: 'bg-placeholder',
     failed: 'bg-destructive',
-    attention: 'bg-warning',
     outdated: 'bg-info',
     current: 'bg-success'
   } satisfies Record<Exclude<Status, 'running'>, string>

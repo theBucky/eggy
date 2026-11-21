@@ -1,4 +1,4 @@
-import type { Theme } from '$shared/api'
+import type { Theme } from '$shared/theme'
 
 export class Preferences {
   #checkOnLaunch = $state(localStorage.getItem('checkOnLaunch') === 'true')
@@ -19,6 +19,6 @@ export class Preferences {
 
   set theme(value: Theme) {
     this.#theme = value
-    window.api.setTheme(value)
+    window.api.invoke('setTheme', value)
   }
 }

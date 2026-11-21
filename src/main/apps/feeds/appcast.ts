@@ -1,7 +1,7 @@
 import type { Element, NodeList } from '@xmldom/xmldom'
-import type { Notes, Release } from '$shared/api'
+import type { Notes, Release } from '$shared/apps'
+import { parseXml } from '../xml'
 import { compare } from './version'
-import { parseXml } from './xml'
 
 export type Appcast = {
   url: string

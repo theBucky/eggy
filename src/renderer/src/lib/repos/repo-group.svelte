@@ -6,7 +6,7 @@
   import * as Sidebar from '$lib/components/ui/sidebar'
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
-  import { dirOf, nameOf } from '$lib/paths'
+  import { nameOf } from '$lib/paths'
   import { behind, statusOf, type Repos } from '$lib/repos/repos.svelte'
 
   let {
@@ -16,19 +16,10 @@
   }: {
     repos: Repos
     selected: string | undefined
-    onselect: (path: string) => void
+    onselect: (id: string) => void
   } = $props()
 
   const expanded = new SvelteSet<string>()
-
-  const folders = $derived(
-    [
-      ...Map.groupBy(
-        repos.entries.toSorted((a, b) => a.repo.path.localeCompare(b.repo.path)),
-        (entry) => dirOf(entry.repo.path)
-      )
-    ].toSorted(([a], [b]) => a.localeCompare(b))
-  )
 
   function setExpanded(dir: string, open: boolean): void {
     if (open) expanded.add(dir)
@@ -38,7 +29,7 @@
 
 <SidebarSection label="Repositories" source={repos} checkLabel="Refresh" upgradeVerb="Pull">
   <Sidebar.Menu>
-    {#each folders as [dir, entries] (dir)}
+    {#each repos.folders as { dir, label, entries } (dir)}
       {@const open = expanded.has(dir)}
       <Collapsible.Root bind:open={() => open, (value) => setExpanded(dir, value)}>
         {#snippet child({ props })}
@@ -51,7 +42,7 @@
                   {:else}
                     <IconFolder />
                   {/if}
-                  <span class="flex-1 truncate-fade">{repos.relative(dir)}</span>
+                  <span class="flex-1 truncate-fade">{label}</span>
                   {#if !open}
                     {@const outdated = entries.filter(behind).length}
                     {#if outdated > 0}
@@ -63,12 +54,12 @@
             </Collapsible.Trigger>
             <Collapsible.Content hiddenUntilFound>
               <Sidebar.Menu class="pt-1 pb-3">
-                {#each entries as entry (entry.repo.path)}
+                {#each entries as entry (entry.id)}
                   {@const status = statusOf(entry)}
                   <Sidebar.MenuItem>
                     <Sidebar.MenuButton
-                      isActive={entry.repo.path === selected}
-                      onclick={() => onselect(entry.repo.path)}
+                      isActive={entry.id === selected}
+                      onclick={() => onselect(entry.id)}
                     >
                       <StatusDot {status} />
                       <span class="flex-1 truncate-fade">{nameOf(entry.repo.path)}</span>

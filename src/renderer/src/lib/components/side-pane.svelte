@@ -20,7 +20,6 @@
   let layout: HTMLElement
   let wrapper = $state<HTMLElement>()
 
-  // The pane keeps showing its last item while it slides shut.
   let shown = $state.raw<Item>()
   let sliding = $state.raw<{ width: string; content: number }>()
 
@@ -44,7 +43,7 @@
 
   $effect(() => () => {
     destroyed = true
-    window.api.planWindowCollapse().then(() => window.api.moveWindow())
+    window.api.invoke('planWindowCollapse').then(() => window.api.invoke('moveWindow'))
   })
 
   async function slide(open: boolean): Promise<void> {
@@ -53,12 +52,11 @@
     sliding = { width: `${from}px`, content: open ? PANE_WIDTH : from }
 
     const grown = open
-      ? await window.api.planWindowExpansion(PANE_WIDTH - COLUMN_SHARE)
-      : await window.api.planWindowCollapse()
+      ? await window.api.invoke('planWindowExpansion', PANE_WIDTH - COLUMN_SHARE)
+      : await window.api.invoke('planWindowCollapse')
 
     if (destroyed) return
 
-    // The layout takes all the window's growth, since the sidebar keeps its width.
     const to = open ? Math.min(PANE_WIDTH, layout.clientWidth + grown - COLUMN_MIN_WIDTH) : 0
     const content = Math.max(from, to)
 
@@ -74,7 +72,7 @@
       const rate = (to - from) / grown
 
       sliding = { width: `calc(${from}px + (100vw - ${window.innerWidth}px) * ${rate})`, content }
-      await window.api.moveWindow()
+      await window.api.invoke('moveWindow')
     }
 
     if (destroyed) return

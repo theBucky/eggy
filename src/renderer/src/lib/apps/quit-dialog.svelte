@@ -1,30 +1,30 @@
 <script lang="ts">
   import * as AlertDialog from '$lib/components/ui/alert-dialog'
-  import type { Apps } from '$lib/apps/apps.svelte'
-  import { list } from '$lib/format'
+  import type { QuitPrompt } from '$lib/apps/quit-prompt.svelte'
+  import { list } from '$shared/english'
 
-  let { apps }: { apps: Apps } = $props()
+  let { prompt }: { prompt: QuitPrompt } = $props()
 
-  const names = $derived(list.format(apps.prompt.quitting.map(({ entry }) => entry.app.name)))
+  const names = $derived(list.format(prompt.apps.map(({ name }) => name)))
 </script>
 
 <AlertDialog.Root
-  open={apps.prompt.open}
+  open={prompt.open}
   onOpenChange={(open) => {
-    if (!open) apps.cancel()
+    if (!open) prompt.answer(false)
   }}
 >
   <AlertDialog.Content>
     <div class="flex flex-wrap gap-2">
-      {#each apps.prompt.quitting as { entry } (entry.app.path)}
-        <img src={entry.app.icon} alt="" class="size-10" />
+      {#each prompt.apps as app (app.path)}
+        <img src={app.icon} alt="" class="size-10" />
       {/each}
     </div>
     <AlertDialog.Header>
       <AlertDialog.Title>
-        {apps.prompt.quitting.length === 1
+        {prompt.apps.length === 1
           ? `${names} is running`
-          : `${apps.prompt.quitting.length} apps are running`}
+          : `${prompt.apps.length} apps are running`}
       </AlertDialog.Title>
       <AlertDialog.Description>
         Upgrading force quits and reopens {names}, and unsaved changes are lost.
@@ -32,7 +32,7 @@
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
-      <AlertDialog.Action variant="destructive" onclick={() => apps.confirm()}>
+      <AlertDialog.Action variant="destructive" onclick={() => prompt.answer(true)}>
         Quit and upgrade
       </AlertDialog.Action>
     </AlertDialog.Footer>

@@ -7,7 +7,7 @@
   import Toolbar from '$lib/components/toolbar.svelte'
   import * as Collapsible from '$lib/components/ui/collapsible'
   import * as Sidebar from '$lib/components/ui/sidebar'
-  import type { Source } from '$lib/sources.svelte'
+  import type { Source } from '$lib/source.svelte'
   import { cn } from '$lib/utils'
 
   let {

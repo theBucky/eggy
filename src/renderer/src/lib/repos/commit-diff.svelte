@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CodeView, parsePatchFiles, type CodeViewDiffItem } from '@pierre/diffs'
+  import { parsePatchFiles, type CodeViewDiffItem } from '@pierre/diffs'
   import IconArrowsMoveVertical from '@tabler/icons-svelte/icons/arrows-move-vertical'
   import IconExternalLink from '@tabler/icons-svelte/icons/external-link'
   import IconFold from '@tabler/icons-svelte/icons/fold'
@@ -8,14 +8,13 @@
   import { SvelteSet } from 'svelte/reactivity'
   import Toolbar from '$lib/components/toolbar.svelte'
   import ToolbarButton from '$lib/components/toolbar-button.svelte'
-  import { DIFF_THEMES, highlighter } from '$lib/repos/highlighter'
-  import FileHeader, { HEADER_HEIGHT } from '$lib/repos/file-header.svelte'
   import { ago } from '$lib/format'
-  import type { Commit } from '$shared/api'
+  import { changesOf, createViewer } from '$lib/repos/diff-viewer'
+  import FileHeader from '$lib/repos/file-header.svelte'
+  import { plural } from '$shared/english'
+  import type { Commit } from '$shared/repos'
 
   type Detail = { commit: Commit; body: string; items: CodeViewDiffItem[] }
-
-  const LINE_HEIGHT = 20
 
   let {
     path,
@@ -40,104 +39,45 @@
   // The viewer asks for a file's header on every render of it, so each file mounts its header once.
   const headers = new Map<string, { host: HTMLElement; header: ReturnType<typeof mount> }>()
 
-  // A switch keeps the last commit on screen until the next one is ready to replace it whole.
   const shown = $derived(detail?.commit ?? commit)
-  const rendered = $derived(revealed ? detail : undefined)
   const allCollapsed = $derived(expanded.size === 0)
 
-  const totals = $derived.by(() => {
-    if (detail === undefined) return undefined
+  // Rendering waits for the pane to come to rest, so the slide never stalls on it.
+  const rendered = $derived(revealed ? detail : undefined)
 
-    const hunks = detail.items.flatMap(({ fileDiff }) => fileDiff.hunks)
-
-    return {
+  const totals = $derived(
+    detail && {
       files: detail.items.length,
-      additions: hunks.reduce((sum, hunk) => sum + hunk.additionLines, 0),
-      deletions: hunks.reduce((sum, hunk) => sum + hunk.deletionLines, 0)
+      ...changesOf(detail.items.flatMap(({ fileDiff }) => fileDiff.hunks))
     }
-  })
-
-  const viewer = new CodeView(
-    {
-      theme: DIFF_THEMES,
-      diffStyle: 'unified',
-      diffIndicators: 'none',
-      hunkSeparators: 'metadata',
-      overflow: 'wrap',
-      stickyHeaders: true,
-      layout: { paddingTop: 0, paddingBottom: 0, gap: 0 },
-      itemMetrics: {
-        lineHeight: LINE_HEIGHT,
-        diffHeaderHeight: HEADER_HEIGHT,
-        hunkSeparatorHeight: LINE_HEIGHT
-      },
-      // Changed lines take their colors as is, where the viewer would tint the background with them,
-      // and run them unbroken through the gutter. A pinned header tucks its top border under the
-      // pane header's, which would otherwise double it.
-      unsafeCSS: `
-      :host {
-        --diffs-font-family: var(--font-mono);
-        --diffs-header-font-family: var(--font-mono);
-        --diffs-font-size: 12px;
-        --diffs-line-height: ${LINE_HEIGHT}px;
-        --diffs-addition-color-override: var(--added);
-        --diffs-deletion-color-override: var(--removed);
-        --diffs-bg-addition-override: var(--added-line);
-        --diffs-bg-addition-number-override: var(--added-line);
-        --diffs-bg-deletion-override: var(--removed-line);
-        --diffs-bg-deletion-number-override: var(--removed-line);
-        --diffs-fg-number-override: var(--placeholder);
-        --diffs-bg-separator-override: var(--muted);
-      }
-      [data-line-type^='change'] {
-        --mix-light: 0%;
-        --mix-dark: 0%;
-      }
-      [data-column-number] {
-        border-right-color: transparent;
-      }
-      [data-separator='metadata'] {
-        height: ${LINE_HEIGHT}px;
-      }
-      [data-separator='metadata'] [data-separator-wrapper] {
-        background-color: transparent;
-        color: var(--muted-foreground);
-        font-size: 12px;
-        line-height: 16px;
-      }
-      [data-diffs-header][data-sticky] {
-        top: -1px;
-      }
-    `,
-      renderCodeViewHeader: () => summary,
-      renderCustomHeader: (_, { item }) => (item.type === 'diff' ? header(item) : undefined)
-    },
-    highlighter
   )
 
-  function header({ id, fileDiff }: CodeViewDiffItem): HTMLElement {
-    let entry = headers.get(id)
+  const viewer = createViewer({
+    renderCodeViewHeader: () => summary,
+    renderCustomHeader: (_, { item }) => (item.type === 'diff' ? headerOf(item) : undefined)
+  })
 
-    if (entry === undefined) {
-      const host = document.createElement('div')
+  function headerOf({ id, fileDiff }: CodeViewDiffItem): HTMLElement {
+    const mounted = headers.get(id)
 
-      entry = {
-        host,
-        header: mount(FileHeader, {
-          target: host,
-          props: {
-            fileDiff,
-            get open() {
-              return expanded.has(id)
-            },
-            ontoggle: (open) => toggle(id, host, open)
-          }
-        })
+    if (mounted !== undefined) return mounted.host
+
+    const host = document.createElement('div')
+
+    const header = mount(FileHeader, {
+      target: host,
+      props: {
+        fileDiff,
+        get open() {
+          return expanded.has(id)
+        },
+        ontoggle: (open) => toggle(id, host, open)
       }
-      headers.set(id, entry)
-    }
+    })
 
-    return entry.host
+    headers.set(id, { host, header })
+
+    return host
   }
 
   // Folding a file from its pinned header would carry the header off the top, so the view first
@@ -175,7 +115,7 @@
     const current = commit
     let live = true
 
-    window.api.showCommit(path, current.hash).then(({ body, patch }) => {
+    window.api.invoke('showCommit', path, current.hash).then(({ body, patch }) => {
       if (!live) return
 
       const files = parsePatchFiles(patch, { cacheKeyPrefix: `${path}:${current.hash}` }).flatMap(
@@ -202,7 +142,6 @@
     }
   })
 
-  // Rendering waits for the pane to come to rest, so the slide never stalls on it.
   $effect(() => {
     if (!rendered) return
 
@@ -226,10 +165,7 @@
     <div class="flex min-w-0 items-center gap-3">
       <span class="font-mono text-xs select-text">{shown.hash}</span>
       {#if totals}
-        <span class="truncate text-muted-foreground">
-          {totals.files}
-          {totals.files === 1 ? 'file' : 'files'}
-        </span>
+        <span class="truncate text-muted-foreground">{plural(totals.files, 'file', 'files')}</span>
         <span class="flex gap-2 font-mono text-xs">
           <span class="text-added">+{totals.additions}</span>
           <span class="text-removed">-{totals.deletions}</span>

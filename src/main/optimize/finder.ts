@@ -2,8 +2,8 @@ import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { shell } from 'electron'
-import type { OptimizeOutcome } from '$shared/api'
-import { plural } from '$shared/plural'
+import { plural } from '$shared/english'
+import type { OptimizeOutcome } from '$shared/optimize'
 import { errorCode } from '../errors'
 import { exec, output } from '../exec'
 import { NEEDS_FULL_DISK_ACCESS, broken } from './support'
@@ -53,7 +53,7 @@ export async function sharedFileLists(): Promise<OptimizeOutcome> {
 const VOLUMES = ['DSDontWriteNetworkStores', 'DSDontWriteUSBStores']
 
 export async function networkVolumes(): Promise<OptimizeOutcome> {
-  let changed = 0
+  let changed = false
 
   for (const key of VOLUMES) {
     const read = await exec('/usr/bin/defaults', ['read', 'com.apple.desktopservices', key], {
@@ -67,13 +67,13 @@ export async function networkVolumes(): Promise<OptimizeOutcome> {
       ['write', 'com.apple.desktopservices', key, '-bool', 'true'],
       { timeout: 5000 }
     )
-    changed++
+    changed = true
   }
 
-  return changed === 0
-    ? { status: 'unchanged', message: 'Finder already skips network and USB volumes.' }
-    : {
+  return changed
+    ? {
         status: 'applied',
         message: 'Finder stops writing .DS_Store files to network and USB volumes once it restarts.'
       }
+    : { status: 'unchanged', message: 'Finder already skips network and USB volumes.' }
 }

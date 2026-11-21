@@ -1,6 +1,7 @@
 import * as z from 'zod'
-import type { Bundle } from './bundle'
-import { fetchFeed, verifyChecksum, verifySigner, type Feed, type Update } from './framework'
+import type { Bundle } from '../bundle'
+import { fetchFeed, type Feed, type Update } from './feed'
+import { verifyChecksum, verifySigner } from './verify'
 
 // Each level includes its payload only when its status is ok.
 const Answer = z.looseObject({ status: z.string() })
