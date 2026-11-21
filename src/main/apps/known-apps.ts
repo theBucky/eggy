@@ -10,8 +10,14 @@ import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
 
+const CursorTrack = z
+  .enum(['stable', 'prerelease', 'dev', 'dogfood', 'candidate'])
+  .optional()
+  .catch(undefined)
+
 const CursorSettings = z.object({
-  'update.releaseTrack': z.enum(['stable', 'prerelease', 'dev', 'dogfood', 'candidate'])
+  'update.releaseTrackOverride': CursorTrack,
+  'update.releaseTrack': CursorTrack
 })
 
 // Cursor's update server requires a machine identifier but answers the same for any.
@@ -83,7 +89,10 @@ const feeds = new Map<string, (bundle: Bundle) => Promise<Feed>>([
         )
       )
 
-      const track = settings.success ? settings.data['update.releaseTrack'] : 'stable'
+      const track =
+        settings.data?.['update.releaseTrackOverride'] ??
+        settings.data?.['update.releaseTrack'] ??
+        'stable'
 
       const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin'
 
