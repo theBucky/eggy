@@ -1,3 +1,5 @@
+import type { Status } from '$lib/status'
+
 type Phase = 'idle' | 'scanning' | 'checking' | 'bulk'
 
 export abstract class Source<Entry extends { id: string } = { id: string }> {
@@ -42,6 +44,8 @@ export abstract class Source<Entry extends { id: string } = { id: string }> {
     await this.upgrade(this.outdated)
     this.#phase = 'idle'
   }
+
+  abstract statusOf(entry: Entry): Status
 
   abstract upgrade(entries: Entry[]): Promise<void>
 

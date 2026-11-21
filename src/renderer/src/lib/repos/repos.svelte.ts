@@ -23,18 +23,6 @@ function unsettled(
   return task?.status === 'queued' || task?.status === 'running'
 }
 
-export function statusOf(entry: Entry): Status {
-  const { task } = entry
-
-  if (unsettled(task)) return 'running'
-
-  if (task?.status === 'failed') return 'failed'
-
-  if (behind(entry)) return 'outdated'
-
-  return task === undefined ? 'unknown' : 'current'
-}
-
 export function behind({ repo }: Entry): boolean {
   return (repo.sync?.behind ?? 0) > 0
 }
@@ -73,6 +61,18 @@ export class Repos extends Source<Entry> {
   )
   // Linked worktrees share refs, so their git commands run one after another to avoid lock errors.
   #git = new Pool(8)
+
+  statusOf(entry: Entry): Status {
+    const { task } = entry
+
+    if (unsettled(task)) return 'running'
+
+    if (task?.status === 'failed') return 'failed'
+
+    if (behind(entry)) return 'outdated'
+
+    return task === undefined ? 'unknown' : 'current'
+  }
 
   async chooseRoot(): Promise<void> {
     const root = await window.api.invoke('chooseRoot', this.root)

@@ -7,7 +7,7 @@
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import { nameOf } from '$lib/paths'
-  import { behind, statusOf, type Repos } from '$lib/repos/repos.svelte'
+  import { behind, type Repos } from '$lib/repos/repos.svelte'
 
   let {
     repos,
@@ -55,7 +55,7 @@
             <Collapsible.Content hiddenUntilFound>
               <Sidebar.Menu class="pt-1 pb-3">
                 {#each entries as entry (entry.id)}
-                  {@const status = statusOf(entry)}
+                  {@const status = repos.statusOf(entry)}
                   <Sidebar.MenuItem>
                     <Sidebar.MenuButton
                       isActive={entry.id === selected}
