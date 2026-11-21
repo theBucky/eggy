@@ -3,16 +3,14 @@
   import ListCard from '$lib/components/list-card.svelte'
   import StandingNote from '$lib/components/standing-note.svelte'
   import * as Item from '$lib/components/ui/item'
-  import { labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
+  import { failureOf, labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import UpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { clauses, megabytes } from '$lib/format'
   import type { App, Release } from '$shared/apps'
 
   let { apps, onselect }: { apps: Apps; onselect: (id: string) => void } = $props()
 
-  const rows = $derived(
-    apps.entries.filter((entry) => releaseOf(entry) || entry.task?.status === 'failed')
-  )
+  const rows = $derived(apps.entries.filter((entry) => releaseOf(entry) || failureOf(entry)))
 
   function metaOf(app: App, release: Release): string {
     const bump =
@@ -34,8 +32,9 @@
 </ListCard>
 
 {#snippet row(entry: Entry)}
-  {@const { app, task } = entry}
+  {@const { app } = entry}
   {@const release = releaseOf(entry)}
+  {@const failed = failureOf(entry)}
   <Item.Root size="xs" role="listitem">
     <Item.Media variant="image"><img src={app.icon} alt="" /></Item.Media>
     <Item.Content>
@@ -45,8 +44,8 @@
         </button>
       </Item.Title>
       <Item.Description>
-        {#if task?.status === 'failed'}
-          <FailureText message={task.message} />
+        {#if failed}
+          <FailureText message={failed.message} />
         {:else if release}
           <span class="font-mono">{metaOf(app, release)}</span>
         {/if}

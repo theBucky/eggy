@@ -53,8 +53,7 @@ app.whenReady().then(() => {
     listApps: () => apps.list(),
     checkApp: (_, path) => apps.check(path),
     upgradeApp: (_, path) => apps.upgrade(path, (progress) => send('appProgress', path, progress)),
-    forceAppUpgrade: (_, path) => apps.forceUpgrade(path),
-    discardAppUpgrade: (_, path) => apps.discardUpgrade(path),
+    answerAppQuit: (_, path, quit) => apps.answerQuit(path, quit),
     listPackages: () => brew.list(),
     checkPackages: () => brew.check(),
     upgradePackage: (_, kind, fullName) =>

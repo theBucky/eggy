@@ -5,7 +5,7 @@
   import Section from '$lib/components/section.svelte'
   import { Badge } from '$lib/components/ui/badge'
   import { Button } from '$lib/components/ui/button'
-  import { labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
+  import { failureOf, labelOf, releaseOf, type Apps, type Entry } from '$lib/apps/apps.svelte'
   import ReleaseNotes from '$lib/apps/release-notes.svelte'
   import UpgradeButton from '$lib/apps/upgrade-button.svelte'
   import { ago, megabytes } from '$lib/format'
@@ -14,8 +14,9 @@
 
   let { apps, entry }: { apps: Apps; entry: Entry } = $props()
 
-  const { app, task } = $derived(entry)
+  const { app, check } = $derived(entry)
   const release = $derived(releaseOf(entry))
+  const failed = $derived(failureOf(entry))
 
   const feedLabel = $derived.by(() => {
     const { origin, pathname } = new URL(app.feed)
@@ -24,21 +25,15 @@
   })
 
   const badge = $derived.by((): StatusBadge | undefined => {
-    if (task?.command === 'check' && task.status === 'running') {
-      return { label: 'Checking', variant: 'secondary' }
-    }
+    if (check?.status === 'running') return { label: 'Checking', variant: 'secondary' }
 
     if (release !== undefined) return { label: 'Upgrade available', variant: 'info' }
 
-    if (task?.command === 'check' && task.status === 'failed') {
-      return { label: 'Check failed', variant: 'destructive' }
-    }
+    if (check?.status === 'failed') return { label: 'Check failed', variant: 'destructive' }
 
-    if (task?.command === 'upgrade' && task.status === 'upgraded') {
-      return { label: 'Upgraded', variant: 'success' }
-    }
+    if (entry.upgrade?.status === 'upgraded') return { label: 'Upgraded', variant: 'success' }
 
-    return task === undefined ? undefined : { label: 'Up to date', variant: 'success' }
+    return check === undefined ? undefined : { label: 'Up to date', variant: 'success' }
   })
 </script>
 
@@ -79,10 +74,10 @@
     </dd>
   </MetaList>
 
-  {#if task?.status === 'failed'}
+  {#if failed}
     <FailureAlert
-      title={task.command === 'check' ? 'Check failed' : 'Upgrade failed'}
-      message={task.message}
+      title={entry.upgrade?.status === 'failed' ? 'Upgrade failed' : 'Check failed'}
+      message={failed.message}
     />
   {/if}
 

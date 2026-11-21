@@ -9,11 +9,11 @@
 </script>
 
 <Button {variant} disabled={!apps.canUpgrade(entry)} onclick={() => apps.upgrade([entry])}>
-  <span data-progress={progress?.stage === 'install' ? 100 : progress?.percent}>
-    {#if progress?.stage === 'install'}
-      Installing
-    {:else if progress}
+  <span data-progress={progress && (progress.stage === 'download' ? progress.percent : 100)}>
+    {#if progress?.stage === 'download'}
       Downloading
+    {:else if progress}
+      Installing
     {:else}
       Upgrade
     {/if}

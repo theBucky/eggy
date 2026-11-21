@@ -1,4 +1,4 @@
-import type { App, CheckOutcome, InstallOutcome, Progress, UpgradeOutcome } from './apps'
+import type { App, CheckOutcome, Progress, UpgradeOutcome } from './apps'
 import type { Machine, Optimization, OptimizeState, Review } from './optimize'
 import type { PackageCheck, PackageKind, PackageList, PackageUpgrade } from './packages'
 import type { CommitDetail, FetchResult, PullCommand, PullResult, Repo } from './repos'
@@ -18,8 +18,7 @@ export type Requests = {
   listApps: () => App[]
   checkApp: (path: string) => CheckOutcome
   upgradeApp: (path: string) => UpgradeOutcome
-  forceAppUpgrade: (path: string) => InstallOutcome
-  discardAppUpgrade: (path: string) => void
+  answerAppQuit: (path: string, quit: boolean) => void
   listPackages: () => PackageList
   checkPackages: () => PackageCheck
   upgradePackage: (kind: PackageKind, fullName: string) => PackageUpgrade

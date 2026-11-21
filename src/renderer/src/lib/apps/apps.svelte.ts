@@ -4,39 +4,29 @@ import type { Status } from '$lib/status'
 import type { App, CheckOutcome, InstallOutcome, Progress, Release } from '$shared/apps'
 import type { Failure } from '$shared/failure'
 
-type Task =
-  | { command: 'check'; status: 'running' }
-  | ({ command: 'check' } & CheckOutcome)
-  | { command: 'upgrade'; status: 'running'; release: Release; progress: Progress }
-  | ({ command: 'upgrade'; release: Release } & Failure)
-  | { command: 'upgrade'; status: 'upgraded' }
+type Check = { status: 'running' } | CheckOutcome
+
+type Upgrade = { status: 'running'; progress: Progress } | InstallOutcome
 
 export type Entry = {
   id: string
   app: App
-  task?: Task
+  check?: Check
+  upgrade?: Upgrade
 }
 
-function upgrading(
-  task: Task | undefined
-): task is Extract<Task, { command: 'upgrade'; status: 'running' }> {
-  return task?.command === 'upgrade' && task.status === 'running'
+export function releaseOf({ check }: Entry): Release | undefined {
+  return check?.status === 'checked' ? check.release : undefined
 }
 
-export function releaseOf({ task }: Entry): Release | undefined {
-  return task !== undefined && 'release' in task ? task.release : undefined
+export function progressOf({ upgrade }: Entry): Progress | undefined {
+  return upgrade?.status === 'running' ? upgrade.progress : undefined
 }
 
-export function progressOf({ task }: Entry): Progress | undefined {
-  return upgrading(task) ? task.progress : undefined
-}
+export function failureOf({ check, upgrade }: Entry): Failure | undefined {
+  if (upgrade?.status === 'failed') return upgrade
 
-export function statusOf({ task }: Entry): Status {
-  if (task === undefined) return 'unknown'
-
-  if (task.status === 'checked') return task.release === undefined ? 'current' : 'outdated'
-
-  return task.status === 'upgraded' ? 'current' : task.status
+  return check?.status === 'failed' ? check : undefined
 }
 
 export function labelOf({ version, build }: App | Release): string {
@@ -46,40 +36,52 @@ export function labelOf({ version, build }: App | Release): string {
 export class Apps extends Source<Entry> {
   readonly prompt = new QuitPrompt()
   checked = $derived(
-    this.entries.some(({ task }) => task !== undefined && task.status !== 'running')
+    this.entries.some(({ check }) => check !== undefined && check.status !== 'running')
   )
-  checkFailed = $derived(
-    this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'check')
-  )
+  checkFailed = $derived(this.entries.some(({ check }) => check?.status === 'failed'))
   outdated = $derived(this.entries.filter(releaseOf))
 
   constructor() {
     super()
     window.api.on('appProgress', (path, progress) => {
-      const task = this.find(path)?.task
+      const entry = this.find(path)
 
-      if (upgrading(task)) task.progress = progress
+      if (entry?.upgrade?.status !== 'running') return
+
+      entry.upgrade.progress = progress
+
+      if (progress.stage === 'waiting') {
+        this.prompt.ask(entry.app).then((quit) => window.api.invoke('answerAppQuit', path, quit))
+      }
     })
+  }
+
+  statusOf({ check, upgrade }: Entry): Status {
+    if (check?.status === 'running' || upgrade?.status === 'running') return 'running'
+
+    if (check?.status === 'failed' || upgrade?.status === 'failed') return 'failed'
+
+    if (check === undefined) return 'unknown'
+
+    return check.release === undefined ? 'current' : 'outdated'
   }
 
   async upgrade(entries: Entry[]): Promise<void> {
     await Promise.all(
       entries.map(async (entry) => {
-        const release = releaseOf(entry)
+        if (releaseOf(entry) === undefined) return
 
-        if (release === undefined) return
-
-        entry.task = {
-          command: 'upgrade',
-          status: 'running',
-          release,
-          progress: { stage: 'download', percent: 0 }
-        }
+        entry.upgrade = { status: 'running', progress: { stage: 'download', percent: 0 } }
 
         const outcome = await window.api.invoke('upgradeApp', entry.app.path)
 
-        if (outcome.status === 'waiting') void this.#settleWaiting(entry, release)
-        else this.#settle(entry, release, outcome)
+        if (outcome.status === 'upgraded') {
+          entry.app.version = outcome.version
+          entry.app.build = outcome.build
+          entry.check = { status: 'checked', release: undefined }
+        }
+
+        entry.upgrade = outcome.status === 'discarded' ? undefined : outcome
       })
     )
   }
@@ -91,33 +93,13 @@ export class Apps extends Source<Entry> {
   protected async check(): Promise<void> {
     await Promise.all(
       this.entries.map(async (entry) => {
-        entry.task = { command: 'check', status: 'running' }
-
-        entry.task = { command: 'check', ...(await window.api.invoke('checkApp', entry.app.path)) }
+        entry.check = { status: 'running' }
+        entry.check = await window.api.invoke('checkApp', entry.app.path)
       })
     )
   }
 
-  protected pending({ task }: Entry): boolean {
-    return upgrading(task)
-  }
-
-  async #settleWaiting(entry: Entry, release: Release): Promise<void> {
-    if (await this.prompt.ask(entry.app)) {
-      this.#settle(entry, release, await window.api.invoke('forceAppUpgrade', entry.app.path))
-    } else {
-      await window.api.invoke('discardAppUpgrade', entry.app.path)
-      entry.task = { command: 'check', status: 'checked', release }
-    }
-  }
-
-  #settle(entry: Entry, release: Release, outcome: InstallOutcome): void {
-    if (outcome.status === 'upgraded') {
-      entry.app.version = outcome.version
-      entry.app.build = outcome.build
-      entry.task = { command: 'upgrade', status: 'upgraded' }
-    } else {
-      entry.task = { command: 'upgrade', release, ...outcome }
-    }
+  protected pending({ upgrade }: Entry): boolean {
+    return upgrade?.status === 'running'
   }
 }

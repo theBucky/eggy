@@ -2,7 +2,7 @@
   import SidebarSection from '$lib/components/sidebar-section.svelte'
   import StatusDot from '$lib/components/status-dot.svelte'
   import * as Sidebar from '$lib/components/ui/sidebar'
-  import { statusOf, type Apps } from '$lib/apps/apps.svelte'
+  import type { Apps } from '$lib/apps/apps.svelte'
 
   let {
     apps,
@@ -22,7 +22,7 @@
       {@const { app } = entry}
       <Sidebar.MenuItem>
         <Sidebar.MenuButton isActive={entry.id === selected} onclick={() => onselect(entry.id)}>
-          <StatusDot status={statusOf(entry)} />
+          <StatusDot status={apps.statusOf(entry)} />
           <img src={app.icon} alt="" class="size-4 shrink-0" />
           <span class="flex-1 truncate-fade">{app.name}</span>
         </Sidebar.MenuButton>

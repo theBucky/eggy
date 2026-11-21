@@ -26,6 +26,9 @@ export type CheckOutcome = { status: 'checked'; release: Release | undefined } |
 
 export type InstallOutcome = { status: 'upgraded'; version: string; build: string } | Failure
 
-export type UpgradeOutcome = InstallOutcome | { status: 'waiting' }
+export type UpgradeOutcome = InstallOutcome | { status: 'discarded' }
 
-export type Progress = { stage: 'download'; percent: number | undefined } | { stage: 'install' }
+export type Progress =
+  | { stage: 'download'; percent: number | undefined }
+  | { stage: 'install' }
+  | { stage: 'waiting' }

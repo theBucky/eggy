@@ -1,7 +1,7 @@
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { nativeImage } from 'electron'
-import type { App, CheckOutcome, InstallOutcome, Progress, UpgradeOutcome } from '$shared/apps'
+import type { App, CheckOutcome, Progress, UpgradeOutcome } from '$shared/apps'
 import { failure } from '../errors'
 import { readBundle } from './bundle'
 import { feedOf, fetchUpdates } from './feeds'
@@ -11,7 +11,7 @@ import { isRunning } from './processes'
 
 const folders = ['/Applications', join(homedir(), 'Applications')]
 
-const waiting = new Map<string, Staged>()
+const waiting = new Map<string, { staged: Staged; answer: (quit: boolean) => void }>()
 
 async function readApp(path: string): Promise<App | undefined> {
   const bundle = await readBundle(path)
@@ -58,9 +58,18 @@ export async function upgrade(
     const staged = await stage(bundle, await fetchUpdates(bundle), report)
 
     if (await isRunning(bundle)) {
-      waiting.set(path, staged)
+      const { promise, resolve } = Promise.withResolvers<boolean>()
 
-      return { status: 'waiting' }
+      waiting.set(path, { staged, answer: resolve })
+      report({ stage: 'waiting' })
+
+      if (!(await promise)) {
+        await discard(staged)
+
+        return { status: 'discarded' }
+      }
+
+      report({ stage: 'install' })
     }
 
     return await install(staged)
@@ -69,30 +78,11 @@ export async function upgrade(
   }
 }
 
-function takeWaiting(path: string): Staged | undefined {
-  const staged = waiting.get(path)
-
+export function answerQuit(path: string, quit: boolean): void {
+  waiting.get(path)?.answer(quit)
   waiting.delete(path)
-
-  return staged
-}
-
-export async function forceUpgrade(path: string): Promise<InstallOutcome> {
-  const staged = takeWaiting(path)
-
-  if (staged === undefined) {
-    return { status: 'failed', message: 'No upgrade is waiting for this app.' }
-  }
-
-  return install(staged)
-}
-
-export async function discardUpgrade(path: string): Promise<void> {
-  const staged = takeWaiting(path)
-
-  if (staged !== undefined) await discard(staged)
 }
 
 export function discardWaiting(): void {
-  for (const { work } of waiting.values()) rmSync(work, { recursive: true, force: true })
+  for (const { staged } of waiting.values()) rmSync(staged.work, { recursive: true, force: true })
 }
