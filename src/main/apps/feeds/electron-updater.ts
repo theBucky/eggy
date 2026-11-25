@@ -13,7 +13,7 @@ import { verifyChecksum, verifySigner } from './verify'
 const Generic = z.object({
   provider: z.literal('generic'),
   url: z.string(),
-  channel: z.string().optional()
+  channel: z.string().default('latest')
 })
 
 type Generic = z.infer<typeof Generic>
@@ -22,7 +22,7 @@ const GitHub = z.object({
   provider: z.literal('github'),
   owner: z.string(),
   repo: z.string(),
-  channel: z.string().optional()
+  channel: z.string().default('latest')
 })
 
 type GitHub = z.infer<typeof GitHub>
@@ -96,7 +96,7 @@ function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update[
   ]
 }
 
-function generic(bundle: Bundle, { url, channel = 'latest' }: Generic): Feed {
+function generic(bundle: Bundle, { url, channel }: Generic): Feed {
   const base = url.endsWith('/') ? url : `${url}/`
   const file = new URL(`${channel}-mac.yml`, base).href
 
@@ -133,6 +133,22 @@ async function findTag(
   )?.tag
 }
 
+export async function offerGitHubRelease(
+  bundle: Bundle,
+  releases: string,
+  tag: string,
+  channel: string,
+  notes: Notes | undefined
+): Promise<Update[]> {
+  const base = `${releases}/download/${tag}/`
+  const info = await fetchInfo(`${base}${prerelease(tag)?.[0] ?? channel}-mac.yml`)
+
+  // electron-builder uploads files to GitHub with dashes in place of spaces.
+  const files = info.files.map((file) => ({ ...file, url: file.url.replaceAll(' ', '-') }))
+
+  return offer(bundle, { ...info, files }, base, notes)
+}
+
 function github(bundle: Bundle, config: GitHub): Feed {
   const releases = `https://github.com/${config.owner}/${config.repo}/releases`
 
@@ -152,19 +168,13 @@ function github(bundle: Bundle, config: GitHub): Feed {
 
       if (tag === undefined) throw new Error('The repository has no release for this channel.')
 
-      const base = `${releases}/download/${tag}/`
-      const channel = prerelease(tag)?.[0] ?? config.channel ?? 'latest'
-      const info = await fetchInfo(`${base}${channel}-mac.yml`)
       const content = entries.find((entry) => entry.tag === tag)?.content
 
       // GitHub fills in an empty description with this placeholder.
       const notes: Notes | undefined =
         content && content !== 'No content.' ? { format: 'html', text: content } : undefined
 
-      // electron-builder uploads files to GitHub with dashes in place of spaces.
-      const files = info.files.map((file) => ({ ...file, url: file.url.replaceAll(' ', '-') }))
-
-      return offer(bundle, { ...info, files }, base, notes)
+      return offerGitHubRelease(bundle, releases, tag, config.channel, notes)
     }
   }
 }

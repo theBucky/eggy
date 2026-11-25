@@ -2,9 +2,11 @@ import { readFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
+import { prerelease } from 'semver'
 import * as z from 'zod'
 import { output } from '../../exec'
 import type { Bundle } from '../bundle'
+import { offerGitHubRelease } from './electron-updater'
 import { fetchFeed, type Feed, type Framework } from './feed'
 import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
@@ -23,8 +25,10 @@ const CursorSettings = z.object({
 // Cursor's update server requires a machine identifier but answers the same for any.
 const anyMachine = '0'.repeat(64)
 
+const T3Pointer = z.object({ tag_name: z.string(), body: z.string().nullish() })
+
 // Apps that pick their feed in code at launch, so these pick it the way the app does.
-const feeds = new Map<string, (bundle: Bundle) => Feed | Promise<Feed>>([
+const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Feed>>([
   [
     'com.openai.codex',
     (bundle) =>
@@ -112,6 +116,35 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | Promise<Feed>>([
         url: `https://api2.cursor.sh/updates/api/update/${platform}/sand/${bundle.version}/${anyMachine}/stable`,
         changelog: 'https://x.ai/changelog/bot'
       })
+    }
+  ],
+  // T3 Code, whose nightly builds read a pointer to the newest nightly, since the repository's other
+  // releases crowd nightlies out of GitHub's release feed.
+  [
+    'com.t3tools.t3code',
+    (bundle) => {
+      const channel = prerelease(bundle.version)?.[0]
+
+      if (channel !== 'nightly') return undefined
+
+      const releases = 'https://github.com/pingdotgg/t3code/releases'
+
+      return {
+        url: releases,
+        check: async () => {
+          const pointer = T3Pointer.parse(
+            await (await fetchFeed(`${releases}/download/update-feed/${channel}.json`)).json()
+          )
+
+          return offerGitHubRelease(
+            bundle,
+            releases,
+            pointer.tag_name,
+            channel,
+            pointer.body ? { format: 'markdown', text: pointer.body } : undefined
+          )
+        }
+      }
     }
   ],
   // Chrome, whose updates hold the app itself, unlike Google apps that update through an installer
