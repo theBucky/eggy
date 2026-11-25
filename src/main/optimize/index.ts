@@ -58,7 +58,6 @@ async function runPrivileged(optimizations: Privileged[], report: Report): Promi
   planned.forEach(({ optimization }, index) => report(optimization, outcomes[index]))
 }
 
-// Asking for the password first keeps the prompt next to the click that caused it.
 export async function run(optimizations: Optimization[], report: Report): Promise<void> {
   await runPrivileged(optimizations.filter(isPrivileged), report)
 

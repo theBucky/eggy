@@ -18,7 +18,6 @@ export async function isRunning(bundle: Bundle): Promise<boolean> {
   return (await pidsOf(bundle)).length > 0
 }
 
-// The app can exit on its own between listing and killing.
 function kill(pid: number): void {
   try {
     process.kill(pid, 'SIGKILL')

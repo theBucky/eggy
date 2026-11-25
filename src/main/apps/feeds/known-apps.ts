@@ -27,7 +27,6 @@ const anyMachine = '0'.repeat(64)
 
 const T3Pointer = z.object({ tag_name: z.string(), body: z.string().nullish() })
 
-// Apps that pick their feed in code at launch, so these pick it the way the app does.
 const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Feed>>([
   [
     'com.openai.codex',
@@ -47,8 +46,6 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
       })
   ],
   // CleanShot X, whose Info.plist feed ends at version 3 since later releases go to licensed copies.
-  // The activation key joins the address only to fetch the feed, so neither the feed the app shows
-  // nor a link the feed resolves carries it.
   [
     'pl.maketheweb.cleanshotx',
     (bundle) => {
@@ -67,8 +64,6 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
       }
     }
   ],
-  // Ghostty, which picks a feed by the update channel its config resolves to. Ghostty's own loader
-  // finds the config files and falls back to the channel of the installed build.
   [
     'com.mitchellh.ghostty',
     async (bundle) => {

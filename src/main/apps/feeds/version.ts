@@ -16,7 +16,6 @@ function separates(kind: Kind): boolean {
   return kind === 'period' || kind === 'separator'
 }
 
-// A dash ends the version so a trailing commit hash never counts.
 function split(version: string): string[] {
   const parts: string[] = []
 

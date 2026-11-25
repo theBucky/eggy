@@ -60,7 +60,6 @@ async function fetchInfo(url: string): Promise<Info> {
   return Info.parse(parse(await (await fetchFeed(url)).text()))
 }
 
-// Like electron-updater, an arm64 Mac takes arm64 archives when the release has any.
 function pickArchive(files: File[]): File {
   const isArm = (file: File): boolean => file.url.includes('arm64')
   const native = process.arch === 'arm64' && files.some(isArm)
@@ -103,8 +102,6 @@ function generic(bundle: Bundle, { url, channel }: Generic): Feed {
   return { url: file, check: async () => offer(bundle, await fetchInfo(file), base) }
 }
 
-// Like electron-updater, alpha and beta builds also take stable and newer beta releases, while
-// other prerelease channels keep to their own.
 function follows(installed: Channel, candidate: Channel): boolean {
   if (installed === 'alpha' || installed === 'beta') {
     return candidate === undefined || candidate === 'beta' || candidate === installed

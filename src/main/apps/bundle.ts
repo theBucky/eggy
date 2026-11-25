@@ -25,7 +25,6 @@ async function readInfo(path: string): Promise<Map<string, string>> {
 
   const dict = parseXml(xml).getElementsByTagName('dict').item(0)
 
-  // Each key element comes right before the element that holds its value.
   const fields = [...(dict?.children ?? [])]
   const strings = new Map<string, string>()
 

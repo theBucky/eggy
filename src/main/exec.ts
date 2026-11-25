@@ -9,7 +9,6 @@ export type Options = {
   report?: (text: string) => void
 }
 
-// Node's error stands in for an exit code when the command never started or a signal stopped it.
 type Exit = number | 'timeout' | Error
 
 type Ran = {

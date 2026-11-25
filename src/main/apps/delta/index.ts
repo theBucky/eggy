@@ -6,7 +6,6 @@ import { applyItems } from './items'
 import { Reader } from './reader'
 import { hashTree } from './tree'
 
-// Sparkle compresses a delta with Apple's compression library, whose command line tool decodes it.
 const algorithms = new Map([
   [2, 'lzma'],
   [3, 'lzfse'],
@@ -49,7 +48,6 @@ async function decode(delta: string): Promise<ChildProcess> {
 
   await file.read(header, 0, header.length, null)
 
-  // Older deltas are xar archives.
   if (header.toString('latin1', 0, 4) !== 'spk!') {
     throw new Error("The delta's format isn't supported.")
   }

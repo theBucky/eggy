@@ -23,7 +23,6 @@ function savedBounds(): Rectangle | undefined {
   }
 }
 
-// Matches `--sidebar` in main.css, so a resize never flashes another color past the page.
 function sidebarColor(): string {
   return nativeTheme.shouldUseDarkColors ? '#101010' : '#f5f5f5'
 }
@@ -62,15 +61,11 @@ export function createWindow(): MainWindow {
   })
 
   window.on('close', (event) => {
-    // Hiding keeps the renderer, so an upgrade underway still reports its progress and asks before
-    // it force quits.
     if (!quitting) {
       event.preventDefault()
       window.hide()
     }
 
-    // The next launch opens without a side pane, so the bounds are saved without the room made for
-    // one.
     writeFileSync(path, JSON.stringify(pane.collapsed(window.getNormalBounds())))
   })
 

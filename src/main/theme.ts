@@ -16,7 +16,6 @@ function savedTheme(): Theme | undefined {
   }
 }
 
-// Electron forgets the theme between launches, so the saved one applies before the window opens.
 export function restoreTheme(): void {
   nativeTheme.themeSource = savedTheme() ?? 'system'
 }

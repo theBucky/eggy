@@ -36,13 +36,11 @@
 
   const expanded = new SvelteSet<string>()
 
-  // The viewer asks for a file's header on every render of it, so each file mounts its header once.
   const headers = new Map<string, { host: HTMLElement; header: ReturnType<typeof mount> }>()
 
   const shown = $derived(detail?.commit ?? commit)
   const allCollapsed = $derived(expanded.size === 0)
 
-  // Rendering waits for the pane to come to rest, so the slide never stalls on it.
   const rendered = $derived(revealed ? detail : undefined)
 
   const totals = $derived(
@@ -80,8 +78,6 @@
     return host
   }
 
-  // Folding a file from its pinned header would carry the header off the top, so the view first
-  // moves to where the file starts. The extra pixel tucks the header's top border under the pane's.
   function toggle(id: string, host: HTMLElement, open: boolean): void {
     if (open) {
       expanded.add(id)
@@ -195,7 +191,6 @@
     </div>
   </header>
 
-  <!-- The viewer moves the summary into the scroll content, above the first file. -->
   <div bind:this={root} class="mb-2 flex-1 overflow-y-auto select-text">
     <div bind:this={summary} class="flex flex-col gap-2 p-5 wrap-anywhere">
       <h2 class="text-lg font-semibold">{shown.subject}</h2>

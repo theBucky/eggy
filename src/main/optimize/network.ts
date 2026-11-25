@@ -16,7 +16,6 @@ printf '%s\\n' "$interfaces" | /usr/bin/awk '
   stopped: { status: 'skipped', message: 'Skipped while a VPN is connected.' }
 }
 
-// The label is the one service the script signals, so an unexpected one stops it before any change.
 const LABELS = ['com.apple.mDNSResponder', 'com.apple.mDNSResponder.reloaded']
 
 // macOS 27 refuses `launchctl kill` on mDNSResponder even for root. Its own service account may still
@@ -67,9 +66,7 @@ esac`
   })
 }
 
-// A default route in either address family and a working lookup mean there's nothing to repair, and
-// flushing would only drop every route until the system rebuilds them. `route get` exits with 0 even
-// when it finds no route.
+// `route get` exits with 0 even when no route exists.
 async function healthy(): Promise<boolean> {
   const probes = await Promise.all([
     exec('/sbin/route', ['-n', 'get', '-inet', 'default'], { timeout: 3000 }),

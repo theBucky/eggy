@@ -14,7 +14,6 @@ export function readAppcast(bundle: Bundle, xml: string, appcast: Appcast): Upda
 
   const updateOf = (enclosure: Enclosure): Update => ({
     release: { ...item.release, url: enclosure.url, size: enclosure.size },
-    // Like Sparkle, an app without an EdDSA key trusts an update by its code signature instead.
     verify: (archive, replacement) =>
       key === undefined
         ? verifySigner(bundle.path, replacement)

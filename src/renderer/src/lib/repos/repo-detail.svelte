@@ -125,7 +125,6 @@
           aria-pressed={active}
           onclick={() => (selected = active ? undefined : commit)}
         >
-          <!-- The title's flex display defeats clamping, so the inner spans clamp instead. -->
           <Item.Content>
             <Item.Title>
               <Badge variant="secondary">

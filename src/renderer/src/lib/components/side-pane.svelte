@@ -1,8 +1,6 @@
 <script lang="ts" generics="Item">
   import { untrack, type Snippet } from 'svelte'
 
-  // The pane's width, of which the column gives up `COLUMN_SHARE` and the window grows by the rest,
-  // so the app stays narrow enough to sit on most screens.
   const PANE_WIDTH = 640
   const COLUMN_SHARE = 240
   const COLUMN_MIN_WIDTH = 384
@@ -60,7 +58,6 @@
     const to = open ? Math.min(PANE_WIDTH, layout.clientWidth + grown - COLUMN_MIN_WIDTH) : 0
     const content = Math.max(from, to)
 
-    // Without the window's move to pace it, the slide plays the system's resize animation itself.
     if (grown === 0) {
       sliding = { width: `${to}px`, content }
       await wrapper!.animate([{ width: `${from}px` }, { width: `${to}px` }], {
@@ -68,7 +65,6 @@
         easing: 'ease-in-out'
       }).finished
     } else {
-      // The pane's width follows the window's through each frame of the system's animation.
       const rate = (to - from) / grown
 
       sliding = { width: `calc(${from}px + (100vw - ${window.innerWidth}px) * ${rate})`, content }
@@ -91,8 +87,6 @@
   </div>
 
   {#if shown !== undefined}
-    <!-- Mid-slide, the pane content keeps its open width and rides the window's edge, and the
-         wrapper's border stands in for the content's own, which sits just past the clip. -->
     <div
       bind:this={wrapper}
       class={['relative min-w-0', sliding && 'flex-none overflow-hidden border-l']}

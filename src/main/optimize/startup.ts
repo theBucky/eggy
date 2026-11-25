@@ -88,7 +88,6 @@ async function programOf(plist: string): Promise<string | undefined> {
   return undefined
 }
 
-// A program on a disk that isn't mounted right now isn't gone.
 async function missing(program: string): Promise<boolean> {
   const volume = /^\/Volumes\/[^/]+/.exec(program)?.[0]
 
@@ -107,7 +106,6 @@ export async function launchAgents(): Promise<OptimizeOutcome> {
   for (const name of plists) {
     const program = await programOf(join(LAUNCH_AGENTS, name))
 
-    // A bare name runs whatever the PATH finds, so only an absolute path can be shown to be gone.
     if (program?.startsWith('/') && (await missing(program))) {
       gone.push(basename(name, '.plist'))
     }

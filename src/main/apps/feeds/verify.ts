@@ -45,8 +45,6 @@ export async function verifyEdSignature(
   if (!matches) throw new Error("The update's signature doesn't match the app's key.")
 }
 
-// Like Squirrel, this trusts a replacement only when its code signature meets the installed app's
-// designated requirement.
 export async function verifySigner(installed: string, replacement: string): Promise<void> {
   const requirement = (await output('/usr/bin/codesign', ['-d', '-r-', installed])).replace(
     /^designated => /,

@@ -5,7 +5,6 @@ import type { Feed, Framework, Update } from './feed'
 import { knownApps } from './known-apps'
 import { sparkle } from './sparkle'
 
-// Known apps come first since their feed overrides the one their bundle names.
 const frameworks: Framework[] = [knownApps, sparkle, electronUpdater]
 
 export async function feedOf(bundle: Bundle): Promise<Feed | undefined> {

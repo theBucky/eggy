@@ -35,7 +35,6 @@ export type Events = {
   menuCommand: [command: MenuCommand]
 }
 
-// What the preload reads synchronously, before the page renders.
 export type Launch = {
   home: string
   theme: Theme

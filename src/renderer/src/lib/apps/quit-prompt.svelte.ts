@@ -2,7 +2,6 @@ import type { App } from '$shared/apps'
 
 export class QuitPrompt {
   open = $state(false)
-  // Kept after closing, so the dialog fades out with the apps it named.
   apps = $state<App[]>([])
   #quit = Promise.withResolvers<boolean>()
 

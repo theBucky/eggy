@@ -89,7 +89,6 @@ function parseItem(
   system: string,
   installed: string
 ): Item | undefined {
-  // Delta updates nest their own enclosures one level deeper.
   const enclosure = [...item.children].find((element) => element.tagName === 'enclosure')
   const archive = enclosureOf(enclosure, appcast.url)
 

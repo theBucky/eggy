@@ -7,9 +7,6 @@ export type Plan = { script: string; interpret: (exit: Exit) => OptimizeOutcome 
 
 export type Prepared = OptimizeOutcome | Plan
 
-// A condition that must still hold when a script runs, which can be long after planning while the
-// password prompt waits. Its check exits with 0 to go ahead, 1 to stop, and anything else after
-// printing why it can't tell.
 export type Guard = { check: string; stopped: OptimizeOutcome }
 
 export const EXIT = { refused: 75, stopped: 76, unsure: 77 } as const
@@ -40,7 +37,6 @@ ${plan.script}`,
   }
 }
 
-// Separates one script's output from the next. Nothing these scripts print contains it.
 const SEPARATOR = '\x1e'
 
 export function quote(argument: string): string {
@@ -55,7 +51,6 @@ function appleScriptString(text: string): string {
   return `"${text.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 }
 
-// Runs every plan in one shell as root, so macOS asks for the administrator password once.
 export async function runAsRoot(plans: Plan[]): Promise<OptimizeOutcome[]> {
   const shell = plans
     .map(({ script }) => `(${script}) 2>&1; printf '${SEPARATOR}%d${SEPARATOR}' "$?"`)

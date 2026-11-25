@@ -17,7 +17,6 @@ function remove(path: string): Promise<void> {
   return fs.rm(path, { recursive: true, force: true })
 }
 
-// Like Sparkle, this keeps an item from writing through a link that an earlier item placed.
 async function target(root: string, relative: string): Promise<string> {
   let folder = root
 
@@ -43,7 +42,6 @@ async function readItems(reader: Reader): Promise<Item[]> {
 
   const items: Item[] = []
 
-  // An empty path table ends the delta without any commands.
   while (paths.length > 0) {
     const commands = await reader.uint(1)
 

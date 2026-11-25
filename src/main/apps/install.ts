@@ -113,7 +113,6 @@ export async function install({ bundle, replacement }: Staged): Promise<InstallO
 
     const { version, build } = await readBundle(path)
 
-    // The upgrade has landed, so an app that fails to reopen stays closed instead of failing it.
     if (wasRunning) await output('/usr/bin/open', ['-g', path]).catch(() => undefined)
 
     return { status: 'upgraded', version, build }

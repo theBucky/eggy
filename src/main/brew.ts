@@ -13,8 +13,6 @@ import { errorCode, failure } from './errors'
 import { checked, exec, type Options } from './exec'
 import { loginEnv } from './login-env'
 
-// Checks refresh brew's index on their own, so upgrades skip its automatic one. Env hints and emoji
-// only clutter the output the app shows.
 const env = loginEnv.then((env) => ({
   ...env,
   HOMEBREW_NO_AUTO_UPDATE: '1',
@@ -128,8 +126,6 @@ async function read(): Promise<PackageList> {
   }
 }
 
-// brew lists its packages slower than the window opens, so the listing starts with the process and
-// the page's first request takes that result.
 let launchList: Promise<PackageList> | undefined = read()
 
 export function list(): Promise<PackageList> {

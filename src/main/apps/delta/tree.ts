@@ -38,7 +38,6 @@ function typeOf(stats: Stats): number | undefined {
   return stats.isSymbolicLink() ? fts.link : undefined
 }
 
-// Like fts, this visits a folder before its contents, sorted by the bytes of their names.
 async function* walk(root: string, relative = ''): AsyncGenerator<[string, Stats]> {
   const names = await fs.readdir(join(root, relative), { encoding: 'buffer' })
 

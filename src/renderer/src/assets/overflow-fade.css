@@ -38,8 +38,6 @@
   }
 }
 
-/* A reveal that finished while scrolling would hold its fade after the overflow goes away, hence
-   the --overflowing factor. The second mask layer keeps the strip under the scrollbar opaque. */
 @utility overflow-fade-y {
   --overflow-fade-size: min(25%, calc(var(--spacing) * 12));
   mask-image:

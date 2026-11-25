@@ -2,7 +2,6 @@
   import { Tooltip as TooltipPrimitive } from 'bits-ui'
   import { createContext } from 'svelte'
 
-  // Buttons share one tooltip that hops between them, since swapping tooltips restyles the page.
   const [getTether, setTether] = createContext<TooltipPrimitive.Tether<string>>()
 
   export { getTether }

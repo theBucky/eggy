@@ -26,7 +26,6 @@ const AC_POWER: Guard = {
   stopped: { status: 'skipped', message: 'Skipped on battery power.' }
 }
 
-// A rebuild reindexes the whole disk for hours, so it only starts when two searches in a row stall.
 export async function spotlight(): Promise<Prepared> {
   const status = await output('/usr/bin/mdutil', ['-s', '/'], { timeout: 3000 })
 

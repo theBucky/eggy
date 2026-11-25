@@ -29,7 +29,6 @@ function largest(span: number): (typeof units)[number] {
 export function ago(date: number): string {
   tick()
 
-  // A committer clock running ahead would otherwise read as a future time.
   const elapsed = Math.max(Date.now() - date, 0)
   const [unit, size] = largest(elapsed)
 

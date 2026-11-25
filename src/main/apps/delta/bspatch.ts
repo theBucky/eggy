@@ -1,7 +1,6 @@
 import { fs } from '../fs'
 import { corrupt, type Reader } from './reader'
 
-// bsdiff stores numbers as sign and magnitude.
 function offtin(buffer: Buffer, offset: number): number {
   const magnitude = Number(buffer.readBigUInt64LE(offset) & 0x7fff_ffff_ffff_ffffn)
 
@@ -20,7 +19,6 @@ export async function bspatch(
   const controlLength = offtin(header, 8)
   const size = offtin(header, 24)
 
-  // The diff and extra blocks together hold as many bytes as the patched file.
   if (header.toString('latin1', 0, 8) !== 'BSDIFN40' || 32 + controlLength + size !== length) {
     throw corrupt()
   }
@@ -45,7 +43,6 @@ export async function bspatch(
     let offset = 0
 
     for await (const piece of reader.take(add)) {
-      // Diff bytes past either end of the old file stand for themselves.
       const position = from + offset
       const start = Math.max(position, 0)
       const end = Math.min(position + piece.length, oldSize)

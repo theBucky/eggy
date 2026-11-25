@@ -3,9 +3,7 @@ import type { OptimizeOutcome } from '$shared/optimize'
 import { errorCode } from '../errors'
 import { checked, exec } from '../exec'
 
-// Resolves to `undefined` when another process holds the database for longer than sqlite waits.
-// sqlite stops at the first failing statement, after the ones before it have committed. An empty
-// init file keeps the user's ~/.sqliterc from changing the output format.
+// An empty init file keeps the user's ~/.sqliterc from changing the output format.
 export async function sqlite(
   database: string,
   statements: string[],
@@ -59,7 +57,6 @@ export async function entries(folder: string): Promise<string[]> {
   }
 }
 
-// Follows symlinks, so a link whose target is gone doesn't count.
 export async function exists(path: string): Promise<boolean> {
   try {
     await stat(path)
@@ -83,7 +80,6 @@ async function parses(paths: string[]): Promise<boolean> {
   return true
 }
 
-// A missing or unreadable file can't be shown to be broken, so it stays.
 export async function broken(paths: string[]): Promise<string[]> {
   const found: string[] = []
 

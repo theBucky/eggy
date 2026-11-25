@@ -4,8 +4,6 @@
   initial-value: 0%;
 }
 
-/* Unlayered, so full opacity beats the disabled fade, which the label's mask redraws over only the
-   share still to download. */
 [data-slot='button']:has(> [data-progress]) {
   opacity: 1;
 }

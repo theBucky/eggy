@@ -90,10 +90,8 @@ type Compaction = 'compacted' | 'compact' | 'large' | 'busy' | 'denied' | 'missi
 async function compact(path: string): Promise<Compaction> {
   const readable = await access(path)
 
-  // sqlite reports why it can't open a file the user can't read.
   if (readable === 'missing' || readable === 'denied') return readable
 
-  // A large database takes long enough to compact that a stalled run would look like a hang.
   if ((await stat(path)).size > 100 * 2 ** 20) return 'large'
 
   const counts = await sqlite(path, ['PRAGMA page_count;', 'PRAGMA freelist_count;'], 10_000)

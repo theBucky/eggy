@@ -17,7 +17,6 @@ import { loginEnv } from './login-env'
 
 type Output = { ok: boolean; stdout: string; stderr: string }
 
-// A repo that needs credentials should fail fast instead of waiting on a prompt nobody sees.
 const env = loginEnv.then((env) => ({ ...env, GIT_TERMINAL_PROMPT: '0' }))
 
 async function git(cwd: string, args: string[]): Promise<Output> {
@@ -90,8 +89,6 @@ async function readHistory(path: string, remote: string): Promise<History> {
     git(path, ['merge-base', '--all', 'HEAD', '@{upstream}'])
   ])
 
-  // Commits reachable from any merge base are exactly those on both sides. Without a local
-  // upstream ref both commands fail and every commit reads as pushed.
   const pushed = await git(path, [
     ...log,
     ...(unpushed.ok ? bases.stdout.trim().split('\n') : ['HEAD'])
@@ -196,7 +193,6 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   const [before, ...states] = stdout.trim().split('\n')
   const rebasing = states.some((state) => existsSync(state))
 
-  // Git's conflict hints explain how to continue a rebase that the abort below undoes.
   const pulled = await git(
     path,
     command === 'rebase'
@@ -204,9 +200,7 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
       : ['pull', '--ff-only']
   )
 
-  // A rebase stopped on a conflict detaches HEAD, which hides the repo from scans, so the branch
-  // and any stashed changes go back to how they were. A rebase already underway, such as one paused
-  // in a terminal, isn't this pull's to abort.
+  // A conflicted rebase detaches HEAD, hiding the repository from branch scans.
   const aborted =
     command === 'rebase' && !rebasing && !pulled.ok && (await git(path, ['rebase', '--abort'])).ok
 
@@ -229,7 +223,6 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
     }
   }
 
-  // Counting from the upstream leaves out local commits that a rebase replays under new hashes.
   const count = Number(added.stdout)
 
   return { tracking, outcome: count === 0 ? { status: 'current' } : { status: 'updated', count } }

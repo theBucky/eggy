@@ -41,7 +41,6 @@
   })
 </script>
 
-<!-- Listed first so the no-drag controls below carve themselves out of it. -->
 <div class="fixed inset-x-0 top-0 h-10 [-webkit-app-region:drag]"></div>
 
 <Sidebar.Provider style="--sidebar-width: 18rem">

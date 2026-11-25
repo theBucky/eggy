@@ -102,8 +102,6 @@ register('dark', {
   link: '#87c3ff'
 })
 
-// Highlighting runs in workers, which start with the app, so neither a slide nor a first open waits
-// on compiling a language's grammar.
 const highlighter = new WorkerPoolManager(
   { workerFactory: () => new HighlightWorker(), poolSize: 2 },
   { theme: themes }
@@ -128,9 +126,6 @@ export function createViewer(
         diffHeaderHeight: HEADER_HEIGHT,
         hunkSeparatorHeight: LINE_HEIGHT
       },
-      // Changed lines take their colors as is, where the viewer would tint the background with them,
-      // and run them unbroken through the gutter. A pinned header tucks its top border under the
-      // pane header's, which would otherwise double it.
       unsafeCSS: `
       :host {
         --diffs-font-family: var(--font-mono);

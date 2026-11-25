@@ -15,9 +15,6 @@
   const { additions, deletions } = $derived(changesOf(fileDiff.hunks))
 </script>
 
-<!-- The viewer hides the file's lines itself, so the collapsible has no content of its own. A
-     folded file leaves its bottom border to the next file's top one but keeps the border's pixel,
-     so the row holds still. -->
 <Collapsible.Root bind:open={() => open, ontoggle}>
   <Collapsible.Trigger
     class={[
@@ -33,7 +30,6 @@
           open && 'rotate-90'
         )}
       />
-      <!-- Right-to-left overflow keeps the file name in view and cuts the directories instead. -->
       <span class="truncate" dir="rtl">
         <bdi>
           {#if fileDiff.prevName}{fileDiff.prevName} →

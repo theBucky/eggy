@@ -63,7 +63,6 @@ export class Packages extends Source<Entry> {
 
     this.#queue = this.#queue.then(async () => {
       for (const entry of entries) {
-        // An earlier upgrade may have upgraded this one as a dependency.
         if (entry.package.state !== 'outdated') {
           entry.task = undefined
           continue

@@ -1,18 +1,11 @@
-/* A highlight that slides between the rows of a list. The list carries `data-fluid-hover` and rounds
-   the highlight with a `before:` utility; its rows carry `data-fluid-hover-item`. Links and buttons
-   light up under the pointer, any other row while it carries `data-highlighted`. */
 @layer components {
   [data-fluid-hover] {
     position: relative;
     isolation: isolate;
-    /* Cuts off the last row's reach. */
     overflow-y: clip;
     anchor-scope: --fluid-hover;
 
-    /* Sized from the row alone. Insets from the list's far edges would trail behind a list that is
-       changing size. */
     &::before {
-      /* The box collapses once no row anchors it, so its place holds until the fade out ends. */
       --fade: 60ms;
       --hold: 0s 60ms allow-discrete;
       --move: var(--hold);
@@ -26,8 +19,6 @@
       width: anchor-size(width);
       height: anchor-size(height);
       opacity: 0;
-      /* Only the slide between rows eases. An eased width restarts on every frame of a row's
-         resize, which stalls the highlight until the row comes to rest. */
       transition:
         opacity var(--fade),
         top var(--move),
@@ -37,12 +28,9 @@
       @apply ease-out;
     }
 
-    /* Every row is positioned, so a row stacks over the reach of the one before. */
     [data-fluid-hover-item] {
       position: relative;
 
-      /* Reaches past the widest gap between rows, which keeps the pointer on a row while crossing
-         or clicking between two. */
       &:is(a[href], button:enabled)::after {
         content: '';
         position: absolute;

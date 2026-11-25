@@ -14,8 +14,6 @@
     format('woff2-variations');
 }
 
-/* Main's `nativeTheme` picks each token's light or dark value. Nothing sets `.dark`, which keeps the
-   vendored components' `dark:` styles off. */
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -24,7 +22,6 @@
   --foreground: light-dark(#1c1c1c, #f5f5f5);
   --card: light-dark(#ffffff, #1f1f1f);
   --card-foreground: var(--foreground);
-  /* Opaque so a select's trigger and menu can flow into one shape. */
   --popover: light-dark(#ffffff, #1f1f1f);
   --popover-foreground: var(--foreground);
   --primary: var(--foreground);
@@ -33,7 +30,6 @@
   --secondary-hover: light-dark(#1c1c1c24, #f5f5f524);
   --secondary-foreground: var(--foreground);
   --muted: light-dark(#1c1c1c0a, #f5f5f50a);
-  /* The text tones are opaque so the strokes where an icon's paths cross don't composite twice. */
   --foreground-secondary: color-mix(in srgb, var(--foreground) 74%, var(--background));
   --muted-foreground: color-mix(in srgb, var(--foreground) 60%, var(--background));
   --placeholder: color-mix(in srgb, var(--foreground) 36%, var(--background));
@@ -62,7 +58,6 @@
   --radius: 8px;
   --sidebar: light-dark(#f5f5f5, #101010);
   --sidebar-foreground: var(--foreground);
-  /* Opaque to hide the fluid hover highlight under selected rows. */
   --sidebar-accent: color-mix(in srgb, var(--sidebar-foreground) 8%, var(--sidebar));
   --selected: color-mix(in srgb, var(--foreground) 8%, var(--background));
   --sidebar-accent-foreground: var(--foreground);
@@ -74,7 +69,6 @@
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
   --font-mono: 'Berkeley Mono', ui-monospace, monospace;
-  /* Every step sets its tracking, so no text inherits the body's. */
   --text-xs: 12px;
   --text-xs--line-height: 16px;
   --text-xs--letter-spacing: 0em;
@@ -93,7 +87,6 @@
   --text-2xl: 22px;
   --text-2xl--line-height: 28px;
   --text-2xl--letter-spacing: -0.016em;
-  /* Each mode blanks out the layers only the other casts. */
   --shadow-popup:
     0 6px 18px light-dark(rgb(0 0 0 / 0.02), transparent),
     0 3px 9px light-dark(rgb(0 0 0 / 0.04), transparent),
@@ -172,13 +165,10 @@
   --transition-duration-collapsible: 300ms;
 }
 
-/* Stretches a button over the positioned row it names, which takes the focus ring in its place. The
-   row's other controls need a positioned box to stack over the stretch. */
 @utility stretched {
   @apply outline-none after:absolute after:inset-0 after:rounded-lg focus-visible:after:ring-1 focus-visible:after:ring-ring focus-visible:after:ring-inset;
 }
 
-/* The negative margin puts a section's scrollbar in the page's padding, clear of the content. */
 @utility scroll-section {
   @apply -mx-scrollbar my-2 overflow-fade-y overflow-y-auto px-scrollbar py-1;
 }
@@ -199,8 +189,6 @@
   .tabler-icon > * {
     stroke-width: 1.75;
   }
-  /* The drag strip takes the window's top edge whatever is stacked over it, so anything clickable
-     or selectable that sits or scrolls under it carves itself out. */
   :where(a[href], button, .select-text) {
     -webkit-app-region: no-drag;
   }
@@ -219,7 +207,6 @@
   interpolate-size: allow-keywords;
   overflow: clip;
   overflow-clip-margin: 2px;
-  /* A clipped flex item otherwise keeps its content height as its minimum. */
   min-height: 0;
   transition-property: opacity;
   transition-duration: var(--transition-duration-collapsible);
