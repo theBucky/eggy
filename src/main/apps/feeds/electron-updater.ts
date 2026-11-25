@@ -125,7 +125,7 @@ async function findTag(
       headers: { accept: 'application/json' }
     })
 
-    return LatestRelease.parse(JSON.parse(await response.text())).tag_name
+    return LatestRelease.parse(await response.json()).tag_name
   }
 
   return entries.find(

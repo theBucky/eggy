@@ -16,7 +16,7 @@ async function check(bundle: Bundle, source: Source): Promise<Update[]> {
 
   if (response.status === 204) return []
 
-  const offer = Offer.parse(JSON.parse(await response.text()))
+  const offer = Offer.parse(await response.json())
 
   // Some feeds, like Figma's, answer with their latest release even when that one is installed.
   if (compare(offer.name, bundle.version) <= 0) return []
