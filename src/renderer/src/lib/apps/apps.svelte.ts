@@ -69,8 +69,6 @@ export class Apps extends Source<Entry> {
   async upgrade(entries: Entry[]): Promise<void> {
     await Promise.all(
       entries.map(async (entry) => {
-        if (releaseOf(entry) === undefined) return
-
         entry.upgrade = { status: 'running', progress: { stage: 'download', percent: 0 } }
 
         const outcome = await window.api.invoke('upgradeApp', entry.app.path)

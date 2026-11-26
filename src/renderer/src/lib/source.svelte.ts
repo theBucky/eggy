@@ -1,6 +1,8 @@
 import type { Status } from '$lib/status'
 
-type Phase = 'idle' | 'scanning' | 'checking' | 'bulk'
+type Phase = 'idle' | 'scanning' | 'checking'
+
+export type Bulk = 'none' | 'running' | 'ready'
 
 export abstract class Source<Entry extends { id: string } = { id: string }> {
   abstract readonly checked: boolean
@@ -8,10 +10,12 @@ export abstract class Source<Entry extends { id: string } = { id: string }> {
   abstract readonly outdated: Entry[]
   entries = $state<Entry[]>([])
   #phase = $state<Phase>('idle')
+  #upgrading = $derived(this.entries.some((entry) => this.pending(entry)))
   scanning = $derived(this.#phase === 'scanning')
   checking = $derived(this.#phase === 'scanning' || this.#phase === 'checking')
-  bulk = $derived(this.#phase === 'bulk')
-  busy = $derived(this.#phase !== 'idle' || this.entries.some((entry) => this.pending(entry)))
+  busy = $derived(this.#phase !== 'idle' || this.#upgrading)
+  upgradable = $derived.by(() => this.outdated.filter((entry) => this.canUpgrade(entry)))
+  bulk = $derived<Bulk>(this.upgradable.length > 0 ? 'ready' : this.#upgrading ? 'running' : 'none')
 
   protected get phase(): Phase {
     return this.#phase
@@ -40,9 +44,7 @@ export abstract class Source<Entry extends { id: string } = { id: string }> {
   }
 
   async upgradeOutdated(): Promise<void> {
-    this.#phase = 'bulk'
-    await this.upgrade(this.outdated)
-    this.#phase = 'idle'
+    await this.upgrade(this.upgradable)
   }
 
   abstract statusOf(entry: Entry): Status

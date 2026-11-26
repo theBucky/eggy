@@ -62,10 +62,10 @@
     </Button>
     <Button
       variant="primary"
-      disabled={sources.busy || sources.outdated === 0}
+      disabled={sources.bulk !== 'ready'}
       onclick={() => sources.upgradeOutdated()}
     >
-      {sources.bulk ? 'Upgrading' : 'Upgrade everything'}
+      {sources.bulk === 'running' ? 'Upgrading' : 'Upgrade everything'}
     </Button>
   {/snippet}
 

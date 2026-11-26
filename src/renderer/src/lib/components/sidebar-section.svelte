@@ -53,10 +53,10 @@
             onclick={() => source.refresh()}
           />
           <ToolbarButton
-            label="{upgradeVerb} {source.outdated.length} outdated"
+            label="{upgradeVerb} {source.upgradable.length} outdated"
             icon={IconCloudDownload}
-            busy={source.bulk}
-            disabled={source.busy || source.outdated.length === 0}
+            busy={source.bulk === 'running'}
+            disabled={source.bulk !== 'ready'}
             onclick={() => source.upgradeOutdated()}
           />
         </Toolbar>
