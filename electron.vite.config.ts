@@ -6,6 +6,13 @@ import tailwindcss from '@tailwindcss/vite'
 const shared = { $shared: resolve(import.meta.dirname, 'src/shared') }
 const platform = { $platform: resolve(import.meta.dirname, 'src/main/platform') }
 
+const layers = Object.fromEntries(
+  ['shell', 'features', 'source', 'client', 'primitives'].map((layer) => [
+    `$${layer}`,
+    resolve(import.meta.dirname, 'src/renderer', layer)
+  ])
+)
+
 export default defineConfig({
   main: {
     resolve: { alias: { ...platform, ...shared } },
@@ -18,9 +25,7 @@ export default defineConfig({
     build: { rolldownOptions: { output: { format: 'cjs' } } }
   },
   renderer: {
-    resolve: {
-      alias: { $lib: resolve(import.meta.dirname, 'src/renderer/src/lib'), ...shared }
-    },
+    resolve: { alias: { ...layers, ...shared } },
     plugins: [svelte(), tailwindcss()],
     build: {
       minify: true,

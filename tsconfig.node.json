@@ -3,6 +3,10 @@
   "include": ["electron.vite.config.ts", "src/main", "src/preload", "src/shared"],
   "compilerOptions": {
     "lib": ["esnext"],
-    "types": ["node", "electron-vite/node"]
+    "types": ["node", "electron-vite/node"],
+    "paths": {
+      "$platform/*": ["./src/main/platform/*"],
+      "$shared/*": ["./src/shared/*"]
+    }
   }
 }

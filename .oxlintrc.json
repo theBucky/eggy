@@ -44,5 +44,5 @@
     "anti-slop-effect/no-service-constructor-imports": "error",
     "anti-slop-effect/prefer-effect-match": "error"
   },
-  "ignorePatterns": ["src/renderer/src/lib/components/ui/**", "tools/oxlint/anti-slop/**"]
+  "ignorePatterns": ["src/renderer/primitives/ui/**", "tools/oxlint/anti-slop/**"]
 }

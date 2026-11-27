@@ -11,11 +11,9 @@
     "erasableSyntaxOnly": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    // shadcn-svelte resolves its aliases here.
     "paths": {
-      "$lib": ["./src/renderer/src/lib"],
-      "$lib/*": ["./src/renderer/src/lib/*"],
-      "$platform/*": ["./src/main/platform/*"],
-      "$shared/*": ["./src/shared/*"]
+      "$primitives/*": ["./src/renderer/primitives/*"]
     }
   }
 }

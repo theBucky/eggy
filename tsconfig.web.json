@@ -1,8 +1,16 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/renderer/src", "src/preload/index.d.ts", "src/shared"],
+  "include": ["src/renderer", "src/preload/index.d.ts", "src/shared"],
   "compilerOptions": {
     "lib": ["esnext", "dom"],
-    "types": ["svelte", "vite/client"]
+    "types": ["svelte", "vite/client"],
+    "paths": {
+      "$shell/*": ["./src/renderer/shell/*"],
+      "$features/*": ["./src/renderer/features/*"],
+      "$source/*": ["./src/renderer/source/*"],
+      "$client/*": ["./src/renderer/client/*"],
+      "$primitives/*": ["./src/renderer/primitives/*"],
+      "$shared/*": ["./src/shared/*"]
+    }
   }
 }

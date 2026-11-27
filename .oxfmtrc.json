@@ -9,7 +9,7 @@
   "ignorePatterns": [
     "**/*.md",
     "build/icon.icon/**",
-    "src/renderer/src/lib/components/ui/**",
+    "src/renderer/primitives/ui/**",
     "tools/oxlint/anti-slop/**"
   ]
 }

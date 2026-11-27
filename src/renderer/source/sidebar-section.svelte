@@ -1,0 +1,71 @@
+<script lang="ts">
+  import IconChevronRight from '@tabler/icons-svelte/icons/chevron-right'
+  import IconCloudDownload from '@tabler/icons-svelte/icons/cloud-download'
+  import IconRefresh from '@tabler/icons-svelte/icons/refresh'
+  import type { Snippet } from 'svelte'
+  import ToolbarButton from '$primitives/toolbar-button.svelte'
+  import Toolbar from '$primitives/toolbar.svelte'
+  import * as Collapsible from '$primitives/ui/collapsible'
+  import * as Sidebar from '$primitives/ui/sidebar'
+  import { cn } from '$primitives/utils'
+  import type { Source } from './source.svelte'
+
+  let {
+    label,
+    source,
+    checkLabel,
+    upgradeVerb,
+    children
+  }: {
+    label: string
+    source: Source
+    checkLabel: string
+    upgradeVerb: string
+    children: Snippet
+  } = $props()
+
+  let open = $state(false)
+</script>
+
+<Collapsible.Root bind:open>
+  {#snippet child({ props })}
+    <Sidebar.Group {...props}>
+      <div class="flex items-center gap-1">
+        <Sidebar.GroupLabel class="flex-1">
+          {#snippet child({ props })}
+            <Collapsible.Trigger {...props}>
+              {label}
+              <IconChevronRight
+                class={cn(
+                  'transition-transform duration-collapsible ease-out-expo',
+                  open && 'rotate-90'
+                )}
+              />
+            </Collapsible.Trigger>
+          {/snippet}
+        </Sidebar.GroupLabel>
+        <Toolbar>
+          <ToolbarButton
+            label={checkLabel}
+            icon={IconRefresh}
+            busy={source.checking}
+            disabled={source.busy}
+            onclick={() => source.refresh()}
+          />
+          <ToolbarButton
+            label="{upgradeVerb} {source.upgradable.length} outdated"
+            icon={IconCloudDownload}
+            busy={source.bulk === 'running'}
+            disabled={source.bulk !== 'ready'}
+            onclick={() => source.upgradeOutdated()}
+          />
+        </Toolbar>
+      </div>
+      <Collapsible.Content hiddenUntilFound>
+        <div class="pt-1">
+          {@render children()}
+        </div>
+      </Collapsible.Content>
+    </Sidebar.Group>
+  {/snippet}
+</Collapsible.Root>
