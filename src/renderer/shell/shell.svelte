@@ -3,6 +3,7 @@
   import IconHome from '@tabler/icons-svelte/icons/home'
   import IconSettings from '@tabler/icons-svelte/icons/settings'
   import type { Snippet } from 'svelte'
+  import { on } from '$client/api'
   import AppDetail from '$features/apps/app-detail.svelte'
   import AppGroup from '$features/apps/app-group.svelte'
   import QuitDialog from '$features/apps/quit-dialog.svelte'
@@ -35,7 +36,7 @@
   if (preferences.checkOnLaunch) sources.refresh()
   else sources.scan()
 
-  window.api.on('menuCommand', (command) => {
+  on('menuCommand', (command) => {
     if (command === 'settings') view = { page: 'settings' }
     else if (!sources.busy) sources.refresh()
   })

@@ -1,3 +1,4 @@
+import { invoke, on } from '$client/api'
 import type { Failure } from '$shared/failure'
 import type { Package, PackageCheck, PackageList, PackageUpgrade } from '$shared/packages'
 import { Source } from '$source/source.svelte'
@@ -36,7 +37,7 @@ export class Packages extends Source<Entry> {
 
   constructor() {
     super()
-    window.api.on('packageOutput', (kind, fullName, text) => {
+    on('packageOutput', (kind, fullName, text) => {
       const task = this.find(idOf({ kind, fullName }))?.task
 
       if (task?.status === 'running') task.output += text
@@ -70,8 +71,8 @@ export class Packages extends Source<Entry> {
         entry.task = { status: 'running', output: '' }
 
         const { kind, fullName } = entry.package
-        const outcome = await window.api.invoke('upgradePackage', kind, fullName)
-        const reply = await window.api.invoke('listPackages')
+        const outcome = await invoke('upgradePackage', kind, fullName)
+        const reply = await invoke('listPackages')
 
         entry.task = { output: entry.task.output, ...outcome }
 
@@ -83,11 +84,11 @@ export class Packages extends Source<Entry> {
   }
 
   protected async list(): Promise<void> {
-    this.#apply(await window.api.invoke('listPackages'))
+    this.#apply(await invoke('listPackages'))
   }
 
   protected async check(): Promise<void> {
-    if (this.installed) this.#apply(await window.api.invoke('checkPackages'))
+    if (this.installed) this.#apply(await invoke('checkPackages'))
   }
 
   protected pending({ task }: Entry): boolean {

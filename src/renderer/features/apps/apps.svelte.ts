@@ -1,3 +1,4 @@
+import { invoke, on } from '$client/api'
 import type { App, CheckOutcome, InstallOutcome, Progress, Release } from '$shared/apps'
 import type { Failure } from '$shared/failure'
 import { Source } from '$source/source.svelte'
@@ -43,7 +44,7 @@ export class Apps extends Source<Entry> {
 
   constructor() {
     super()
-    window.api.on('appProgress', (path, progress) => {
+    on('appProgress', (path, progress) => {
       const entry = this.find(path)
 
       if (entry?.upgrade?.status !== 'running') return
@@ -51,7 +52,7 @@ export class Apps extends Source<Entry> {
       entry.upgrade.progress = progress
 
       if (progress.stage === 'waiting') {
-        this.prompt.ask(entry.app).then((quit) => window.api.invoke('answerAppQuit', path, quit))
+        this.prompt.ask(entry.app).then((quit) => invoke('answerAppQuit', path, quit))
       }
     })
   }
@@ -71,7 +72,7 @@ export class Apps extends Source<Entry> {
       entries.map(async (entry) => {
         entry.upgrade = { status: 'running', progress: { stage: 'download', percent: 0 } }
 
-        const outcome = await window.api.invoke('upgradeApp', entry.app.path)
+        const outcome = await invoke('upgradeApp', entry.app.path)
 
         if (outcome.status === 'upgraded') {
           entry.app.version = outcome.version
@@ -85,14 +86,14 @@ export class Apps extends Source<Entry> {
   }
 
   protected async list(): Promise<void> {
-    this.entries = (await window.api.invoke('listApps')).map((app) => ({ id: app.path, app }))
+    this.entries = (await invoke('listApps')).map((app) => ({ id: app.path, app }))
   }
 
   protected async check(): Promise<void> {
     await Promise.all(
       this.entries.map(async (entry) => {
         entry.check = { status: 'running' }
-        entry.check = await window.api.invoke('checkApp', entry.app.path)
+        entry.check = await invoke('checkApp', entry.app.path)
       })
     )
   }

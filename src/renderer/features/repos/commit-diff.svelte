@@ -6,6 +6,7 @@
   import IconX from '@tabler/icons-svelte/icons/x'
   import { mount, unmount } from 'svelte'
   import { SvelteSet } from 'svelte/reactivity'
+  import { invoke } from '$client/api'
   import { ago } from '$primitives/format'
   import ToolbarButton from '$primitives/toolbar-button.svelte'
   import Toolbar from '$primitives/toolbar.svelte'
@@ -111,7 +112,7 @@
     const current = commit
     let live = true
 
-    window.api.invoke('showCommit', path, current.hash).then(({ body, patch }) => {
+    invoke('showCommit', path, current.hash).then(({ body, patch }) => {
       if (!live) return
 
       const files = parsePatchFiles(patch, { cacheKeyPrefix: `${path}:${current.hash}` }).flatMap(

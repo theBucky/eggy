@@ -1,3 +1,4 @@
+import { invoke, on } from '$client/api'
 import {
   OPTIMIZATIONS,
   type Machine,
@@ -17,7 +18,7 @@ export class Optimizer {
   running = $derived(this.done < this.batch.length)
 
   constructor() {
-    window.api.on('optimization', (optimization, state) => {
+    on('optimization', (optimization, state) => {
       this.#states[optimization] = state
     })
   }
@@ -33,14 +34,14 @@ export class Optimizer {
   }
 
   async inspect(): Promise<void> {
-    this.machine = await window.api.invoke('inspectMachine').catch(() => this.machine)
+    this.machine = await invoke('inspectMachine').catch(() => this.machine)
   }
 
   async optimize(optimizations: Optimization[]): Promise<void> {
     for (const optimization of optimizations) delete this.#states[optimization]
 
     this.batch = optimizations
-    await window.api.invoke('optimize', optimizations)
+    await invoke('optimize', optimizations)
     await this.inspect()
   }
 }

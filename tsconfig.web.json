@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src/renderer", "src/preload/index.d.ts", "src/shared"],
+  "include": ["src/renderer", "src/shared"],
   "compilerOptions": {
     "lib": ["esnext", "dom"],
     "types": ["svelte", "vite/client"],

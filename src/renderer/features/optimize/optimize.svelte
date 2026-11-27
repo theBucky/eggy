@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import IconLock from '@tabler/icons-svelte/icons/lock'
+  import { invoke } from '$client/api'
   import { duration } from '$primitives/format'
   import ListCard from '$primitives/list-card.svelte'
   import MetaList from '$primitives/meta-list.svelte'
@@ -150,7 +151,7 @@
         {optimizer.isRunning(optimization) ? 'Running' : 'Run'}
       </Button>
       {#if outcome?.status === 'attention'}
-        <Button onclick={() => window.api.invoke('review', outcome.review)}>Review</Button>
+        <Button onclick={() => invoke('review', outcome.review)}>Review</Button>
       {/if}
     </Item.Actions>
   </Item.Root>

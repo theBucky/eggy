@@ -1,5 +1,6 @@
 <script lang="ts" generics="Item">
   import { untrack, type Snippet } from 'svelte'
+  import { invoke } from '$client/api'
 
   const PANE_WIDTH = 640
   const COLUMN_SHARE = 240
@@ -40,7 +41,7 @@
 
   $effect(() => () => {
     destroyed = true
-    window.api.invoke('planWindowCollapse').then(() => window.api.invoke('moveWindow'))
+    invoke('planWindowCollapse').then(() => invoke('moveWindow'))
   })
 
   async function slide(open: boolean): Promise<void> {
@@ -49,8 +50,8 @@
     sliding = { width: `${from}px`, content: open ? PANE_WIDTH : from }
 
     const grown = open
-      ? await window.api.invoke('planWindowExpansion', PANE_WIDTH - COLUMN_SHARE)
-      : await window.api.invoke('planWindowCollapse')
+      ? await invoke('planWindowExpansion', PANE_WIDTH - COLUMN_SHARE)
+      : await invoke('planWindowCollapse')
 
     if (destroyed) return
 
@@ -67,7 +68,7 @@
       const rate = (to - from) / grown
 
       sliding = { width: `calc(${from}px + (100vw - ${window.innerWidth}px) * ${rate})`, content }
-      await window.api.invoke('moveWindow')
+      await invoke('moveWindow')
     }
 
     if (destroyed) return

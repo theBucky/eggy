@@ -1,4 +1,4 @@
-const { home } = window.api
+import { home } from './api'
 
 export function tilde(path: string): string {
   return path === home || path.startsWith(`${home}/`) ? `~${path.slice(home.length)}` : path

@@ -1,3 +1,4 @@
+import { home, invoke } from '$client/api'
 import { dirOf, tilde } from '$client/paths'
 import { clauses } from '$primitives/format'
 import type { FetchOutcome, PullCommand, PullOutcome, Repo, Sync } from '$shared/repos'
@@ -40,7 +41,7 @@ export function pendingPull({ task }: Entry): PullCommand | undefined {
 }
 
 export class Repos extends Source<Entry> {
-  root = $state(localStorage.getItem('root') ?? `${window.api.home}/repo`)
+  root = $state(localStorage.getItem('root') ?? `${home}/repo`)
   checked = $derived(this.entries.some(({ task }) => task !== undefined && !unsettled(task)))
   checkFailed = $derived(
     this.entries.some(({ task }) => task?.status === 'failed' && task.command === 'fetch')
@@ -75,7 +76,7 @@ export class Repos extends Source<Entry> {
   }
 
   async chooseRoot(): Promise<void> {
-    const root = await window.api.invoke('chooseRoot', this.root)
+    const root = await invoke('chooseRoot', this.root)
 
     if (root === undefined) return
 
@@ -92,11 +93,7 @@ export class Repos extends Source<Entry> {
         this.#git.run(entry.repo.commonDir, async () => {
           entry.task = { command, status: 'running' }
 
-          const { tracking, outcome } = await window.api.invoke(
-            'pullRepo',
-            entry.repo.path,
-            command
-          )
+          const { tracking, outcome } = await invoke('pullRepo', entry.repo.path, command)
 
           Object.assign(entry.repo, tracking)
           entry.task = { command, ...outcome }
@@ -106,7 +103,7 @@ export class Repos extends Source<Entry> {
   }
 
   protected async list(): Promise<void> {
-    const repos = await window.api.invoke('scanRepos', this.root)
+    const repos = await invoke('scanRepos', this.root)
 
     this.entries = repos.map((repo) => ({ id: repo.path, repo }))
   }
@@ -117,7 +114,7 @@ export class Repos extends Source<Entry> {
         this.#git.run(entry.repo.commonDir, async () => {
           entry.task = { command: 'fetch', status: 'running' }
 
-          const { tracking, outcome } = await window.api.invoke('fetchRepo', entry.repo.path)
+          const { tracking, outcome } = await invoke('fetchRepo', entry.repo.path)
 
           Object.assign(entry.repo, tracking)
           entry.task = { command: 'fetch', ...outcome }

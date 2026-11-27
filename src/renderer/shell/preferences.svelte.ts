@@ -1,8 +1,9 @@
+import { invoke, theme } from '$client/api'
 import type { Theme } from '$shared/theme'
 
 export class Preferences {
   #checkOnLaunch = $state(localStorage.getItem('checkOnLaunch') === 'true')
-  #theme = $state(window.api.theme)
+  #theme = $state(theme)
 
   get checkOnLaunch(): boolean {
     return this.#checkOnLaunch
@@ -19,6 +20,6 @@ export class Preferences {
 
   set theme(value: Theme) {
     this.#theme = value
-    window.api.invoke('setTheme', value)
+    invoke('setTheme', value)
   }
 }
