@@ -29,7 +29,6 @@
 
 	let press = $state<Press>();
 	let hovered = $state(false);
-	// Outlives the release by a frame, so the click that ends a drag can't toggle again.
 	let dragged = false;
 
 	const width = $derived(THUMB + (press ? PRESS_EXTEND : hovered && !disabled ? HOVER_EXTEND : 0));
@@ -38,6 +37,8 @@
 	const x = $derived(press?.x ?? rest);
 
 	function onpointerdown(event: PointerEvent & { currentTarget: HTMLButtonElement }): void {
+		dragged = false;
+
 		if (disabled || event.button !== 0) return;
 
 		press = { pointerX: event.clientX, x: undefined };
@@ -62,7 +63,6 @@
 		if (released === undefined) return;
 
 		dragged = true;
-		requestAnimationFrame(() => (dragged = false));
 
 		if (released > DRAG_MIDPOINT !== checked) {
 			checked = !checked;
@@ -90,7 +90,10 @@
 		onpointerenter: (event: PointerEvent) => (hovered = event.pointerType === "mouse"),
 		onpointerleave: () => (hovered = false),
 		onclick: (event: MouseEvent) => {
-			if (dragged) event.preventDefault();
+			if (!dragged) return;
+
+			dragged = false;
+			event.preventDefault();
 		},
 	})}
 >

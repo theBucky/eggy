@@ -31,8 +31,9 @@
 		const wrapper = frame.parentElement;
 		const node = trigger.node;
 		if (!wrapper || !node) throw new Error("Select.Content needs a Select.Trigger to flow out of");
-		const placed = requestAnimationFrame(() => (placing = false));
 		trigger.pouring = true;
+		// bits-ui parks a new menu off the page, then places it by rewriting the wrapper's transform.
+		const parked = wrapper.style.transform;
 		// The trigger's box, as insets from the menu's box.
 		const measure = () => {
 			const menu = wrapper.getBoundingClientRect();
@@ -45,15 +46,16 @@
 			// box measured before the menu was placed.
 			void frame.offsetWidth;
 		};
-		// bits-ui places the menu by rewriting the wrapper's inline transform.
-		const moved = new MutationObserver(measure);
+		const moved = new MutationObserver(() => {
+			measure();
+			if (wrapper.style.transform !== parked) placing = false;
+		});
 		moved.observe(wrapper, { attributeFilter: ["style"] });
 		const resized = new ResizeObserver(measure);
 		resized.observe(wrapper);
 		resized.observe(node);
 		measure();
 		return () => {
-			cancelAnimationFrame(placed);
 			placing = true;
 			trigger.pouring = false;
 			moved.disconnect();
