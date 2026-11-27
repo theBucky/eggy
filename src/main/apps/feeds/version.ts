@@ -5,7 +5,7 @@ function kindOf(part: string): Kind {
 
   if (part === '-') return 'dash'
 
-  if (/^\p{Nd}/u.test(part)) return 'number'
+  if (/^\d/.test(part)) return 'number'
 
   if (/^[\s\p{P}]/u.test(part)) return 'separator'
 
@@ -62,8 +62,8 @@ export function compare(a: string, b: string): number {
     const kindB = kindOf(partB)
 
     if (kindA === kindB || (separates(kindA) && separates(kindB))) {
-      if (kindA === 'number' && Number(partA) !== Number(partB)) {
-        return Number(partA) > Number(partB) ? 1 : -1
+      if (kindA === 'number' && BigInt(partA) !== BigInt(partB)) {
+        return BigInt(partA) > BigInt(partB) ? 1 : -1
       }
 
       if (kindA === 'string' && partA !== partB) return partA > partB ? 1 : -1

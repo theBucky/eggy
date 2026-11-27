@@ -8,14 +8,15 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
     "erasableSyntaxOnly": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    // shadcn-svelte resolves its aliases here.
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
+    // shadcn-svelte resolves its aliases here.
     "paths": {
       "$primitives/*": ["./src/renderer/primitives/*"]
     }
