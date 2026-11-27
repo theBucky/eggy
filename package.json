@@ -41,6 +41,7 @@
     "oxlint": "1.93.0",
     "semver": "^7.8.6",
     "shadcn-svelte": "^1.8.0",
+    "oxlint-tsgolint": "7.0.2009",
     "svelte": "^5.57.3",
     "svelte-check": "^4.7.8",
     "tailwind-variants": "^4.0.2",

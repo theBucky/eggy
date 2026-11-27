@@ -41,8 +41,8 @@ function typeOf(stats: Stats): number | undefined {
 async function* walk(root: string, relative = ''): AsyncGenerator<[string, Stats]> {
   const names = await fs.readdir(join(root, relative), { encoding: 'buffer' })
 
-  for (const name of names.sort(Buffer.compare)) {
-    const path = `${relative}/${name}`
+  for (const name of names.sort((a, b) => a.compare(b))) {
+    const path = `${relative}/${name.toString()}`
     const stats = await fs.lstat(join(root, path))
 
     yield [path, stats]
