@@ -43,7 +43,6 @@ export function installMenu(run: (command: MenuCommand) => void): void {
   )
 }
 
-// Chromium shows no menu of its own, which leaves selected text without the system's Copy.
 export function installContextMenu(window: BrowserWindow): void {
   const copy = Menu.buildFromTemplate([{ role: 'copy' }])
 

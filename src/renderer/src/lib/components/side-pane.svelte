@@ -25,7 +25,6 @@
 
   const revealed = $derived(item !== undefined && sliding === undefined)
 
-  // A slide under way runs to its end before turning, since the window's move can't turn midway.
   $effect(() => {
     const next = item
 

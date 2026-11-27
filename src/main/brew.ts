@@ -39,7 +39,6 @@ async function brew(
   return checked(ran)
 }
 
-// brew skips pinned packages when upgrading, so a pinned package never counts as outdated.
 function stateOf({ pinned, outdated }: { pinned: boolean; outdated: boolean }): Package['state'] {
   if (pinned) return 'pinned'
 

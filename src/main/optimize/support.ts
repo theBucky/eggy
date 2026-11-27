@@ -69,7 +69,6 @@ export async function exists(path: string): Promise<boolean> {
   }
 }
 
-// plutil exits with 1 when a file doesn't parse, and passes a batch only when every file in it does.
 async function parses(paths: string[]): Promise<boolean> {
   const ran = await exec('/usr/bin/plutil', ['-lint', '-s', ...paths], { timeout: 30_000 })
 

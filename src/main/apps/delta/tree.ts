@@ -81,7 +81,6 @@ export async function hashTree(root: string, version: number): Promise<Buffer> {
       tree.update(Buffer.alloc(20, 0xdd))
     }
 
-    // Sparkle hashes paths in their decomposed file system form, and links as always 0755.
     tree.update(Buffer.from(relative.normalize('NFD')))
     tree.update(uint(type, 2))
     tree.update(uint(type === fts.link ? 0o755 : stats.mode & 0o7777, 2))

@@ -40,8 +40,6 @@
     }
   }
 
-  /* Kept out of the list's block: nested under a descendant selector, `:has(&)` compiles to one
-     that looks for a second list inside the first. */
   [data-fluid-hover-item]:is(:is(a[href], button:enabled):hover, [data-highlighted]) {
     anchor-name: --fluid-hover;
 

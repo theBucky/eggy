@@ -77,7 +77,6 @@ const DATABASES = {
 async function running(app: string): Promise<boolean> {
   const ran = await exec('/usr/bin/pgrep', ['-x', app], { timeout: 5000 })
 
-  // pgrep exits with 1 when no process matches.
   if (ran.exit === 1) return false
 
   if (ran.exit !== 0) throw new Error(ran.stderr.trim() || "Couldn't list running apps.")

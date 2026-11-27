@@ -5,7 +5,6 @@ export type PackageKind = 'formula' | 'cask'
 export type Package = {
   kind: PackageKind
   name: string
-  // Includes the tap for packages outside Homebrew's own, which brew needs to tell them apart.
   fullName: string
   description: string | undefined
   homepage: string | undefined

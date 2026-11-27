@@ -29,7 +29,6 @@ export async function loginItems(): Promise<OptimizeOutcome> {
   // The first run waits on the user to answer macOS's prompt to let eggy control System Events.
   const ran = await exec('/usr/bin/osascript', ['-e', LOGIN_ITEMS], { timeout: 120_000 })
 
-  // -1743 is AppleScript's "Not authorized to send Apple events".
   if (ran.stderr.includes('(-1743)')) {
     return {
       status: 'skipped',

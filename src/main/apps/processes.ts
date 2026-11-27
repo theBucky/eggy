@@ -26,7 +26,6 @@ function kill(pid: number): void {
   }
 }
 
-// Each pass also catches an instance that launchd restarts.
 export async function forceQuit(bundle: Bundle): Promise<boolean> {
   for (let pass = 0; pass < 20; pass++) {
     const pids = await pidsOf(bundle)

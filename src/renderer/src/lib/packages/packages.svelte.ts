@@ -16,7 +16,6 @@ export type Entry = {
   task?: Task
 }
 
-// A formula and a cask can share a name.
 function idOf({ kind, fullName }: Pick<Package, 'kind' | 'fullName'>): string {
   return `${kind}:${fullName}`
 }

@@ -62,7 +62,6 @@ export async function runAsRoot(plans: Plan[]): Promise<OptimizeOutcome[]> {
 
   const ran = await exec('/usr/bin/osascript', ['-e', source])
 
-  // -128 is AppleScript's "User canceled."
   if (ran.exit !== 0 && ran.stderr.includes('(-128)')) {
     return plans.map(() => ({
       status: 'skipped',

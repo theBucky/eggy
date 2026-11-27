@@ -3,7 +3,6 @@ import { totalmem, uptime } from 'node:os'
 import type { Machine } from '$shared/optimize'
 import { output } from '../exec'
 
-// Counts memory the way Activity Monitor's "Memory Used" does: app memory, wired, and compressed.
 async function memoryUsed(): Promise<number> {
   const stats = await output('/usr/bin/vm_stat', [], { timeout: 5000 })
 
