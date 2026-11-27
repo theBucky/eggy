@@ -48,6 +48,8 @@ function stateOf({ pinned, outdated }: { pinned: boolean; outdated: boolean }): 
   return outdated ? 'outdated' : 'current'
 }
 
+const Keg = z.object({ version: z.string(), installed_on_request: z.boolean() })
+
 const Formula = z
   .object({
     name: z.string(),
@@ -57,16 +59,15 @@ const Formula = z
     homepage: z.string().nullable(),
     versions: z.object({ stable: z.string().nullable() }),
     revision: z.number(),
-    installed: z
-      .array(z.object({ version: z.string(), installed_on_request: z.boolean() }))
-      .nonempty(),
+    installed: z.tuple([Keg], Keg),
     linked_keg: z.string().nullable(),
     pinned: z.boolean(),
     outdated: z.boolean()
   })
   .transform((formula): Package => {
     const { stable } = formula.versions
-    const version = formula.linked_keg ?? formula.installed[formula.installed.length - 1].version
+    const [oldest, ...newer] = formula.installed
+    const version = formula.linked_keg ?? (newer.at(-1) ?? oldest).version
     const revision = formula.revision > 0 ? `_${formula.revision}` : ''
 
     return {

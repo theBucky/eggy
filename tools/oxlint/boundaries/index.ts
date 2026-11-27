@@ -86,13 +86,15 @@ function allows({ layer, root }: Module, file: string, specifier: string): boole
       : target === root || target.startsWith(`${root}/`)
   }
 
-  const [head, ...rest] = specifier.split('/')
+  const segments = specifier.split('/')
 
-  if (head.startsWith('$')) return layer.aliases.includes(head) && !rest.includes('..')
+  if (specifier.startsWith('$')) {
+    return layer.aliases.some((alias) => alias === segments[0]) && !segments.includes('..')
+  }
 
   if (layer.packages === 'node') return true
 
-  const name = head.startsWith('@') ? `${head}/${rest[0]}` : head
+  const name = segments.slice(0, specifier.startsWith('@') ? 2 : 1).join('/')
 
   return layer.packages === 'browser'
     ? !name.startsWith('node:') && !NODE_ONLY.has(name)
@@ -113,7 +115,7 @@ function textOf(node: ESTree.Node): string | undefined {
   if (node.type === 'Literal') return String(node.value)
 
   if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
-    return node.quasis[0].value.cooked ?? undefined
+    return node.quasis[0]?.value.cooked ?? undefined
   }
 
   return undefined

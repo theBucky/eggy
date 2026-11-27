@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
 import { dialog, type BrowserWindow } from 'electron'
+import * as z from 'zod'
 import { exec } from '$platform/exec'
 import type { Handlers } from '$platform/ipc'
 import { loginEnv } from '$platform/login-env'
@@ -32,31 +33,30 @@ function messageOf({ stdout, stderr }: Output): string {
   return (stdout + stderr).trim()
 }
 
+const Counts = z
+  .tuple([z.coerce.number().int(), z.coerce.number().int()])
+  .transform(([ahead, behind]): Sync => ({ ahead, behind }))
+
 async function readSync(path: string): Promise<Sync | undefined> {
-  const { ok, stdout } = await git(path, [
-    'rev-list',
-    '--left-right',
-    '--count',
-    'HEAD...@{upstream}'
-  ])
+  const { stdout } = await git(path, ['rev-list', '--left-right', '--count', 'HEAD...@{upstream}'])
 
-  if (!ok) return undefined
-
-  const [ahead, behind] = stdout.trim().split('\t').map(Number)
-
-  return { ahead, behind }
+  return Counts.safeParse(stdout.trim().split('\t')).data
 }
 
 const log = ['log', '--no-show-signature', '--max-count=10', '--format=%h%x1f%s%x1f%an%x1f%ct']
 
+const LogLine = z.tuple([z.string(), z.string(), z.string(), z.coerce.number()])
+
 function parseLog(stdout: string, pages?: string): Commit[] {
   return stdout.split('\n').flatMap((line) => {
-    if (line === '') return []
+    const fields = LogLine.safeParse(line.split('\x1f'))
 
-    const [hash, subject, author, date] = line.split('\x1f')
+    if (!fields.success) return []
+
+    const [hash, subject, author, seconds] = fields.data
     const url = pages === undefined ? undefined : `${pages}${hash}`
 
-    return [{ hash, subject, author, date: Number(date) * 1000, url }]
+    return [{ hash, subject, author, date: seconds * 1000, url }]
   })
 }
 
@@ -121,11 +121,9 @@ async function readRepo(path: string): Promise<Repo | undefined> {
     ])
   ])
 
-  const current = /^\*(\S+) (\S+)$/m.exec(heads.stdout)
+  const [, branch, upstream] = /^\*(\S+) (\S+)$/m.exec(heads.stdout) ?? []
 
-  if (current === null) return undefined
-
-  const [, branch, upstream] = current
+  if (branch === undefined || upstream === undefined) return undefined
 
   return {
     path,

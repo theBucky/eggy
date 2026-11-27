@@ -2,9 +2,10 @@ import { fs } from '../fs'
 import { corrupt, type Reader } from './reader'
 
 function offtin(buffer: Buffer, offset: number): number {
-  const magnitude = Number(buffer.readBigUInt64LE(offset) & 0x7fff_ffff_ffff_ffffn)
+  const raw = buffer.readBigUInt64LE(offset)
+  const magnitude = Number(raw & 0x7fff_ffff_ffff_ffffn)
 
-  return buffer[offset + 7] & 0x80 ? -magnitude : magnitude
+  return raw >> 63n ? -magnitude : magnitude
 }
 
 // Sparkle's BSDIFN40 variant of bsdiff leaves its blocks uncompressed, and the whole diff block
@@ -52,8 +53,10 @@ export async function bspatch(
 
         await old.read(original, 0, original.length, start)
 
+        const overlap = piece.subarray(start - position)
+
         for (let index = 0; index < original.length; index++) {
-          piece[start - position + index] += original[index]
+          overlap[index] = overlap.readUInt8(index) + original.readUInt8(index)
         }
       }
 

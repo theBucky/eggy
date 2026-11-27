@@ -12,8 +12,7 @@ const units = [
   ['week', 7 * 86_400_000],
   ['day', 86_400_000],
   ['hour', 3_600_000],
-  ['minute', 60_000],
-  ['second', 1000]
+  ['minute', 60_000]
 ] as const
 
 const tick = createSubscriber((update) => {
@@ -22,8 +21,8 @@ const tick = createSubscriber((update) => {
   return () => clearInterval(timer)
 })
 
-function largest(span: number): (typeof units)[number] {
-  return units.find(([, size]) => span >= size) ?? units[units.length - 1]
+function largest(span: number): readonly [Intl.RelativeTimeFormatUnit, number] {
+  return units.find(([, size]) => span >= size) ?? ['second', 1000]
 }
 
 export function ago(date: number): string {

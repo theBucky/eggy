@@ -9,7 +9,7 @@ export type Resizer = {
   collapsed: (bounds: Rectangle) => Rectangle
 }
 
-export function resizer(window: BrowserWindow): Resizer {
+export function resizer(window: BrowserWindow, minWidth: number): Resizer {
   let expansion: { width: number; shift: number; deferred: boolean } | undefined
   let planned: Rectangle | undefined
 
@@ -44,7 +44,7 @@ export function resizer(window: BrowserWindow): Resizer {
   function collapsed(bounds: Rectangle): Rectangle {
     if (expansion === undefined) return bounds
 
-    const width = Math.min(expansion.width, bounds.width - window.getMinimumSize()[0])
+    const width = Math.min(expansion.width, bounds.width - minWidth)
     const shift = Math.min(expansion.shift, width)
 
     return { ...bounds, x: bounds.x + shift, width: bounds.width - width }

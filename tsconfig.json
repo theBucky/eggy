@@ -12,6 +12,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     // shadcn-svelte resolves its aliases here.
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
     "paths": {
       "$primitives/*": ["./src/renderer/primitives/*"]
     }

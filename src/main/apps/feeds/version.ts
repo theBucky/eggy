@@ -39,9 +39,10 @@ function leadingNumbers(parts: string[]): number {
 }
 
 function pad(shorter: string[], longer: string[]): void {
-  for (let index = leadingNumbers(shorter); index < leadingNumbers(longer); index++) {
-    shorter.splice(index, 0, kindOf(longer[index]) === 'period' ? '.' : '0')
-  }
+  const start = leadingNumbers(shorter)
+  const missing = longer.slice(start, leadingNumbers(longer))
+
+  shorter.splice(start, 0, ...missing.map((part) => (kindOf(part) === 'period' ? '.' : '0')))
 }
 
 // Follows Sparkle's SUStandardVersionComparator rather than semver.
@@ -52,12 +53,12 @@ export function compare(a: string, b: string): number {
   pad(partsA, partsB)
   pad(partsB, partsA)
 
-  const shared = Math.min(partsA.length, partsB.length)
-
-  for (let index = 0; index < shared; index++) {
-    const partA = partsA[index]
+  for (const [index, partA] of partsA.entries()) {
     const partB = partsB[index]
     const kindA = kindOf(partA)
+
+    if (partB === undefined) return kindA === 'string' ? -1 : 1
+
     const kindB = kindOf(partB)
 
     if (kindA === kindB || (separates(kindA) && separates(kindB))) {
@@ -73,10 +74,9 @@ export function compare(a: string, b: string): number {
     }
   }
 
-  if (partsA.length === partsB.length) return 0
+  const extra = partsB[partsA.length]
 
-  const longer = partsA.length > partsB.length ? partsA : partsB
-  const newerIsLonger = kindOf(longer[shared]) !== 'string'
+  if (extra === undefined) return 0
 
-  return partsA.length > partsB.length === newerIsLonger ? 1 : -1
+  return kindOf(extra) === 'string' ? 1 : -1
 }

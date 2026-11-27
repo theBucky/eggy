@@ -52,7 +52,7 @@ async function decode(delta: string): Promise<ChildProcess> {
     throw new Error("The delta's format isn't supported.")
   }
 
-  const algorithm = algorithms.get(header[4])
+  const algorithm = algorithms.get(header.readUInt8(4))
 
   if (algorithm === undefined) throw new Error("The delta's compression isn't supported.")
 

@@ -45,7 +45,7 @@ export async function loginItems(): Promise<OptimizeOutcome> {
   const items = ran.stdout.split('\n').flatMap((line) => {
     const [name, path] = line.split('\t')
 
-    return path === undefined ? [] : [{ name, path }]
+    return name === undefined || path === undefined ? [] : [{ name, path }]
   })
 
   if (items.length === 0) return { status: 'unchanged', message: 'No login items.' }

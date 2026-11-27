@@ -30,11 +30,13 @@ function sidebarColor(): string {
 type MainWindow = { window: BrowserWindow; pane: Resizer }
 
 export function createWindow(): MainWindow {
+  const minWidth = 1150
+
   const window = new BrowserWindow({
-    width: 1150,
+    width: minWidth,
     height: 760,
     ...savedBounds(),
-    minWidth: 1150,
+    minWidth,
     minHeight: 760,
     show: false,
     titleBarStyle: 'hidden',
@@ -46,7 +48,7 @@ export function createWindow(): MainWindow {
     }
   })
 
-  const pane = resizer(window)
+  const pane = resizer(window, minWidth)
 
   installContextMenu(window)
 

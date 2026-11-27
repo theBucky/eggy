@@ -47,19 +47,19 @@ async function readItems(reader: Reader): Promise<Item[]> {
 
     if (commands === 0) break
 
-    if (items.length === paths.length) throw corrupt()
+    const path = paths[items.length]
 
-    const item: Item = { path: paths[items.length], commands, mode: 0, length: 0, clone: undefined }
+    if (path === undefined) throw corrupt()
+
+    const item: Item = { path, commands, mode: 0, length: 0, clone: undefined }
 
     if (commands & (Command.clone | Command.diff)) {
       if (commands & Command.permissions) item.mode = await reader.uint(2)
 
       if (commands & Command.clone) {
-        const index = await reader.uint(4)
+        item.clone = paths[await reader.uint(4)]
 
-        if (index >= paths.length) throw corrupt()
-
-        item.clone = paths[index]
+        if (item.clone === undefined) throw corrupt()
       }
 
       if (commands & Command.diff) item.length = await reader.uint(8)

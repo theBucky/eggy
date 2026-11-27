@@ -24,14 +24,13 @@ export class Pool {
 
   #next(): void {
     while (this.#running.size < this.#size) {
-      const index = this.#waiting.findIndex(({ key }) => !this.#running.has(key))
+      const next = this.#waiting.find(({ key }) => !this.#running.has(key))
 
-      if (index === -1) return
+      if (next === undefined) return
 
-      const [{ key, start }] = this.#waiting.splice(index, 1)
-
-      this.#running.add(key)
-      start()
+      this.#waiting.splice(this.#waiting.indexOf(next), 1)
+      this.#running.add(next.key)
+      next.start()
     }
   }
 }

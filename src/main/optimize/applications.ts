@@ -84,6 +84,9 @@ async function running(app: string): Promise<boolean> {
   return true
 }
 
+const SPARSE =
+  'SELECT freelist_count * 20 >= page_count FROM pragma_freelist_count, pragma_page_count;'
+
 type Compaction = 'compacted' | 'compact' | 'large' | 'busy' | 'denied' | 'missing'
 
 async function compact(path: string): Promise<Compaction> {
@@ -93,13 +96,11 @@ async function compact(path: string): Promise<Compaction> {
 
   if ((await stat(path)).size > 100 * 2 ** 20) return 'large'
 
-  const counts = await sqlite(path, ['PRAGMA page_count;', 'PRAGMA freelist_count;'], 10_000)
+  const sparse = await sqlite(path, [SPARSE], 10_000)
 
-  if (counts === undefined) return 'busy'
+  if (sparse === undefined) return 'busy'
 
-  const [pages, free] = counts.split('\n').map(Number)
-
-  if (free * 20 < pages) return 'compact'
+  if (sparse !== '1') return 'compact'
 
   const integrity = await sqlite(path, ['PRAGMA integrity_check;'], 20_000)
 

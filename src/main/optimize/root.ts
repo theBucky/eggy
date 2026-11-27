@@ -51,27 +51,37 @@ function appleScriptString(text: string): string {
   return `"${text.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`
 }
 
-export async function runAsRoot(plans: Plan[]): Promise<OptimizeOutcome[]> {
-  const shell = plans
-    .map(({ script }) => `(${script}) 2>&1; printf '${SEPARATOR}%d${SEPARATOR}' "$?"`)
-    .join('\n')
+export async function runAsRoot<Key>(plans: Map<Key, Plan>): Promise<Map<Key, OptimizeOutcome>> {
+  const shell = Array.from(
+    plans.values(),
+    ({ script }) => `(${script}) 2>&1; printf '${SEPARATOR}%d${SEPARATOR}' "$?"`
+  ).join('\n')
 
-  const names = plans.length === 1 ? 'an optimization' : `${plans.length} optimizations`
+  const names = plans.size === 1 ? 'an optimization' : `${plans.size} optimizations`
   const prompt = `eggy needs an administrator to run ${names}.`
   const source = `do shell script ${appleScriptString(shell)} with prompt ${appleScriptString(prompt)} with administrator privileges without altering line endings`
 
   const ran = await exec('/usr/bin/osascript', ['-e', source])
 
+  const settle = (
+    outcomeOf: (plan: Plan, index: number) => OptimizeOutcome
+  ): Map<Key, OptimizeOutcome> =>
+    new Map(Array.from(plans, ([key, plan], index) => [key, outcomeOf(plan, index)]))
+
   if (ran.exit !== 0 && ran.stderr.includes('(-128)')) {
-    return plans.map(() => ({
-      status: 'skipped',
-      message: 'Administrator access was not granted.'
-    }))
+    return settle(() => ({ status: 'skipped', message: 'Administrator access was not granted.' }))
   }
 
   const parts = checked(ran).split(SEPARATOR)
 
-  return plans.map((plan, index) =>
-    plan.interpret({ code: Number(parts[2 * index + 1]), printed: parts[2 * index].trim() })
-  )
+  return settle((plan, index) => {
+    const printed = parts[2 * index]
+    const code = parts[2 * index + 1]
+
+    if (printed === undefined || code === undefined) {
+      throw new Error("The administrator script didn't report every result.")
+    }
+
+    return plan.interpret({ code: Number(code), printed: printed.trim() })
+  })
 }

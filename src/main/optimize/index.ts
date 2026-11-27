@@ -41,21 +41,22 @@ const ROOT_TASKS: Record<Privileged, () => Promise<Prepared>> = {
 async function runPrivileged(optimizations: Privileged[], report: Report): Promise<void> {
   for (const optimization of optimizations) report(optimization, { status: 'running' })
 
-  const planned: { optimization: Privileged; plan: Plan }[] = []
+  const planned = new Map<Privileged, Plan>()
 
   for (const optimization of optimizations) {
     const prepared = await ROOT_TASKS[optimization]().catch(failure)
 
-    if ('script' in prepared) planned.push({ optimization, plan: prepared })
+    if ('script' in prepared) planned.set(optimization, prepared)
     else report(optimization, prepared)
   }
 
-  if (planned.length === 0) return
+  if (planned.size === 0) return
 
-  const plans = planned.map(({ plan }) => plan)
-  const outcomes = await runAsRoot(plans).catch((cause) => plans.map(() => failure(cause)))
-
-  planned.forEach(({ optimization }, index) => report(optimization, outcomes[index]))
+  try {
+    for (const [optimization, outcome] of await runAsRoot(planned)) report(optimization, outcome)
+  } catch (cause) {
+    for (const optimization of planned.keys()) report(optimization, failure(cause))
+  }
 }
 
 async function run(optimizations: Optimization[], report: Report): Promise<void> {

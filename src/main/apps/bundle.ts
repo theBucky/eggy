@@ -28,11 +28,11 @@ async function readInfo(path: string): Promise<Map<string, string>> {
   const fields = [...(dict?.children ?? [])]
   const strings = new Map<string, string>()
 
-  for (let index = 0; index + 1 < fields.length; index += 2) {
+  for (const [index, key] of fields.entries()) {
     const value = fields[index + 1]
 
-    if (value.tagName === 'string') {
-      strings.set(fields[index].textContent ?? '', value.textContent ?? '')
+    if (key.tagName === 'key' && value?.tagName === 'string') {
+      strings.set(key.textContent ?? '', value.textContent ?? '')
     }
   }
 
