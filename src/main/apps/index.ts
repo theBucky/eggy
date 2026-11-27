@@ -42,9 +42,9 @@ async function list(): Promise<App[]> {
 
 async function check(path: string): Promise<CheckOutcome> {
   try {
-    const updates = await fetchUpdates(await readBundle(path))
+    const release = (await fetchUpdates(await readBundle(path))).at(0)?.release
 
-    return { status: 'checked', release: updates.at(0)?.release }
+    return release === undefined ? { status: 'current' } : { status: 'outdated', release }
   } catch (cause) {
     return failure(cause)
   }

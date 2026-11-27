@@ -1,3 +1,13 @@
+<script lang="ts" module>
+  import type { Progress } from '$shared/apps'
+
+  const labels = {
+    download: 'Downloading',
+    install: 'Installing',
+    waiting: 'Installing'
+  } satisfies Record<Progress['stage'], string>
+</script>
+
 <script lang="ts">
   import { Button, type ButtonVariant } from '$primitives/ui/button'
   import { progressOf, type Apps, type Entry } from './apps.svelte'
@@ -10,12 +20,6 @@
 
 <Button {variant} disabled={!apps.canUpgrade(entry)} onclick={() => apps.upgrade([entry])}>
   <span data-progress={progress && (progress.stage === 'download' ? progress.percent : 100)}>
-    {#if progress?.stage === 'download'}
-      Downloading
-    {:else if progress}
-      Installing
-    {:else}
-      Upgrade
-    {/if}
+    {progress ? labels[progress.stage] : 'Upgrade'}
   </span>
 </Button>

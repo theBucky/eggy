@@ -1,3 +1,16 @@
+<script lang="ts" module>
+  import type { StatusBadge } from '$source/status'
+  import type { Standing } from './apps.svelte'
+
+  const badges = {
+    checking: { label: 'Checking', variant: 'secondary' },
+    outdated: { label: 'Upgrade available', variant: 'info' },
+    failed: { label: 'Check failed', variant: 'destructive' },
+    upgraded: { label: 'Upgraded', variant: 'success' },
+    current: { label: 'Up to date', variant: 'success' }
+  } satisfies Record<Standing['status'], StatusBadge>
+</script>
+
 <script lang="ts">
   import { nameOf, tilde } from '$client/paths'
   import FailureAlert from '$primitives/failure-alert.svelte'
@@ -7,14 +20,13 @@
   import Section from '$primitives/section.svelte'
   import { Badge } from '$primitives/ui/badge'
   import { Button } from '$primitives/ui/button'
-  import type { StatusBadge } from '$source/status'
   import { failureOf, labelOf, releaseOf, type Apps, type Entry } from './apps.svelte'
   import ReleaseNotes from './release-notes.svelte'
   import UpgradeButton from './upgrade-button.svelte'
 
   let { apps, entry }: { apps: Apps; entry: Entry } = $props()
 
-  const { app, check } = $derived(entry)
+  const { app, standing } = $derived(entry)
   const release = $derived(releaseOf(entry))
   const failed = $derived(failureOf(entry))
 
@@ -24,17 +36,7 @@
     return origin + pathname.split('/', 2).join('/')
   })
 
-  const badge = $derived.by((): StatusBadge | undefined => {
-    if (check?.status === 'running') return { label: 'Checking', variant: 'secondary' }
-
-    if (release !== undefined) return { label: 'Upgrade available', variant: 'info' }
-
-    if (check?.status === 'failed') return { label: 'Check failed', variant: 'destructive' }
-
-    if (entry.upgrade?.status === 'upgraded') return { label: 'Upgraded', variant: 'success' }
-
-    return check === undefined ? undefined : { label: 'Up to date', variant: 'success' }
-  })
+  const badge = $derived(standing && badges[standing.status])
 </script>
 
 <Page title={app.name} icon={app.icon} actions={release ? upgrade : undefined}>
@@ -76,7 +78,7 @@
 
   {#if failed}
     <FailureAlert
-      title={entry.upgrade?.status === 'failed' ? 'Upgrade failed' : 'Check failed'}
+      title={standing?.status === 'failed' ? 'Check failed' : 'Upgrade failed'}
       message={failed.message}
     />
   {/if}

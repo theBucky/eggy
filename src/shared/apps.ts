@@ -22,7 +22,10 @@ export type Release = {
   notes: Notes | undefined
 }
 
-export type CheckOutcome = { status: 'checked'; release: Release | undefined } | Failure
+export type CheckOutcome =
+  | { status: 'current' }
+  | { status: 'outdated'; release: Release }
+  | Failure
 
 export type InstallOutcome = { status: 'upgraded'; version: string; build: string } | Failure
 
