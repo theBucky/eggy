@@ -9,6 +9,10 @@
     {
       "name": "anti-slop-effect",
       "specifier": "./tools/oxlint/anti-slop/effect/index.ts"
+    },
+    {
+      "name": "boundaries",
+      "specifier": "./tools/oxlint/boundaries/index.ts"
     }
   ],
   "categories": {
@@ -42,7 +46,8 @@
     "anti-slop-effect/no-manual-tag-comparison": "error",
     "anti-slop-effect/no-manual-tagged-construction": "error",
     "anti-slop-effect/no-service-constructor-imports": "error",
-    "anti-slop-effect/prefer-effect-match": "error"
+    "anti-slop-effect/prefer-effect-match": "error",
+    "boundaries/imports": "error"
   },
   "ignorePatterns": ["src/renderer/primitives/ui/**", "tools/oxlint/anti-slop/**"]
 }

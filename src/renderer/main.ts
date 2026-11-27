@@ -1,4 +1,4 @@
-import './assets/main.css'
+import './main.css'
 
 import { mount } from 'svelte'
 import Shell from '$shell/shell.svelte'

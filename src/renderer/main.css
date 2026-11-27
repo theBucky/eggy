@@ -1,9 +1,9 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
-@import './typeset.css';
-@import './fluid-hover.css';
-@import './overflow-fade.css';
+@import './assets/typeset.css';
+@import './assets/fluid-hover.css';
+@import './assets/overflow-fade.css';
 
 @font-face {
   font-family: 'Geist Variable';
