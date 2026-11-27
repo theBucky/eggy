@@ -44,3 +44,13 @@ export type Machine = {
   disk: { free: number; total: number }
   uptime: number
 }
+
+export type Requests = {
+  inspectMachine: () => Machine
+  optimize: (optimizations: Optimization[]) => void
+  review: (target: Review) => void
+}
+
+export type Events = {
+  optimization: [optimization: Optimization, state: OptimizeState]
+}

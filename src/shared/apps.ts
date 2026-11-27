@@ -32,3 +32,14 @@ export type Progress =
   | { stage: 'download'; percent: number | undefined }
   | { stage: 'install' }
   | { stage: 'waiting' }
+
+export type Requests = {
+  listApps: () => App[]
+  checkApp: (path: string) => CheckOutcome
+  upgradeApp: (path: string) => UpgradeOutcome
+  answerAppQuit: (path: string, quit: boolean) => void
+}
+
+export type Events = {
+  appProgress: [path: string, progress: Progress]
+}

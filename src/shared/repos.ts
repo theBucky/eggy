@@ -45,3 +45,11 @@ export type CommitDetail = {
   body: string
   patch: string
 }
+
+export type Requests = {
+  chooseRoot: (current: string) => string | undefined
+  scanRepos: (root: string) => Repo[]
+  fetchRepo: (path: string) => FetchResult
+  pullRepo: (path: string, command: PullCommand) => PullResult
+  showCommit: (path: string, hash: string) => CommitDetail
+}

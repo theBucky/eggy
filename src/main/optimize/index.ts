@@ -1,21 +1,21 @@
 import { failure } from '$platform/errors'
+import type { Handlers, Send } from '$platform/ipc'
 import {
   isPrivileged,
+  type Events,
   type Optimization,
   type OptimizeOutcome,
   type OptimizeState,
-  type Privileged
+  type Privileged,
+  type Requests
 } from '$shared/optimize'
 import { appDatabases, preferences, savedStates } from './applications'
 import { networkVolumes, quickLook, sharedFileLists } from './finder'
+import { inspectMachine } from './machine'
 import { dnsCache, networkStack } from './network'
 import { runAsRoot, type Plan, type Prepared } from './root'
-import { launchAgents, loginItems } from './startup'
+import { launchAgents, loginItems, review } from './startup'
 import { notifications, quarantine, spotlight } from './system'
-
-export { inspectMachine } from './machine'
-
-export { review } from './startup'
 
 type Report = (optimization: Optimization, state: OptimizeState) => void
 
@@ -58,7 +58,7 @@ async function runPrivileged(optimizations: Privileged[], report: Report): Promi
   planned.forEach(({ optimization }, index) => report(optimization, outcomes[index]))
 }
 
-export async function run(optimizations: Optimization[], report: Report): Promise<void> {
+async function run(optimizations: Optimization[], report: Report): Promise<void> {
   await runPrivileged(optimizations.filter(isPrivileged), report)
 
   for (const optimization of optimizations) {
@@ -66,5 +66,14 @@ export async function run(optimizations: Optimization[], report: Report): Promis
 
     report(optimization, { status: 'running' })
     report(optimization, await TASKS[optimization]().catch(failure))
+  }
+}
+
+export function handlers(send: Send<Events>): Handlers<Requests> {
+  return {
+    inspectMachine: () => inspectMachine(),
+    optimize: (_, optimizations) =>
+      run(optimizations, (optimization, state) => send('optimization', optimization, state)),
+    review: (_, target) => review(target)
   }
 }

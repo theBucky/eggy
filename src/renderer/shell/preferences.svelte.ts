@@ -1,5 +1,5 @@
 import { invoke, theme } from '$client/api'
-import type { Theme } from '$shared/theme'
+import type { Theme } from '$shared/shell'
 
 export class Preferences {
   #checkOnLaunch = $state(localStorage.getItem('checkOnLaunch') === 'true')

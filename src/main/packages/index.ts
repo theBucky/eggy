@@ -4,13 +4,16 @@ import { app } from 'electron'
 import * as z from 'zod'
 import { errorCode, failure } from '$platform/errors'
 import { checked, exec, type Options } from '$platform/exec'
+import type { Handlers, Send } from '$platform/ipc'
 import { loginEnv } from '$platform/login-env'
 import type {
+  Events,
   Package,
   PackageCheck,
   PackageKind,
   PackageList,
-  PackageUpgrade
+  PackageUpgrade,
+  Requests
 } from '$shared/packages'
 
 const env = loginEnv.then((env) => ({
@@ -127,7 +130,7 @@ async function read(): Promise<PackageList> {
 
 let launchList: Promise<PackageList> | undefined = read()
 
-export function list(): Promise<PackageList> {
+function list(): Promise<PackageList> {
   const listing = launchList ?? read()
 
   launchList = undefined
@@ -135,7 +138,7 @@ export function list(): Promise<PackageList> {
   return listing
 }
 
-export async function check(): Promise<PackageCheck> {
+async function check(): Promise<PackageCheck> {
   try {
     await brew(['update'])
 
@@ -160,7 +163,7 @@ exec /usr/bin/osascript -e 'text returned of (display dialog "eggy needs an admi
   return path
 }
 
-export async function upgrade(
+async function upgrade(
   kind: PackageKind,
   fullName: string,
   report: (text: string) => void
@@ -174,5 +177,14 @@ export async function upgrade(
     return { status: 'upgraded' }
   } catch (cause) {
     return failure(cause)
+  }
+}
+
+export function handlers(send: Send<Events>): Handlers<Requests> {
+  return {
+    listPackages: () => list(),
+    checkPackages: () => check(),
+    upgradePackage: (_, kind, fullName) =>
+      upgrade(kind, fullName, (text) => send('packageOutput', kind, fullName, text))
   }
 }

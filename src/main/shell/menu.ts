@@ -1,6 +1,6 @@
 import { Menu, type BrowserWindow, type MenuItemConstructorOptions } from 'electron'
 import { is } from '@electron-toolkit/utils'
-import type { MenuCommand } from '$shared/ipc'
+import type { MenuCommand } from '$shared/shell'
 
 export function installMenu(run: (command: MenuCommand) => void): void {
   const developer: MenuItemConstructorOptions[] = [

@@ -5,7 +5,7 @@
   import * as Field from '$primitives/ui/field'
   import * as Select from '$primitives/ui/select'
   import { Switch } from '$primitives/ui/switch'
-  import { THEMES, type Theme } from '$shared/theme'
+  import { THEMES, type Theme } from '$shared/shell'
   import type { Preferences } from './preferences.svelte'
 
   const LABELS: Record<Theme, string> = { system: 'System', light: 'Light', dark: 'Dark' }

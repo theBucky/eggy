@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { Api, Events, Launch, Requests } from '$shared/ipc'
+import type { Api, Events, Requests } from '$shared/ipc'
+import type { Launch } from '$shared/shell'
 
 function invoke<Channel extends keyof Requests>(
   channel: Channel,

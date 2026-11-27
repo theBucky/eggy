@@ -1,7 +1,9 @@
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { dialog, type BrowserWindow } from 'electron'
 import { exec } from '$platform/exec'
+import type { Handlers } from '$platform/ipc'
 import { loginEnv } from '$platform/login-env'
 import type {
   Commit,
@@ -11,6 +13,7 @@ import type {
   PullCommand,
   PullResult,
   Repo,
+  Requests,
   Sync,
   Tracking
 } from '$shared/repos'
@@ -149,7 +152,7 @@ async function findRepos(dir: string): Promise<string[]> {
   return nested.flat()
 }
 
-export async function scan(root: string): Promise<Repo[]> {
+async function scan(root: string): Promise<Repo[]> {
   const queue = (await findRepos(root)).entries()
   const repos: (Repo | undefined)[] = []
 
@@ -162,7 +165,7 @@ export async function scan(root: string): Promise<Repo[]> {
   return repos.filter((repo) => repo !== undefined)
 }
 
-export async function fetch(path: string): Promise<FetchResult> {
+async function fetch(path: string): Promise<FetchResult> {
   const fetched = await git(path, ['fetch', '--tags', '--force'])
   const tracking = await readTracking(path)
 
@@ -178,7 +181,7 @@ export async function fetch(path: string): Promise<FetchResult> {
   return { tracking, outcome: { status: 'fetched' } }
 }
 
-export async function pull(path: string, command: PullCommand): Promise<PullResult> {
+async function pull(path: string, command: PullCommand): Promise<PullResult> {
   // Git keeps a paused rebase's state in one of these directories, even after switching branches.
   const { stdout } = await git(path, [
     'rev-parse',
@@ -228,7 +231,7 @@ export async function pull(path: string, command: PullCommand): Promise<PullResu
   return { tracking, outcome: count === 0 ? { status: 'current' } : { status: 'updated', count } }
 }
 
-export async function show(path: string, hash: string): Promise<CommitDetail> {
+async function show(path: string, hash: string): Promise<CommitDetail> {
   // A merge diffs against its first parent, since combined diffs have no patch form to parse. The
   // prefixes override `diff.noprefix`, whose paths the parser misreads.
   const { stdout } = await git(path, [
@@ -248,4 +251,21 @@ export async function show(path: string, hash: string): Promise<CommitDetail> {
   const split = stdout.indexOf('\0')
 
   return { body: stdout.slice(0, split).trim(), patch: stdout.slice(split + 1) }
+}
+
+export function handlers(window: BrowserWindow): Handlers<Requests> {
+  return {
+    chooseRoot: async (_, current) => {
+      const { canceled, filePaths } = await dialog.showOpenDialog(window, {
+        defaultPath: current,
+        properties: ['openDirectory']
+      })
+
+      return canceled ? undefined : filePaths[0]
+    },
+    scanRepos: (_, root) => scan(root),
+    fetchRepo: (_, path) => fetch(path),
+    pullRepo: (_, path, command) => pull(path, command),
+    showCommit: (_, path, hash) => show(path, hash)
+  }
 }

@@ -2,7 +2,8 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { nativeImage } from 'electron'
 import { failure } from '$platform/errors'
-import type { App, CheckOutcome, Progress, UpgradeOutcome } from '$shared/apps'
+import type { Handlers, Send } from '$platform/ipc'
+import type { App, CheckOutcome, Events, Progress, Requests, UpgradeOutcome } from '$shared/apps'
 import { readBundle } from './bundle'
 import { feedOf, fetchUpdates } from './feeds'
 import { fs, rmSync } from './fs'
@@ -25,7 +26,7 @@ async function readApp(path: string): Promise<App | undefined> {
   return { path, name, version, build, feed: feed.url, icon: icon.toDataURL() }
 }
 
-export async function list(): Promise<App[]> {
+async function list(): Promise<App[]> {
   const listed = await Promise.all(
     folders.map(async (folder) =>
       (await fs.readdir(folder).catch(() => [])).flatMap((name) =>
@@ -39,7 +40,7 @@ export async function list(): Promise<App[]> {
   return apps.filter((app) => app !== undefined).toSorted((a, b) => a.name.localeCompare(b.name))
 }
 
-export async function check(path: string): Promise<CheckOutcome> {
+async function check(path: string): Promise<CheckOutcome> {
   try {
     const updates = await fetchUpdates(await readBundle(path))
 
@@ -49,7 +50,7 @@ export async function check(path: string): Promise<CheckOutcome> {
   }
 }
 
-export async function upgrade(
+async function upgrade(
   path: string,
   report: (progress: Progress) => void
 ): Promise<UpgradeOutcome> {
@@ -74,11 +75,20 @@ export async function upgrade(
   }
 }
 
-export function answerQuit(path: string, quit: boolean): void {
+function answerQuit(path: string, quit: boolean): void {
   waiting.get(path)?.answer(quit)
   waiting.delete(path)
 }
 
 export function discardWaiting(): void {
   for (const { staged } of waiting.values()) rmSync(staged.work, { recursive: true, force: true })
+}
+
+export function handlers(send: Send<Events>): Handlers<Requests> {
+  return {
+    listApps: () => list(),
+    checkApp: (_, path) => check(path),
+    upgradeApp: (_, path) => upgrade(path, (progress) => send('appProgress', path, progress)),
+    answerAppQuit: (_, path, quit) => answerQuit(path, quit)
+  }
 }

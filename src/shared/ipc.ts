@@ -1,46 +1,19 @@
-import type { App, CheckOutcome, Progress, UpgradeOutcome } from './apps'
-import type { Machine, Optimization, OptimizeState, Review } from './optimize'
-import type { PackageCheck, PackageKind, PackageList, PackageUpgrade } from './packages'
-import type { CommitDetail, FetchResult, PullCommand, PullResult, Repo } from './repos'
-import type { Theme } from './theme'
+import type * as apps from './apps'
+import type * as optimize from './optimize'
+import type * as packages from './packages'
+import type * as repos from './repos'
+import type * as shell from './shell'
 
-export type MenuCommand = 'settings' | 'refresh'
+type Join<Left, Right extends Record<keyof Left & keyof Right, never>> = Left & Right
 
-export type Requests = {
-  chooseRoot: (current: string) => string | undefined
-  scanRepos: (root: string) => Repo[]
-  fetchRepo: (path: string) => FetchResult
-  pullRepo: (path: string, command: PullCommand) => PullResult
-  showCommit: (path: string, hash: string) => CommitDetail
-  planWindowExpansion: (width: number) => number
-  planWindowCollapse: () => number
-  moveWindow: () => void
-  listApps: () => App[]
-  checkApp: (path: string) => CheckOutcome
-  upgradeApp: (path: string) => UpgradeOutcome
-  answerAppQuit: (path: string, quit: boolean) => void
-  listPackages: () => PackageList
-  checkPackages: () => PackageCheck
-  upgradePackage: (kind: PackageKind, fullName: string) => PackageUpgrade
-  setTheme: (theme: Theme) => void
-  inspectMachine: () => Machine
-  optimize: (optimizations: Optimization[]) => void
-  review: (target: Review) => void
-}
+export type Requests = Join<
+  Join<Join<Join<apps.Requests, optimize.Requests>, packages.Requests>, repos.Requests>,
+  shell.Requests
+>
 
-export type Events = {
-  appProgress: [path: string, progress: Progress]
-  packageOutput: [kind: PackageKind, fullName: string, text: string]
-  optimization: [optimization: Optimization, state: OptimizeState]
-  menuCommand: [command: MenuCommand]
-}
+export type Events = Join<Join<Join<apps.Events, optimize.Events>, packages.Events>, shell.Events>
 
-export type Launch = {
-  home: string
-  theme: Theme
-}
-
-export type Api = Launch & {
+export type Api = shell.Launch & {
   invoke: <Channel extends keyof Requests>(
     channel: Channel,
     ...args: Parameters<Requests[Channel]>
