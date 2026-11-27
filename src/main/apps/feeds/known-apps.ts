@@ -6,7 +6,7 @@ import { prerelease } from 'semver'
 import * as z from 'zod'
 import { output } from '../../exec'
 import type { Bundle } from '../bundle'
-import { offerGitHubRelease } from './electron-updater'
+import { genericFeed, offerGitHubRelease } from './electron-updater'
 import { fetchFeed, type Feed, type Framework } from './feed'
 import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
@@ -141,6 +141,15 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
         }
       }
     }
+  ],
+  // Antigravity, whose app-update.yml omits the per-architecture channel the app sets in code.
+  [
+    'com.google.antigravity',
+    (bundle) =>
+      genericFeed(bundle, {
+        url: 'https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/',
+        channel: `latest-${process.arch}`
+      })
   ],
   // Chrome, whose updates hold the app itself, unlike Google apps that update through an installer
   // package.

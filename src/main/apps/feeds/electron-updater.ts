@@ -95,7 +95,7 @@ function offer(bundle: Bundle, info: Info, base: string, notes?: Notes): Update[
   ]
 }
 
-function generic(bundle: Bundle, { url, channel }: Generic): Feed {
+export function genericFeed(bundle: Bundle, { url, channel }: Omit<Generic, 'provider'>): Feed {
   const base = url.endsWith('/') ? url : `${url}/`
   const file = new URL(`${channel}-mac.yml`, base).href
 
@@ -186,6 +186,6 @@ export const electronUpdater: Framework = async (bundle) => {
   if (!config.success) return undefined
 
   return config.data.provider === 'generic'
-    ? generic(bundle, config.data)
+    ? genericFeed(bundle, config.data)
     : github(bundle, config.data)
 }
