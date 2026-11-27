@@ -1,5 +1,5 @@
+import { checked, exec } from '$platform/exec'
 import type { OptimizeOutcome } from '$shared/optimize'
-import { checked, exec } from '../exec'
 
 type Exit = { code: number; printed: string }
 

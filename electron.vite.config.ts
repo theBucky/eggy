@@ -4,10 +4,11 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 import tailwindcss from '@tailwindcss/vite'
 
 const shared = { $shared: resolve(import.meta.dirname, 'src/shared') }
+const platform = { $platform: resolve(import.meta.dirname, 'src/main/platform') }
 
 export default defineConfig({
   main: {
-    resolve: { alias: shared },
+    resolve: { alias: { ...platform, ...shared } },
     // Electron's own module, which Node's built-in list leaves out.
     build: { rolldownOptions: { external: ['original-fs'] } }
   },

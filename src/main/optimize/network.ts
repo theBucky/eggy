@@ -1,4 +1,4 @@
-import { exec, output } from '../exec'
+import { exec, output } from '$platform/exec'
 import { EXIT, command, guarded, quote, type Guard, type Prepared } from './root'
 
 // Refreshing network state makes a connected VPN drop and reconnect. A VPN shows up either as a

@@ -1,3 +1,4 @@
+import { failure } from '$platform/errors'
 import {
   isPrivileged,
   type Optimization,
@@ -5,7 +6,6 @@ import {
   type OptimizeState,
   type Privileged
 } from '$shared/optimize'
-import { failure } from '../errors'
 import { appDatabases, preferences, savedStates } from './applications'
 import { networkVolumes, quickLook, sharedFileLists } from './finder'
 import { dnsCache, networkStack } from './network'

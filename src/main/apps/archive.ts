@@ -1,6 +1,6 @@
 import { mkdir, readdir } from 'node:fs/promises'
 import { basename, extname, join } from 'node:path'
-import { output } from '../exec'
+import { output } from '$platform/exec'
 import { readBundle, type Bundle } from './bundle'
 import { applyDelta } from './delta'
 

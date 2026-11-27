@@ -1,7 +1,7 @@
 import { statfs } from 'node:fs/promises'
 import { totalmem, uptime } from 'node:os'
+import { output } from '$platform/exec'
 import type { Machine } from '$shared/optimize'
-import { output } from '../exec'
 
 async function memoryUsed(): Promise<number> {
   const stats = await output('/usr/bin/vm_stat', [], { timeout: 5000 })

@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from 'node:timers/promises'
-import { errorCode } from '../errors'
-import { output } from '../exec'
+import { errorCode } from '$platform/errors'
+import { output } from '$platform/exec'
 import type { Bundle } from './bundle'
 
 // Bundles can also ship CLI tools whose processes must stay running.

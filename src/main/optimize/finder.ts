@@ -2,10 +2,10 @@ import { readdir } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { shell } from 'electron'
+import { errorCode } from '$platform/errors'
+import { exec, output } from '$platform/exec'
 import { plural } from '$shared/english'
 import type { OptimizeOutcome } from '$shared/optimize'
-import { errorCode } from '../errors'
-import { exec, output } from '../exec'
 import { NEEDS_FULL_DISK_ACCESS, broken } from './support'
 
 export async function quickLook(): Promise<OptimizeOutcome> {

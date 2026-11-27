@@ -1,7 +1,7 @@
 import { open, readdir, stat } from 'node:fs/promises'
+import { errorCode } from '$platform/errors'
+import { checked, exec } from '$platform/exec'
 import type { OptimizeOutcome } from '$shared/optimize'
-import { errorCode } from '../errors'
-import { checked, exec } from '../exec'
 
 // An empty init file keeps the user's ~/.sqliterc from changing the output format.
 export async function sqlite(

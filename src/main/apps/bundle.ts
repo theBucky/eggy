@@ -1,5 +1,5 @@
 import { basename, join } from 'node:path'
-import { output } from '../exec'
+import { output } from '$platform/exec'
 import { parseXml } from './xml'
 
 export type Bundle = {

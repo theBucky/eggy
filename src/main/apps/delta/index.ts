@@ -1,6 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { once } from 'node:events'
-import { output } from '../../exec'
+import { output } from '$platform/exec'
 import { fs } from '../fs'
 import { applyItems } from './items'
 import { Reader } from './reader'

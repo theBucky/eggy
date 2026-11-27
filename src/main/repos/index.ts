@@ -1,6 +1,8 @@
 import { existsSync } from 'node:fs'
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
+import { exec } from '$platform/exec'
+import { loginEnv } from '$platform/login-env'
 import type {
   Commit,
   CommitDetail,
@@ -12,8 +14,6 @@ import type {
   Sync,
   Tracking
 } from '$shared/repos'
-import { exec } from './exec'
-import { loginEnv } from './login-env'
 
 type Output = { ok: boolean; stdout: string; stderr: string }
 

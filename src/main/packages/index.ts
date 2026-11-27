@@ -2,6 +2,9 @@ import { writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { app } from 'electron'
 import * as z from 'zod'
+import { errorCode, failure } from '$platform/errors'
+import { checked, exec, type Options } from '$platform/exec'
+import { loginEnv } from '$platform/login-env'
 import type {
   Package,
   PackageCheck,
@@ -9,9 +12,6 @@ import type {
   PackageList,
   PackageUpgrade
 } from '$shared/packages'
-import { errorCode, failure } from './errors'
-import { checked, exec, type Options } from './exec'
-import { loginEnv } from './login-env'
 
 const env = loginEnv.then((env) => ({
   ...env,

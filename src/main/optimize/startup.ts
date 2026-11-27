@@ -1,9 +1,9 @@
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
 import { shell } from 'electron'
+import { exec, output } from '$platform/exec'
 import { list, plural } from '$shared/english'
 import type { OptimizeOutcome, Review } from '$shared/optimize'
-import { exec, output } from '../exec'
 import { entries, exists } from './support'
 
 const LOGIN_ITEMS = `tell application "System Events"

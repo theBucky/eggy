@@ -2,7 +2,7 @@ import { createHash, createPublicKey, verify, type BinaryToTextEncoding } from '
 import { createReadStream } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
-import { output } from '../../exec'
+import { output } from '$platform/exec'
 
 const verifyAsync = promisify(verify)
 

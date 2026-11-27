@@ -2,12 +2,12 @@ import { app, dialog, ipcMain, nativeTheme, type IpcMainInvokeEvent } from 'elec
 import { homedir } from 'node:os'
 import type { Events, Launch, Requests } from '$shared/ipc'
 import * as apps from './apps'
-import * as brew from './brew'
-import * as git from './git'
 import * as optimize from './optimize'
-import { installMenu } from './menu'
-import { restoreTheme, setTheme } from './theme'
-import { createWindow } from './window'
+import * as packages from './packages'
+import * as repos from './repos'
+import { installMenu } from './shell/menu'
+import { restoreTheme, setTheme } from './shell/theme'
+import { createWindow } from './shell/window'
 
 type Handlers = {
   [Channel in keyof Requests]: (
@@ -43,10 +43,10 @@ app.whenReady().then(() => {
 
       return canceled ? undefined : filePaths[0]
     },
-    scanRepos: (_, root) => git.scan(root),
-    fetchRepo: (_, path) => git.fetch(path),
-    pullRepo: (_, path, command) => git.pull(path, command),
-    showCommit: (_, path, hash) => git.show(path, hash),
+    scanRepos: (_, root) => repos.scan(root),
+    fetchRepo: (_, path) => repos.fetch(path),
+    pullRepo: (_, path, command) => repos.pull(path, command),
+    showCommit: (_, path, hash) => repos.show(path, hash),
     planWindowExpansion: (_, width) => pane.planExpansion(width),
     planWindowCollapse: () => pane.planCollapse(),
     moveWindow: () => pane.move(),
@@ -54,10 +54,10 @@ app.whenReady().then(() => {
     checkApp: (_, path) => apps.check(path),
     upgradeApp: (_, path) => apps.upgrade(path, (progress) => send('appProgress', path, progress)),
     answerAppQuit: (_, path, quit) => apps.answerQuit(path, quit),
-    listPackages: () => brew.list(),
-    checkPackages: () => brew.check(),
+    listPackages: () => packages.list(),
+    checkPackages: () => packages.check(),
     upgradePackage: (_, kind, fullName) =>
-      brew.upgrade(kind, fullName, (text) => send('packageOutput', kind, fullName, text)),
+      packages.upgrade(kind, fullName, (text) => send('packageOutput', kind, fullName, text)),
     setTheme: (_, theme) => setTheme(theme),
     inspectMachine: () => optimize.inspectMachine(),
     optimize: (_, optimizations) =>
