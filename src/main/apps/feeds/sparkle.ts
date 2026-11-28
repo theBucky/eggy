@@ -34,6 +34,6 @@ export const sparkle: Framework = async (bundle) => {
   const url = bundle.info.get('SUFeedURL')
 
   return url !== undefined && existsSync(join(bundle.path, 'Contents/Frameworks/Sparkle.framework'))
-    ? sparkleFeed(bundle, { url, channels: [] })
+    ? sparkleFeed(bundle, { url })
     : undefined
 }

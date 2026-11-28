@@ -5,52 +5,36 @@ import { parse } from 'jsonc-parser'
 import { prerelease } from 'semver'
 import * as z from 'zod'
 import { output } from '$platform/exec'
-import type { Bundle } from '../bundle'
 import { genericFeed, offerGitHubRelease } from './electron-updater'
-import { fetchFeed, type Feed, type Framework } from './feed'
+import { fetchFeed, type Framework } from './feed'
 import { githubReleasesFeed } from './github-releases'
 import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
 
-const CursorTrack = z
-  .enum(['stable', 'prerelease', 'dev', 'dogfood', 'candidate'])
-  .optional()
-  .catch(undefined)
+function cursorUpdateUrl(product: 'cursor' | 'sand', version: string, track: string): string {
+  const intel = product === 'cursor' ? 'darwin' : 'darwin-x64'
+  const platform = process.arch === 'arm64' ? 'darwin-arm64' : intel
 
-const CursorSettings = z.object({
-  'update.releaseTrackOverride': CursorTrack,
-  'update.releaseTrack': CursorTrack
-})
+  // The endpoint requires a machine ID but does not use it to select the update.
+  return `https://api2.cursor.sh/updates/api/update/${platform}/${product}/${version}/${'0'.repeat(64)}/${track}`
+}
 
-// Cursor's update server requires a machine identifier but answers the same for any.
-const anyMachine = '0'.repeat(64)
-
-const T3Pointer = z.object({ tag_name: z.string(), body: z.string().nullish() })
-
-const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Feed>>([
-  [
-    'com.openai.codex',
-    (bundle) =>
-      sparkleFeed(bundle, {
-        url: 'https://persistent.oaistatic.com/codex-app-prod/appcast.xml',
-        channels: []
+export const knownApps: Framework = async (bundle) => {
+  switch (bundle.id) {
+    case 'com.openai.codex':
+      return sparkleFeed(bundle, {
+        url: 'https://persistent.oaistatic.com/codex-app-prod/appcast.xml'
       })
-  ],
-  // OrbStack, whose feed lags a release behind without a rollout bucket.
-  [
-    'dev.kdrag0n.MacVirt',
-    (bundle) =>
-      sparkleFeed(bundle, {
+    case 'dev.kdrag0n.MacVirt':
+      // Without a rollout bucket the feed lags one release behind.
+      return sparkleFeed(bundle, {
         url: `https://api-updates.orbstack.dev/${process.arch === 'arm64' ? 'arm64' : 'amd64'}/appcast.xml?bucket=0`,
-        channels: ['stable']
+        channel: 'stable'
       })
-  ],
-  // CleanShot X, whose Info.plist feed ends at version 3 since later releases go to licensed copies.
-  [
-    'pl.maketheweb.cleanshotx',
-    (bundle) => {
-      const appcast = { url: 'https://legit.maketheweb.io/api/v1/appcast', channels: [] }
+    case 'pl.maketheweb.cleanshotx': {
+      // The bundled public feed stops at version 3.
+      const appcast = { url: 'https://legit.maketheweb.io/api/v1/appcast' }
 
       return {
         url: appcast.url,
@@ -64,61 +48,42 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
         }
       }
     }
-  ],
-  [
-    'com.mitchellh.ghostty',
-    async (bundle) => {
+
+    case 'com.mitchellh.ghostty': {
       const config = await output(bundle.executable, ['+show-config'])
       const channel = /^auto-update-channel = tip$/m.test(config) ? 'tip' : 'release'
 
-      return sparkleFeed(bundle, {
-        url: `https://${channel}.files.ghostty.org/appcast.xml`,
-        channels: []
-      })
+      return sparkleFeed(bundle, { url: `https://${channel}.files.ghostty.org/appcast.xml` })
     }
-  ],
-  [
-    'com.todesktop.230313mzl4w4u92',
-    async (bundle) => {
-      const settings = CursorSettings.safeParse(
-        parse(
-          await readFile(
-            join(homedir(), 'Library/Application Support/Cursor/User/settings.json'),
-            'utf8'
-          ).catch(() => '')
-        )
-      )
 
-      const track =
-        settings.data?.['update.releaseTrackOverride'] ??
-        settings.data?.['update.releaseTrack'] ??
-        'stable'
+    case 'com.todesktop.230313mzl4w4u92': {
+      const path = join(homedir(), 'Library/Application Support/Cursor/User/settings.json')
+      const text = await readFile(path, 'utf8').catch(() => '')
 
-      const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin'
+      const track = z
+        .enum(['stable', 'prerelease', 'dev', 'dogfood', 'candidate'])
+        .optional()
+        .catch(undefined)
+
+      const { data } = z
+        .object({ 'update.releaseTrackOverride': track, 'update.releaseTrack': track })
+        .safeParse(parse(text))
+
+      const channel =
+        data?.['update.releaseTrackOverride'] ?? data?.['update.releaseTrack'] ?? 'stable'
 
       return squirrelFeed(bundle, {
-        url: `https://api2.cursor.sh/updates/api/update/${platform}/cursor/${bundle.version}/${anyMachine}/${track}`,
+        url: cursorUpdateUrl('cursor', bundle.version, channel),
         changelog: 'https://cursor.com/changelog'
       })
     }
-  ],
-  // Grok Bot, whose other release tracks are internal.
-  [
-    'com.anysphere.sand',
-    (bundle) => {
-      const platform = process.arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64'
 
+    case 'com.anysphere.sand':
       return squirrelFeed(bundle, {
-        url: `https://api2.cursor.sh/updates/api/update/${platform}/sand/${bundle.version}/${anyMachine}/stable`,
+        url: cursorUpdateUrl('sand', bundle.version, 'stable'),
         changelog: 'https://x.ai/changelog/bot'
       })
-    }
-  ],
-  // T3 Code, whose nightly builds read a pointer to the newest nightly, since the repository's other
-  // releases crowd nightlies out of GitHub's release feed.
-  [
-    'com.t3tools.t3code',
-    (bundle) => {
+    case 'com.t3tools.t3code': {
       const channel = prerelease(bundle.version)?.[0]
 
       if (channel !== 'nightly') return undefined
@@ -128,47 +93,40 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
       return {
         url: releases,
         check: async () => {
-          const pointer = T3Pointer.parse(
-            await (await fetchFeed(`${releases}/download/update-feed/${channel}.json`)).json()
-          )
+          // Mobile releases can push nightlies out of the GitHub release feed.
+          const response = await fetchFeed(`${releases}/download/update-feed/${channel}.json`)
+
+          const { tag_name, body } = z
+            .object({ tag_name: z.string(), body: z.string().nullish() })
+            .parse(await response.json())
 
           return offerGitHubRelease(
             bundle,
             releases,
-            pointer.tag_name,
+            tag_name,
             channel,
-            pointer.body ? { format: 'markdown', text: pointer.body } : undefined
+            body ? { format: 'markdown', text: body } : undefined
           )
         }
       }
     }
-  ],
-  // Antigravity, whose app-update.yml omits the per-architecture channel the app sets in code.
-  [
-    'com.google.antigravity',
-    (bundle) =>
-      genericFeed(bundle, {
+
+    case 'com.google.antigravity':
+      // The bundled app-update.yml omits the architecture from the channel.
+      return genericFeed(bundle, {
         url: 'https://antigravity-hub-auto-updater-974169037036.us-central1.run.app/manifest/',
         channel: `latest-${process.arch}`
       })
-  ],
-  // Chrome, whose updates hold the app itself, unlike Google apps that update through an installer
-  // package.
-  ['com.google.Chrome', googleUpdaterFeed],
-  [
-    'com.figma.Desktop',
-    (bundle) =>
-      squirrelFeed(bundle, {
+    case 'com.google.Chrome':
+      return googleUpdaterFeed(bundle)
+    case 'com.figma.Desktop':
+      return squirrelFeed(bundle, {
         url: `https://desktop.figma.com/${process.arch === 'arm64' ? 'mac-arm' : 'mac'}/RELEASE.json`,
         changelog: 'https://www.figma.com/release-notes/'
       })
-  ],
-  // Yubico Authenticator, which ships no updater of its own.
-  [
-    'com.yubico.yubioath',
-    (bundle) =>
-      githubReleasesFeed(bundle, { repo: 'Yubico/yubioath-flutter', asset: /-macos\.dmg$/ })
-  ]
-])
-
-export const knownApps: Framework = async (bundle) => feeds.get(bundle.id)?.(bundle)
+    case 'com.yubico.yubioath':
+      return githubReleasesFeed(bundle, { repo: 'Yubico/yubioath-flutter', asset: /-macos\.dmg$/ })
+    default:
+      return undefined
+  }
+}

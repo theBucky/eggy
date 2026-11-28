@@ -5,7 +5,7 @@ import { compare } from './version'
 
 export type Appcast = {
   url: string
-  channels: string[]
+  channel?: string
 }
 
 export type Enclosure = {
@@ -56,13 +56,13 @@ function notesOf(item: Element, base: string): Notes | undefined {
   return url ? { format: 'link', url: new URL(url, base).href } : undefined
 }
 
-function runsHere(item: Element, { channels }: Appcast, system: string): boolean {
+function runsHere(item: Element, appcast: Appcast, system: string): boolean {
   const channel = sparkleText(item, 'channel')
   const minimum = sparkleText(item, 'minimumSystemVersion')
   const maximum = sparkleText(item, 'maximumSystemVersion')
 
   return (
-    (channel === undefined || channels.includes(channel)) &&
+    (channel === undefined || channel === appcast.channel) &&
     (process.arch === 'arm64' || !sparkleText(item, 'hardwareRequirements')?.includes('arm64')) &&
     (minimum === undefined || compare(minimum, system) <= 0) &&
     (maximum === undefined || compare(maximum, system) >= 0)
