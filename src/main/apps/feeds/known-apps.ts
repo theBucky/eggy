@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { parse } from 'jsonc-parser'
 import { prerelease } from 'semver'
 import * as z from 'zod'
-import { output } from '$platform/exec'
+import { exec, output } from '$platform/exec'
 import { genericFeed, offerGitHubRelease } from './electron-updater'
 import { fetchFeed, type Framework } from './feed'
 import { githubReleasesFeed } from './github-releases'
@@ -26,6 +26,22 @@ export const knownApps: Framework = async (bundle) => {
       return sparkleFeed(bundle, {
         url: 'https://persistent.oaistatic.com/codex-app-prod/appcast.xml'
       })
+    case 'com.tencent.xinWeChat': {
+      if (bundle.info.has('SUFeedURL')) return undefined
+
+      // Store receipts can be missing. Only Tencent's Developer ID build uses the website feed.
+      const signature = await exec('/usr/bin/codesign', [
+        '--verify',
+        '--ignore-resources',
+        '-R=anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.13] and certificate leaf[subject.OU] = "5A4RE8SF68"',
+        bundle.path
+      ])
+
+      if (signature.exit !== 0) return undefined
+
+      return sparkleFeed(bundle, { url: 'https://dldir1.qq.com/weixin/mac/mac-release.xml' })
+    }
+
     case 'dev.kdrag0n.MacVirt':
       // Without a rollout bucket the feed lags one release behind.
       return sparkleFeed(bundle, {
