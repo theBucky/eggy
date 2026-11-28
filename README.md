@@ -12,7 +12,7 @@ Scans `/Applications` and `~/Applications` for apps with a supported update feed
 
 - Sparkle appcasts
 - electron-updater feeds
-- per-app feeds for apps that resolve their feed at launch, such as Chrome, Cursor, Figma, and Ghostty
+- per-app feeds for apps that resolve their feed at launch or ship no updater, such as Chrome, Cursor, Figma, Ghostty, and Yubico Authenticator
 
 Each app shows installed and latest versions, release date, download size, and release notes when the feed provides them.
 

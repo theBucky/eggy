@@ -8,6 +8,7 @@ import { output } from '$platform/exec'
 import type { Bundle } from '../bundle'
 import { genericFeed, offerGitHubRelease } from './electron-updater'
 import { fetchFeed, type Feed, type Framework } from './feed'
+import { githubReleasesFeed } from './github-releases'
 import { googleUpdaterFeed } from './google-updater'
 import { readAppcast, sparkleFeed } from './sparkle'
 import { squirrelFeed } from './squirrel'
@@ -161,6 +162,12 @@ const feeds = new Map<string, (bundle: Bundle) => Feed | undefined | Promise<Fee
         url: `https://desktop.figma.com/${process.arch === 'arm64' ? 'mac-arm' : 'mac'}/RELEASE.json`,
         changelog: 'https://www.figma.com/release-notes/'
       })
+  ],
+  // Yubico Authenticator, which ships no updater of its own.
+  [
+    'com.yubico.yubioath',
+    (bundle) =>
+      githubReleasesFeed(bundle, { repo: 'Yubico/yubioath-flutter', asset: /-macos\.dmg$/ })
   ]
 ])
 
