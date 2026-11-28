@@ -132,7 +132,7 @@ function loads(callee: ESTree.Node): boolean {
   )
 }
 
-const imports = defineRule({
+export const imports = defineRule({
   meta: {
     type: 'problem',
     docs: { description: 'Keep every import inside what the layer of the importing file allows.' },

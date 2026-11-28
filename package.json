@@ -10,7 +10,7 @@
     "format:check": "oxfmt --check",
     "lint": "oxlint",
     "typecheck": "tsc -p tsconfig.node.json && svelte-check --tsconfig ./tsconfig.web.json",
-    "test": "node --test \"src/**/*.test.ts\"",
+    "test": "node --test \"src/**/*.test.ts\" \"tools/oxlint/boundaries/*.test.ts\"",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "pnpm typecheck && electron-vite build",
