@@ -1,6 +1,7 @@
 ## commands
 
 - `pnpm dev`: run Electron with HMR.
+- `pnpm check`: lint, format check, typecheck, and tests.
 - `pnpm build`: typecheck (`tsc` for main/preload, `svelte-check` for the renderer) then build main/preload/renderer; `pnpm typecheck` runs checks alone.
 - `pnpm dlx shadcn-svelte@latest add <component>`: vendor shadcn-svelte components into `src/renderer/primitives/ui` (directory is excluded from lint and format).
 
